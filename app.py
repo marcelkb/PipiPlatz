@@ -27,20 +27,72 @@ GROUPS = [
     ['nwr[shop=supermarket]["brand:wikidata"~"^(Q701755|Q16968817|Q685967|Q1541857)$"]{a};'],
 ]
 
-def run_groups(area, limit=300):
-    a = f"({area})"
-    from concurrent.futures import ThreadPoolExecutor
-    def one(g):
+# WC evidence: shops get a WC mostly when a cafe / bakery with seats is next to them.
+# (source selector, selectors searched around the source, radius in m)
+EVIDENCE = [
+    ('nwr[shop=supermarket]["brand:wikidata"~"^(Q701755|Q16968817|Q685967|Q1541857)$"]{a}',
+     ["nwr[shop=bakery]", "nwr[amenity=cafe]"], 80),
+]
+EVID_RADIUS = {"super": 80}
+
+def allQueries(a, limit):
+    """[(is_evidence, query)] for one search area `a` (an Overpass area filter like '(around:...)')."""
+    qs = []
+    for g in GROUPS:
         body = "".join(x.replace("{a}", a) for x in g)
+        qs.append((False, f"[out:json][timeout:25];({body});out center tags {limit};"))
+    for src, targets, r in EVIDENCE:
+        sets = "".join(f"{t}(around.s:{r});" for t in targets)
+        qs.append((True, f"[out:json][timeout:25];{src.replace('{a}', a)}->.s;({sets});out center tags {limit};"))
+    return qs
+
+def fetchAll(queries, workers):
+    """Run queries in parallel -> (poi elements, evidence elements, number of failed queries)."""
+    from concurrent.futures import ThreadPoolExecutor
+    def one(q):
         try:
-            return overpass(f"[out:json][timeout:25];({body});out center tags {limit};")
+            return overpass(q[1])
         except RuntimeError:
             return None
-    with ThreadPoolExecutor(len(GROUPS)) as ex:
-        res = list(ex.map(one, GROUPS))
+    with ThreadPoolExecutor(workers) as ex:
+        res = list(ex.map(one, queries))
     if all(r is None for r in res):
         raise RuntimeError("Alle Overpass-Server nicht erreichbar")
-    return [e for r in res if r for e in r], sum(r is None for r in res)
+    pois = [e for (ev, _), r in zip(queries, res) if r and not ev for e in r]
+    evid = [e for (ev, _), r in zip(queries, res) if r and ev for e in r]
+    return pois, evid, sum(r is None for r in res)
+
+def run_groups(area, limit=300):
+    return fetchAll(allQueries(f"({area})", limit), len(GROUPS) + len(EVIDENCE))
+
+def evidenceOf(e):
+    """cafe / bakery element -> (lat, lon, label, strong) or None. strong = has seats, so likely a WC."""
+    t = e.get("tags", {})
+    lat = e.get("lat") or e.get("center", {}).get("lat")
+    lon = e.get("lon") or e.get("center", {}).get("lon")
+    if lat is None: return None
+    if t.get("amenity") == "cafe":
+        return lat, lon, "Café", True
+    if t.get("shop") == "bakery":
+        if t.get("indoor_seating") == "yes":
+            return lat, lon, "Bäcker mit Sitzplätzen", True
+        return lat, lon, "Bäcker", False
+    return None
+
+def enrich(pois, evid):
+    """Set wc / hint on shops without a confirmed WC from cafes and bakeries next to them."""
+    ev = [x for x in map(evidenceOf, evid) if x]
+    for p in pois:
+        r = EVID_RADIUS.get(p["kind"])
+        if not r or p["wc"] is True: continue
+        near = [x for x in ev if hav((p["lat"], p["lon"]), (x[0], x[1])) <= r]
+        strong = [x for x in near if x[3]]
+        if strong:
+            p["wc"], p["hint"] = "likely", f"{strong[0][2]} beim Markt"
+        elif near:
+            p["wc"], p["hint"] = None, "nur Bäcker-Theke beim Markt"
+        else:
+            p["wc"], p["hint"] = None, "kein Café/Bäcker erfasst"
 
 def classify(t):
     brand = t.get("brand") or t.get("name") or ""
@@ -149,8 +201,9 @@ def nearby():
     radius = 3000
     pois = []
     while radius <= 24000:  # widen until we have some results
-        els, failed = run_groups(f"around:{radius},{lat},{lon}")
+        els, evid, failed = run_groups(f"around:{radius},{lat},{lon}")
         pois = dedupe([p for p in map(to_poi, els) if p])
+        enrich(pois, evid)
         if len(pois) >= 8: break
         radius *= 2
     for p in pois:
@@ -190,28 +243,19 @@ def along():
     keep = [i for i, c in enumerate(cum) if c <= ahead_km * 1000] or [0]
     spts, scum = [pts[i] for i in keep], [cum[i] for i in keep]
     # Overpass: chunk the polyline so queries stay small
-    from concurrent.futures import ThreadPoolExecutor
     CH = 26
     jobs = []
     for s in range(0, len(spts), CH - 1):
         chunk = spts[s:s + CH]
         if len(chunk) < 2: chunk = chunk * 2
         line = ",".join(f"{la:.5f},{lo:.5f}" for la, lo in chunk)
-        for g in GROUPS:
-            body = "".join(x.replace("{a}", f"(around:{radius},{line})") for x in g)
-            jobs.append(f"[out:json][timeout:25];({body});out center tags 400;")
-    def one(q):
-        try:
-            return overpass(q)
-        except RuntimeError:
-            return None
-    with ThreadPoolExecutor(8) as ex:
-        res = list(ex.map(one, jobs))
-    failed = sum(r is None for r in res)
-    if failed == len(res):
+        jobs += allQueries(f"(around:{radius},{line})", 400)
+    try:
+        els, evid, failed = fetchAll(jobs, 8)
+    except RuntimeError:
         return jsonify(error="Overpass-Server nicht erreichbar, bitte später erneut"), 502
-    pois = [p for r in res if r for p in map(to_poi, r) if p]
-    pois = dedupe(pois)
+    pois = dedupe([p for p in map(to_poi, els) if p])
+    enrich(pois, evid)
     for p in pois:
         best = min(range(len(spts)), key=lambda i: hav(spts[i], (p["lat"], p["lon"])))
         p["off"] = round(hav(spts[best], (p["lat"], p["lon"])))
