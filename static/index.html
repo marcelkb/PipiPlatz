@@ -296,17 +296,19 @@ async function nearby(){
   finally{busy(false)}
 }
 function setMe(pos,first){
-  me=[pos.coords.latitude,pos.coords.longitude];
+  const old=me;me=[pos.coords.latitude,pos.coords.longitude];
   if(!meMarker)meMarker=L.circleMarker(me,{radius:9,color:'#fff',weight:3,fillColor:'#00548f',fillOpacity:1}).addTo(map);else meMarker.setLatLng(me);
-  if(first){map.setView(me,13);nearby();}
+  // search on a fresh fix only when there is no position yet or it really moved (no double search on a cached fix)
+  if(first&&(!old||Math.abs(old[0]-me[0])>0.002||Math.abs(old[1]-me[1])>0.002)){map.setView(me,13);nearby();}
 }
 function locate(){
   if(!navigator.geolocation){setStatus('Keine Geolocation (HTTPS nötig!)',true);return}
   const g=navigator.geolocation;
   const ok=p=>{setMe(p,true);if(watchId==null)watchId=g.watchPosition(q=>setMe(q,false),()=>{},{enableHighAccuracy:true,maximumAge:10000})};
-  const fail=e=>setStatus(e.code===1?'Standort-Zugriff verweigert. In den Browser-Einstellungen für diese Seite erlauben (HTTPS nötig).'
+  const fail=e=>{if(me){setStatus('Standort nicht aktualisiert – Ergebnisse für den letzten Standort');return}
+    setStatus(e.code===1?'Standort-Zugriff verweigert. In den Browser-Einstellungen für diese Seite erlauben (HTTPS nötig).'
     :e.code===3?'Kein Standort gefunden (Zeitüberschreitung). Kein GPS-Empfang? Nochmal auf „In der Nähe“ tippen.'
-    :'Standort nicht verfügbar: '+e.message,true);
+    :'Standort nicht verfügbar: '+e.message,true)};
   // fast coarse fix first (wifi/cell, may be a bit old); GPS only if that fails, with a longer limit
   g.getCurrentPosition(ok,e=>{
     if(e.code===1)return fail(e);
@@ -315,7 +317,7 @@ function locate(){
   },{enableHighAccuracy:false,timeout:8000,maximumAge:120000});
 }
 function routePanel(show){$('route').classList.toggle('show',show);$('app').classList.toggle('routing',show);map.invalidateSize()}
-$('loc').onclick=()=>{setMode('near');routePanel(false);locate()};
+$('loc').onclick=()=>{setMode('near');routePanel(false);if(me)nearby();locate()};
 $('rt').onclick=()=>{setMode('route');routePanel(!$('route').classList.contains('show'))};
 
 // destination autocomplete
