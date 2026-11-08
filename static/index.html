@@ -124,7 +124,12 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .skel i:nth-child(2){height:16px;width:16px;border-radius:50%;margin-left:3px}
 .skel i:nth-child(4){height:48px}
 @keyframes pulse{50%{opacity:.45}}
-@media (prefers-reduced-motion:reduce){.skel i{animation:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+#busy{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;pointer-events:none}
+#busy.on{display:flex}
+#busy div{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 26px;border-radius:12px;background:var(--panel);color:var(--chip-off-fg);font-weight:600;box-shadow:0 6px 28px rgba(0,0,0,.35)}
+#busy i{width:44px;height:44px;border-radius:50%;border:5px solid var(--skel);border-top-color:var(--chip-on);animation:spin .8s linear infinite}
+@media (prefers-reduced-motion:reduce){.skel i{animation:none}#busy i{animation-duration:2.4s}}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
  <symbol id="i-wc" viewBox="0 0 24 24"><circle cx="6.5" cy="4" r="1.6"/><path d="M4 9.5h5L8.2 15H9v6H7v-4.5H6V21H4v-6h.8z"/><circle cx="17.5" cy="4" r="1.6"/><path d="M14.5 9.5h6l-1.5 5.5h-3zM16 15v6M19 15v6"/></symbol>
@@ -170,6 +175,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
  <div id="chips" role="group" aria-label="Orte filtern"></div>
  <div id="views"><div id="map"></div><iframe id="gm" title="Google Maps" allowfullscreen loading="lazy"></iframe></div>
  <section id="sheet">
+  <div id="busy" role="alert" aria-live="polite"><div><i></i><span>Suche läuft…</span></div></div>
   <div id="status" role="status">Standort wird ermittelt…</div>
   <div id="list"></div>
  </section>
@@ -211,6 +217,7 @@ const gmNav=p=>{ // navigate to POI; if a route is active, keep the final destin
 };
 const pinIcon=(p,sel)=>L.divIcon({html:`<div class="pin${sel?' sel':''}">${ico(KINDS[p.kind][0])}</div>`,className:'',iconSize:[36,36],iconAnchor:[18,18]});
 
+const busy=on=>$('busy').classList.toggle('on',on);
 function skeleton(){$('list').innerHTML='<div class="skel"><i></i><i></i><i></i><i></i></div>'.repeat(3)}
 
 function render(){
@@ -242,11 +249,12 @@ $('list').onclick=e=>{const el=e.target.closest('.poi');if(!el||e.target.closest
 $('list').onkeydown=e=>{if(e.key!=='Enter'||e.target.closest('a'))return;const el=e.target.closest('.poi');if(el)pick(el)};
 
 async function nearby(){
-  setStatus('Suche in der Nähe…');skeleton();
+  setStatus('Suche in der Nähe…');skeleton();busy(true);
   try{const r=await (await fetch(`/api/nearby?lat=${me[0]}&lon=${me[1]}`)).json();
     pois=r.pois;routeInfo=null;selId=null;if(routeLine){map.removeLayer(routeLine);routeLine=null}
     setStatus(`${pois.length} Orte im Umkreis von ${r.radius/1000} km${r.partial?' (teilweise, Server überlastet)':''}`);render();
   }catch(e){setStatus('Fehler: '+e,true);$('list').innerHTML=''}
+  finally{busy(false)}
 }
 function setMe(pos,first){
   me=[pos.coords.latitude,pos.coords.longitude];
@@ -284,7 +292,7 @@ $('go').onclick=async()=>{
   if($('start').value&&!startPt)return setStatus('Start aus der Vorschlagsliste wählen',true);
   if(!org)return setStatus('Erst Standort ermitteln oder Start eingeben',true);
   if(!dest)return setStatus('Ziel aus der Vorschlagsliste wählen',true);
-  setStatus('Route + Suche entlang der Strecke… (kann 10-30 s dauern)');skeleton();$('go').disabled=true;
+  setStatus('Route + Suche entlang der Strecke… (kann 10-30 s dauern)');skeleton();busy(true);$('go').disabled=true;
   try{const res=await fetch('/api/along',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:org,to:[dest.lat,dest.lon],radius:+$('rad').value,ahead_km:+$('ahead').value})});
    const r=await res.json();if(r.error)throw r.error;
    pois=r.pois;routeInfo=r;selId=null;if(routeLine)map.removeLayer(routeLine);
@@ -292,7 +300,7 @@ $('go').onclick=async()=>{
    routePanel(false);map.fitBounds(routeLine.getBounds());
    setStatus(`Route ${fmt(r.total)}, ${Math.round(r.duration/60)} min · ${pois.length} Stopps entlang der Strecke`);render();
   }catch(e){setStatus('Fehler: '+e,true);$('list').innerHTML=''}
-  finally{$('go').disabled=false}
+  finally{$('go').disabled=false;busy(false)}
 };
 
 // Google Maps embed (needs free Maps Embed API key, optional)
