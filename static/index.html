@@ -222,11 +222,11 @@ const gmNav=p=>{ // navigate to POI; if a route is active, keep the final destin
 const pinIcon=(p,sel)=>L.divIcon({html:`<div class="pin${sel?' sel':''}">${ico(KINDS[p.kind][0])}</div>`,className:'',iconSize:[36,36],iconAnchor:[18,18]});
 
 // time estimate: median of the last durations per search mode, kept in localStorage
-const DEF_EST={nearby:20,route:30};
+const DEF_EST={nearby:6,route:25};
 let busyT=null,busyT0=0,busyMode='nearby';
-function estimate(mode){try{const a=JSON.parse(localStorage.getItem('pp-dur-'+mode)||'[]').sort((x,y)=>x-y);
+function estimate(mode){try{const a=JSON.parse(localStorage.getItem('pp-dur2-'+mode)||'[]').sort((x,y)=>x-y);
   if(a.length)return a[Math.floor(a.length/2)]}catch(e){}return DEF_EST[mode]}
-function busyRec(){try{const k='pp-dur-'+busyMode,a=JSON.parse(localStorage.getItem(k)||'[]');
+function busyRec(){try{const k='pp-dur2-'+busyMode,a=JSON.parse(localStorage.getItem(k)||'[]');
   a.push(Math.max(1,Math.round((Date.now()-busyT0)/1000)));localStorage.setItem(k,JSON.stringify(a.slice(-5)))}catch(e){}}
 function busy(on,mode){
   $('busy').classList.toggle('on',on);clearInterval(busyT);
