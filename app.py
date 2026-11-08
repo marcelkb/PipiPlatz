@@ -59,10 +59,12 @@ EVID_RADIUS = {"super": 80, "moebel": 150, "bau": 150}
 
 WORKERS = 5  # public Overpass servers handle only a few requests per client at once
 
-def allQueries(a, limit):
-    """[(is_evidence, query)] for one search area `a` (an Overpass area filter like '(around:...)')."""
+def allQueries(a, limit, merge=False):
+    """[(is_evidence, query)] for one search area `a` (an Overpass area filter like '(around:...)').
+    merge=True puts all POI groups into one query: fewer requests for long route searches."""
     qs = []
-    for g in GROUPS:
+    groups = [[x for g in GROUPS for x in g]] if merge else GROUPS
+    for g in groups:
         body = "".join(x.replace("{a}", a) for x in g)
         qs.append((False, f"[out:json][timeout:25];({body});out center tags {limit};"))
     for src, targets, r in EVIDENCE:
@@ -340,7 +342,7 @@ def along():
         chunk = spts[s:s + CH]
         if len(chunk) < 2: chunk = chunk * 2
         line = ",".join(f"{la:.5f},{lo:.5f}" for la, lo in chunk)
-        jobs += allQueries(f"(around:{radius},{line})", 400)
+        jobs += allQueries(f"(around:{radius},{line})", 1500, merge=True)
     try:
         els, evid, failed = fetchAll(jobs, WORKERS)
     except RuntimeError:
