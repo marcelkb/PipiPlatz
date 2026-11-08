@@ -17,6 +17,11 @@ NOMINATIM = "https://nominatim.openstreetmap.org/search"
 
 LIKELY_SUPER = "Edeka|EDEKA|Rewe|REWE|Kaufland|Globus|Marktkauf|Famila|HIT|real|E center|E-Center"
 BURGER = "McDonald's|Burger King"
+FURNITURE = ("Ostermann|IKEA|XXXL|Höffner|Segmüller|Porta|Möbel Kraft|Rieger|Mömax|Roller|"
+             "Sconto|Hardeck|Biller|Zurbrüggen|Mahler")
+DIY = "^OBI( |$)|Bauhaus|Hornbach|^toom|hagebau|Hellweg|Globus Bau|Bauvit"
+BIGSHOPS = (f'nwr[shop=furniture][name~"{FURNITURE}",i]{{a}};'
+            f'nwr[shop=doityourself][name~"{DIY}",i]{{a}};')
 
 GROUPS = [
     ["nwr[highway=rest_area]{a};", "nwr[highway=services]{a};"],
@@ -25,6 +30,7 @@ GROUPS = [
      "nwr[amenity=restaurant][toilets=yes]{a};", "nwr[shop=supermarket][toilets=yes]{a};"],
     ['nwr[amenity=fast_food]["brand:wikidata"~"^(Q38076|Q177054)$"]{a};'],
     ['nwr[shop=supermarket]["brand:wikidata"~"^(Q701755|Q16968817|Q685967|Q1541857)$"]{a};'],
+    [BIGSHOPS, "nwr[shop=furniture][toilets=yes]{a};", "nwr[shop=doityourself][toilets=yes]{a};"],
 ]
 
 # WC evidence: shops get a WC mostly when a cafe / bakery with seats is next to them.
@@ -32,8 +38,10 @@ GROUPS = [
 EVIDENCE = [
     ('nwr[shop=supermarket]["brand:wikidata"~"^(Q701755|Q16968817|Q685967|Q1541857)$"]{a}',
      ["nwr[shop=bakery]", "nwr[amenity=cafe]"], 80),
+    (f"({BIGSHOPS})",
+     ["nwr[amenity=cafe]", "nwr[amenity=restaurant]", "nwr[amenity=fast_food]"], 150),
 ]
-EVID_RADIUS = {"super": 80}
+EVID_RADIUS = {"super": 80, "moebel": 150, "bau": 150}
 
 def allQueries(a, limit):
     """[(is_evidence, query)] for one search area `a` (an Overpass area filter like '(around:...)')."""
@@ -73,6 +81,8 @@ def evidenceOf(e):
     if lat is None: return None
     if t.get("amenity") == "cafe":
         return lat, lon, "Café", True
+    if t.get("amenity") in ("restaurant", "fast_food"):
+        return lat, lon, "Restaurant", True
     if t.get("shop") == "bakery":
         if t.get("indoor_seating") == "yes":
             return lat, lon, "Bäcker mit Sitzplätzen", True
@@ -89,6 +99,8 @@ def enrich(pois, evid):
         strong = [x for x in near if x[3]]
         if strong:
             p["wc"], p["hint"] = "likely", f"{strong[0][2]} beim Markt"
+        elif p["kind"] == "moebel":
+            p["wc"], p["hint"] = "likely", "großes Möbelhaus"
         elif near:
             p["wc"], p["hint"] = None, "nur Bäcker-Theke beim Markt"
         else:
@@ -109,6 +121,10 @@ def classify(t):
         if t.get("takeaway") == "only" or re.search(r"pop.?up|nur drive|drive.?only", txt, re.I):
             return "burger", brand, wc or None
         return "burger", brand, True
+    if t.get("shop") == "furniture":
+        return "moebel", t.get("name") or "Möbelhaus", wc or None
+    if t.get("shop") == "doityourself":
+        return "bau", t.get("name") or "Baumarkt", wc or None
     if t.get("shop") == "supermarket":
         return "super", brand or "Supermarkt", wc or None
     if t.get("amenity") == "fuel":
@@ -173,7 +189,7 @@ def to_poi(e):
     lon = e.get("lon") or e.get("center", {}).get("lon")
     if lat is None: return None
     kind, name, wc = classify(t)
-    if t.get("toilets") == "no" and kind in ("burger", "super"):
+    if t.get("toilets") == "no" and kind in ("burger", "super", "moebel", "bau"):
         return None  # OSM says explicitly: no WC
     return {"id": f'{e["type"]}{e["id"]}', "lat": lat, "lon": lon, "kind": kind,
             "name": name, "wc": wc, "hours": t.get("opening_hours", ""),
