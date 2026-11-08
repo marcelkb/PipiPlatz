@@ -1,2 +1,5 @@
 .impeccable/
 __pycache__/
+cache.db
+run.log
+run.err
