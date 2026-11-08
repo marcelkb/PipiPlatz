@@ -238,8 +238,9 @@ const fmtP=m=>m>=1000?[de(m/1000),'km']:[String(Math.round(m)),'m'];
 const gmNav=p=>{ // navigate to POI; if a route is active, keep the final destination as a stop after it
   const base='https://www.google.com/maps/dir/?api=1&travelmode=driving';
   if(dest&&routeInfo){ // stops from a loaded Google route and the POI, in driving order
+    const o=me||(routeInfo.route&&routeInfo.route[0]); // typed start: the route knows where it begins
     const wp=[...(routeInfo.vias||[]),{lat:p.lat,lon:p.lon,a:p.along||0}].sort((x,y)=>x.a-y.a).map(x=>`${x.lat},${x.lon}`).join('%7C');
-    return `${base}&origin=${me[0]},${me[1]}&destination=${dest.lat},${dest.lon}&waypoints=${wp}`}
+    return `${base}${o?`&origin=${o[0]},${o[1]}`:''}&destination=${dest.lat},${dest.lon}&waypoints=${wp}`}
   return `${base}&destination=${p.lat},${p.lon}`;
 };
 const pinIcon=(p,sel)=>L.divIcon({html:`<div class="pin${sel?' sel':''}">${ico(KINDS[p.kind][0])}</div>`,className:'',iconSize:[36,36],iconAnchor:[18,18]});
