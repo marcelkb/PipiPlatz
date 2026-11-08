@@ -354,6 +354,7 @@ def hostOk(url):
 def gmapsResolve(url):
     """Follow a short Google Maps link (maps.app.goo.gl/...) to the full /maps/dir/ URL.
     Refuses every host that is not Google, also in redirects (no fetching of arbitrary URLs)."""
+    seen = set()
     for _ in range(6):
         if not hostOk(url):
             raise ValueError("Das ist kein Google-Maps-Link")
@@ -363,8 +364,13 @@ def gmapsResolve(url):
             if not nxt: raise ValueError("Google verlangt eine Zustimmung, bitte den langen Link einfügen")
             url = nxt
             continue
-        if "/maps/dir" in u.path or "api=1" in u.query:
+        # a link that already carries the route needs no request; fetching it only adds a consent round trip
+        qs = parse_qs(u.query, keep_blank_values=True)
+        if "/maps/dir" in u.path or qs.get("api") == ["1"] or qs.get("saddr") or qs.get("daddr"):
             return url
+        if url in seen:  # bounced back (consent page above): nothing new to follow
+            return url
+        seen.add(url)
         r = requests.get(url, headers=UA, timeout=10, allow_redirects=False)
         loc = r.headers.get("Location")
         if not (300 <= r.status_code < 400 and loc):
@@ -388,6 +394,10 @@ def gmapsStops(url):
         for seg in u.path.split("/dir/", 1)[1].split("/"):
             if seg.startswith("@") or seg.startswith("data="): break
             if seg.strip(): raw.append(unquote_plus(seg))
+    elif q.get("saddr") or q.get("daddr"):
+        # the form Google's "share route" copies on the phone: /maps?saddr=51.5,6.9&daddr=Address&dirflg=d
+        # (parse_qs already decoded %xx and +), several stops may be chained with " to "
+        raw = q.get("saddr", []) + [x for d in q.get("daddr", []) for x in d.split(" to ")]
     else:
         raw = []
     stops = [stopOf(x) for x in raw if x.strip()]

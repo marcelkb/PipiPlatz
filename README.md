@@ -12,7 +12,8 @@ All data is free: OpenStreetMap through Overpass, OSRM for routing, Nominatim fo
 - **Entlang der Route**: enter start and destination, get stops along the way with the distance ahead
   and the detour to each one. Radius and "how far ahead" are adjustable.
 - **Google-Maps-Link laden**: paste the share link of a route planned in Google Maps (short
-  `maps.app.goo.gl` or long `/maps/dir/` links). Start, destination and the stops in between are read
+  `maps.app.goo.gl`, long `/maps/dir/` links, or the `?saddr=…&daddr=…` form the phone's "Share"
+  produces). Start, destination and the stops in between are read
   from it and the route is searched through them. The road line is calculated again with OSRM, so it
   can differ slightly from Google's, especially for alternative routes.
 - **Route options:** when OSRM finds alternatives, "Suchen" first lists them with their main roads

@@ -38,6 +38,22 @@ class Parse(unittest.TestCase):
         self.assertEqual((s[2]["lat"], s[2]["lon"]), (49.9, 9.1))
         self.assertEqual((s[3]["lat"], s[3]["lon"]), (50.1, 8.6))
 
+    def test_saddr_daddr_form(self):
+        # a route shared from the phone: start is the current position, destination an address
+        u = ("https://www.google.com/maps?geocode=AAAAAAAAAAAAAA%3D%3D;BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB%3D%3D"
+             "&daddr=Musterstrasse+1,+Musterstadt&saddr=50.9375123,6.9603456&dirflg=d"
+             "&ftid=0x0:0x0&skid=00000000&g_st=ic")
+        s = app.gmapsStops(u)
+        self.assertEqual([x["name"] for x in s], ["50.9375123,6.9603456", "Musterstrasse 1, Musterstadt"])
+        self.assertEqual((s[0]["lat"], s[0]["lon"]), (50.9375123, 6.9603456))
+        self.assertIsNone(s[1]["lat"])
+
+    def test_daddr_chain(self):
+        u = "https://www.google.com/maps?dirflg=d&saddr=Fulda&daddr=Gelnhausen+to+Hanau+to+50.1,8.6"
+        s = app.gmapsStops(u)
+        self.assertEqual([x["name"] for x in s], ["Fulda", "Gelnhausen", "Hanau", "50.1,8.6"])
+        self.assertEqual((s[3]["lat"], s[3]["lon"]), (50.1, 8.6))
+
     def test_not_a_route_link(self):
         for u in ("https://www.google.com/maps/place/Berlin", DIR + "Berlin/@52,13,9z"):
             with self.assertRaises(ValueError):
@@ -54,6 +70,22 @@ class Resolve(unittest.TestCase):
         chain = {"https://maps.app.goo.gl/abc": Resp(302, cons)}
         with mock.patch.object(app.requests, "get", lambda u, **kw: chain[u]):
             self.assertEqual(app.gmapsResolve("https://maps.app.goo.gl/abc"), "https://www.google.com/maps/dir/A/B")
+
+    def test_directions_link_needs_no_request(self):
+        u = "https://www.google.com/maps?saddr=51.5,6.9&daddr=Musterstrasse+1,+Musterstadt&dirflg=d"
+        with mock.patch.object(app.requests, "get", side_effect=AssertionError("must not fetch")):
+            self.assertEqual(app.gmapsResolve(u), u)
+
+    def test_consent_bounce_back_does_not_loop(self):
+        u = "https://www.google.com/maps?q=Musterstadt"  # no route in the URL: would be fetched
+        cons = "https://consent.google.com/ml?continue=" + u.replace(":", "%3A").replace("/", "%2F")
+        seen = []
+        def get(url, **kw):
+            seen.append(url)
+            return Resp(302, cons) if url == u else Resp(302, u)
+        with mock.patch.object(app.requests, "get", get):
+            self.assertEqual(app.gmapsResolve(u), u)
+        self.assertEqual(len(seen), 1)
 
     def test_refuses_foreign_hosts(self):
         with mock.patch.object(app.requests, "get", side_effect=AssertionError("must not fetch")):
