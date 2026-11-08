@@ -113,5 +113,22 @@ class Endpoint(unittest.TestCase):
         self.assertEqual(r.status_code, 400)
         self.assertIn("Google", r.get_json()["error"])
 
+    def test_google_unreachable_is_json(self):
+        # the browser shows a JSON parse error when the body is an HTML error page
+        with mock.patch.object(app.requests, "get", side_effect=app.requests.Timeout("slow")):
+            r = app.app.test_client().post("/api/gmaps", json={"url": "https://maps.app.goo.gl/zytX1UureJJdHFER7?g_st=ic"})
+        self.assertEqual(r.status_code, 502)
+        self.assertIn("erreichbar", r.get_json()["error"])
+
+    def test_geocoder_unreachable_is_json(self):
+        def get(u, **kw):
+            if "nominatim" in u:
+                raise app.requests.ConnectionError("down")
+            return Resp(200)
+        with mock.patch.object(app.requests, "get", get):
+            r = app.app.test_client().post("/api/gmaps", json={"url": "https://www.google.com/maps?saddr=51.5,6.9&daddr=Musterstadt"})
+        self.assertEqual(r.status_code, 502)
+        self.assertIn("erreichbar", r.get_json()["error"])
+
 if __name__ == "__main__":
     unittest.main()

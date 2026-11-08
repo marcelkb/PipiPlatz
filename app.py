@@ -424,6 +424,8 @@ def gmaps():
                 st["lat"], st["lon"] = float(r[0]["lat"]), float(r[0]["lon"])
     except ValueError as e:
         return jsonify(error=str(e)), 400
+    except requests.RequestException:
+        return jsonify(error="Google oder der Ortsdienst war nicht erreichbar – bitte nochmal versuchen"), 502
     return jsonify(points=stops)
 
 def resample(coords, step=1500):

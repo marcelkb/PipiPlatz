@@ -368,7 +368,8 @@ $('gmlGo').onclick=async()=>{
   const url=$('gml').value.trim();if(!url)return setStatus('Erst einen Google-Maps-Link einfügen',true);
   $('gmlGo').disabled=true;setStatus('Link wird gelesen…');
   try{const res=await fetch('/api/gmaps',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
-   const r=await res.json();if(r.error)throw r.error;
+   const r=await res.json().catch(()=>({error:`Server antwortet nicht wie erwartet (HTTP ${res.status}) – bitte nochmal versuchen`}));
+   if(r.error)throw r.error;
    const p=r.points;clearAlts();startPt=p[0];dest=p[p.length-1];via=p.slice(1,-1);
    $('start').value=startPt.name;$('dest').value=dest.name;$('sugg').innerHTML='';showVia();
    setStatus(`Route geladen (${p.length} Punkte). Mit „Suchen“ starten.`);
