@@ -61,6 +61,9 @@ EVID_RADIUS = {"super": 80, "moebel": 150, "bau": 150}
 WORKERS = 5  # public Overpass servers handle only a few requests per client at once
 ALONG_CUT = 35  # s a route search waits before answering with what is ready; the rest finishes in the background
 OPPOSITE_M = 150  # m: a motorway stop this close but on the left is on the other carriageway
+OPPOSITE_DETOUR = 4000  # m extra when OSRM has to drive past a stop and turn around: other carriageway
+OPPOSITE_CHECK = 24  # stops per search that are verified with OSRM (beyond that the side test decides)
+MWY_FACILITY = {"raststaette", "rastplatz", "wc"}  # only these are unusable from the other carriageway
 
 def allQueries(a, limit, merge=False):
     """[(is_evidence, query)] for one search area `a` (an Overpass area filter like '(around:...)').
@@ -477,6 +480,24 @@ def nearestSeg(segs, pt, lo=0, hi=None):
             best = (d, st + t * L, dx * (py - ay) - dy * (px - ax) > 0, mway)
     return best
 
+def accessDetour(coords, pt, back=1500):
+    """Extra metres OSRM needs to drive through `pt` compared with driving straight on.
+    A stop on your own carriageway costs a few hundred, one across the median several kilometres."""
+    i = min(range(len(coords)), key=lambda k: hav(coords[k], pt))
+    ia, ib, acc = i, i, 0.0
+    while ia > 0 and acc < back:
+        acc += hav(coords[ia], coords[ia-1]); ia -= 1
+    acc = 0.0
+    while ib < len(coords) - 1 and acc < back:
+        acc += hav(coords[ib], coords[ib+1]); ib += 1
+    if ib - ia < 2:
+        return None
+    direct = sum(hav(coords[k], coords[k+1]) for k in range(ia, ib))
+    rs = osrmRoutes([coords[ia], pt, coords[ib]])
+    if not rs:
+        return None
+    return rs[0]["distance"] - direct
+
 def mainRoads(route, n=3):
     """The roads (A 3, B 42 ...) a route spends most of its distance on, longest first."""
     dist = {}
@@ -541,12 +562,36 @@ def along():
             d, along, left, mway = nearestSeg(segs, (p["lat"], p["lon"]), lo, hi)
             if d > 1e17:  # nothing in that window (step and overview distances drift): use the whole line
                 d, along, left, mway = nearestSeg(segs, (p["lat"], p["lon"]))
-            p["off"], p["along"] = round(d), round(along)
+            p["off"], p["along"], p["_mway"] = round(d), round(along), mway
             if left and mway and d <= OPPOSITE_M:
                 p["opp"] = True  # across the median: only the other carriageway gets there
         else:
             p["off"] = round(hav(spts[best], (p["lat"], p["lon"])))
             p["along"] = round(scum[best])
+    # The side test cannot see a stop that lies across an interchange: there the road line curves
+    # and the cross product says the wrong thing. OSRM knows: driving through such a stop means
+    # leaving at the next exit and coming back. Rest areas come first: they are the mirrored pairs,
+    # while the WC nodes are mostly town toilets and would push them out of the list.
+    cand = sorted([p for p in pois if p["kind"] in MWY_FACILITY and p["off"] <= 1200 and p.get("_mway")],
+                  key=lambda p: (p["kind"] == "wc", p["off"]))[:OPPOSITE_CHECK]
+    if cand:
+        from concurrent.futures import ThreadPoolExecutor, wait
+        ex = ThreadPoolExecutor(WORKERS)
+        fut = {ex.submit(accessDetour, coords, (p["lat"], p["lon"])): p for p in cand}
+        wait(fut, timeout=10)
+        for f, p in fut.items():
+            if not f.done():
+                continue
+            d = f.result()
+            if d is None:
+                continue
+            if d > OPPOSITE_DETOUR:
+                p["opp"] = True
+            else:
+                p.pop("opp", None)  # on the way after all: a detour over the exit, not the wrong lane
+        ex.shutdown(wait=False)
+    for p in pois:
+        p.pop("_mway", None)
     pois.sort(key=lambda p: p["along"])
     return jsonify(route=coords[::max(1, len(coords)//1500)], total=round(total),
                    duration=round(route["duration"]), pois=pois, partial=failed, pending=pending,
