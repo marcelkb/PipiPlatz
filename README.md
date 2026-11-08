@@ -73,7 +73,7 @@ store, which fixes `CERTIFICATE_VERIFY_FAILED` errors behind antivirus that insp
 - Name filters (`name~`) are slow on the public servers, so furniture and DIY chains are matched in Python.
 - A cold search takes a few seconds when the servers are healthy (1.9 s measured for Frankfurt on
   2026-11-08) and much longer when they are overloaded.
-- **Route searches do not wait for the whole route.** `/api/along` answers after at most 30 s
+- **Route searches do not wait for the whole route.** `/api/along` answers after at most 35 s
   (`ALONG_CUT`) with the stops it has by then (`pending` = queries still running); the rest keeps
   running on the server and its answers go into the cache. The app shows the first stops at once, says
   so in a notice, and picks the rest up in a few polls, so the list fills in while you drive. A query

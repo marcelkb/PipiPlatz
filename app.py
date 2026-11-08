@@ -59,7 +59,7 @@ EVIDENCE = [
 EVID_RADIUS = {"super": 80, "moebel": 150, "bau": 150}
 
 WORKERS = 5  # public Overpass servers handle only a few requests per client at once
-ALONG_CUT = 30  # s a route search waits before answering with what is ready; the rest finishes in the background
+ALONG_CUT = 35  # s a route search waits before answering with what is ready; the rest finishes in the background
 
 def allQueries(a, limit, merge=False):
     """[(is_evidence, query)] for one search area `a` (an Overpass area filter like '(around:...)').
