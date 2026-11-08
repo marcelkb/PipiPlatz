@@ -306,12 +306,24 @@ function setMe(pos,first){
   // search on a fresh fix only when there is no position yet or it really moved (no double search on a cached fix)
   if(first&&(!old||Math.abs(old[0]-me[0])>0.002||Math.abs(old[1]-me[1])>0.002)){map.setView(me,13);nearby();}
 }
+const isIos=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isStandalone=()=>!!navigator.standalone||matchMedia('(display-mode: standalone)').matches;
+function deniedHint(){
+  if(!isIos)return 'Standort-Zugriff verweigert. In den Browser-Einstellungen für diese Seite erlauben (HTTPS nötig).';
+  return 'Standort verweigert – iOS fragt nicht noch einmal, wenn einmal „Nicht erlauben“ gewählt wurde.\n'
+    +(isStandalone()
+      ?'Einstellungen ▸ Datenschutz & Sicherheit ▸ Ortungsdienste ▸ PipiPlatz ▸ Beim Verwenden der App'
+      :'Einstellungen ▸ Safari ▸ Standort ▸ Fragen / Beim Verwenden der App')
+    +'\nRoutensuche geht auch mit getipptem Start.';
+}
 function locate(){
   if(!navigator.geolocation){setStatus('Keine Geolocation (HTTPS nötig!)',true);return}
+  // Safari/iOS asks only on a secure origin; over http:// it denies at once without any dialog
+  if(!window.isSecureContext){setStatus('Standort braucht HTTPS: diese Seite läuft über http://, iOS fragt dann nicht, sondern verweigert sofort.\nÜber https öffnen (z. B. cloudflared-Tunnel) und von dort installieren.',true);return}
   const g=navigator.geolocation;
   const ok=p=>{setMe(p,true);if(watchId==null)watchId=g.watchPosition(q=>setMe(q,false),()=>{},{enableHighAccuracy:true,maximumAge:10000})};
   const fail=e=>{if(me){setStatus('Standort nicht aktualisiert – Ergebnisse für den letzten Standort');return}
-    setStatus(e.code===1?'Standort-Zugriff verweigert. In den Browser-Einstellungen für diese Seite erlauben (HTTPS nötig).'
+    setStatus(e.code===1?deniedHint()
     :e.code===3?'Kein Standort gefunden (Zeitüberschreitung). Kein GPS-Empfang? Nochmal auf „In der Nähe“ tippen.'
     :'Standort nicht verfügbar: '+e.message,true)};
   // fast coarse fix first (wifi/cell, may be a bit old); GPS only if that fails, with a longer limit
