@@ -269,6 +269,7 @@ $('list').onkeydown=e=>{if(e.key!=='Enter'||e.target.closest('a'))return;const e
 async function nearby(){
   setStatus('Suche in der Nähe…');skeleton();busy(true,'nearby');
   try{const r=await (await fetch(`/api/nearby?lat=${me[0]}&lon=${me[1]}`)).json();
+    if(r.error)throw r.error;
     pois=r.pois;routeInfo=null;selId=null;if(routeLine){map.removeLayer(routeLine);routeLine=null}
     setStatus(`${pois.length} Orte im Umkreis von ${r.radius/1000} km${r.partial?' (teilweise, Server überlastet)':''}`);render();busyRec();
   }catch(e){setStatus('Fehler: '+e,true);$('list').innerHTML=''}
