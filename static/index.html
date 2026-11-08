@@ -212,7 +212,7 @@ function render(){
     const meta=[`${ico(icn)}${kn}`];
     if(p.along!=null)meta.push(esc(fmt(p.off))+' abseits');
     if(p.hours)meta.push(esc(p.hours));
-    if(p.fee)meta.push('Gebühr '+esc(p.fee));
+    if(p.fee)meta.push('Gebühr '+esc({yes:'Ja',no:'Nein'}[String(p.fee).toLowerCase()]||p.fee));
     if(p.hint)meta.push(esc(p.hint));
     const wc=p.wc===true?`<span class="wc ok">${ico('check')}WC vorhanden</span>`:p.wc==='likely'?'<span class="wc maybe">WC wahrscheinlich</span>':'<span class="wc maybe">WC unklar</span>';
     return `<div class="poi${p.id===selId?' sel':''}" data-id="${esc(p.id)}" tabindex="0"><div class="d"><b>${v}</b><span>${u}${p.along!=null?' voraus':''}</span></div><div class="sp"><i></i></div><div class="t"><div class="n">${esc(p.name)}</div><div class="m">${meta.join(' · ')}</div>${wc}</div><a class="go" target="_blank" rel="noopener" aria-label="Navigation zu ${esc(p.name)}" href="${gmNav(p)}">${ico('go')}Los</a></div>`}).join('')
