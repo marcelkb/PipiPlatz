@@ -346,35 +346,41 @@ def nearby():
 
 def geoList(q, limit):
     # Nominatim answers a datacentre IP with its block page instead of JSON (a Render deploy gets
-    # nothing but 502s), so Photon - a different host, different operator - is the fallback.
+    # nothing but 502s), and it has no fuzzy match for a partial name like "muen" either - Photon
+    # (a different host, different operator) covers both, so it is the fallback for a block page
+    # and for an empty answer alike.
     r = requests.get(NOMINATIM, params={"q": q, "format": "json",
                      "countrycodes": "de,at,nl,be,lu,fr,ch,cz,pl,dk", "limit": limit},
                      headers=UA, timeout=20)
+    status = r.status_code
     try:
-        return [{"name": x["display_name"], "lat": float(x["lat"]), "lon": float(x["lon"])} for x in r.json()]
+        hits = [{"name": x["display_name"], "lat": float(x["lat"]), "lon": float(x["lon"])} for x in r.json()]
+        if hits:
+            return hits
     except (ValueError, KeyError, TypeError):
-        p = requests.get(PHOTON, params={"q": q, "lang": "de", "limit": limit, "bbox": EU_BBOX},
-                         headers=UA, timeout=20)
-        try:
-            feats = p.json()["features"]
-        except (ValueError, KeyError, TypeError):
-            raise ValueError(f"Ortssuche nicht erreichbar (Nominatim HTTP {r.status_code}, "
-                             f"Photon HTTP {p.status_code})")
-        out = []
-        for f in feats:
-            pr = f.get("properties", {})
-            street = " ".join(s for s in (pr.get("street"), pr.get("housenumber")) if s)
-            parts = [pr.get("name"), street, pr.get("city"), pr.get("state"), pr.get("country")]
-            name, seen = [], set()
-            for part in parts:  # drop gaps and repeats; Photon often repeats name in city
-                if part and part not in seen:
-                    name.append(part)
-                    seen.add(part)
-            if not name:
-                continue
-            c = f["geometry"]["coordinates"]
-            out.append({"name": ", ".join(name), "lat": float(c[1]), "lon": float(c[0])})
-        return out[:limit]
+        pass  # not JSON: a block page
+    p = requests.get(PHOTON, params={"q": q, "lang": "de", "limit": limit, "bbox": EU_BBOX},
+                     headers=UA, timeout=20)
+    try:
+        feats = p.json()["features"]
+    except (ValueError, KeyError, TypeError):
+        raise ValueError(f"Ortssuche nicht erreichbar (Nominatim HTTP {status}, "
+                         f"Photon HTTP {p.status_code})")
+    out = []
+    for f in feats:
+        pr = f.get("properties", {})
+        street = " ".join(s for s in (pr.get("street"), pr.get("housenumber")) if s)
+        parts = [pr.get("name"), street, pr.get("city"), pr.get("state"), pr.get("country")]
+        name, seen = [], set()
+        for part in parts:  # drop gaps and repeats; Photon often repeats name in city
+            if part and part not in seen:
+                name.append(part)
+                seen.add(part)
+        if not name:
+            continue
+        c = f["geometry"]["coordinates"]
+        out.append({"name": ", ".join(name), "lat": float(c[1]), "lon": float(c[0])})
+    return out[:limit]
 
 @app.get("/api/geocode")
 def geocode():

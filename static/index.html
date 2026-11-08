@@ -508,6 +508,7 @@ async function loadRoutes(org,key){ // true when there is a choice to show
   setStatus(`${alts.length} Routen gefunden. Route wählen, dann suchen.`);map.invalidateSize();map.fitBounds(altLayer.getLayers()[0].getBounds());
   return true}
 function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const q=inp.value;clearVia();clearAlts();if(inp.id==='start')startPt=null;else{dest=null;routeTogLabel()}if(q.length<3){$('sugg').innerHTML='';return}
+ inp.closest('label').after($('sugg')); // the list belongs under the field being typed, not under Ziel
  tm=setTimeout(async()=>{const r=await (await fetch('/api/geocode?q='+encodeURIComponent(q))).json();
   $('sugg').innerHTML=r.map((x,i)=>`<div data-i="${i}">${esc(x.name)}</div>`).join('');
   $('sugg').onclick=e=>{const x=r[e.target.dataset.i];if(!x)return;set(x);inp.value=x.name;$('sugg').innerHTML='';routeTogLabel()};},400)}}
