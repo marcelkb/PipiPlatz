@@ -54,7 +54,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .seg button:not([aria-pressed=true]):hover{background:rgba(255,255,255,.1)}
 
 /* route form */
-#route{display:none;background:var(--panel);border-bottom:1px solid var(--line);padding:12px;flex:none;max-height:52dvh;overflow:auto}
+#route{display:none;background:var(--panel);border-bottom:1px solid var(--line);padding:12px;flex:none;max-height:52dvh;overflow:auto;position:relative}
 #route.show{display:block}
 /* grip: tap or swipe up/down to fold the form away and give the map the space */
 #routeTog{display:flex;align-items:center;gap:8px;width:100%;min-height:34px;padding:0 0 8px;border:0;background:none;color:var(--ink2);font:inherit;font-weight:700;text-align:left;cursor:pointer;touch-action:pan-y}
@@ -89,7 +89,9 @@ button{cursor:pointer;border:0;background:none;padding:0}
 #viaInfo:empty{display:none}
 #viaInfo{margin:-4px 0 10px;font-size:14px;color:var(--ink2)}
 #sugg:empty{display:none}
-#sugg{margin:-4px 0 10px;border:1.5px solid var(--line);border-radius:8px;overflow:hidden}
+/* a floating dropdown under the field being typed: overlaying what follows (selects, "Suchen")
+   instead of pushing the form down, so it never ends up below the pinned button */
+#sugg{position:absolute;left:12px;right:12px;z-index:30;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel);box-shadow:0 8px 20px rgba(0,0,0,.25);max-height:52dvh;overflow-y:auto}
 #sugg div{padding:13px 12px;min-height:48px;border-bottom:1px solid var(--line);cursor:pointer}
 #sugg div:last-child{border-bottom:0}
 #sugg div:hover{background:var(--ground)}
@@ -508,9 +510,11 @@ async function loadRoutes(org,key){ // true when there is a choice to show
   setStatus(`${alts.length} Routen gefunden. Route wählen, dann suchen.`);map.invalidateSize();map.fitBounds(altLayer.getLayers()[0].getBounds());
   return true}
 function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const q=inp.value;clearVia();clearAlts();if(inp.id==='start')startPt=null;else{dest=null;routeTogLabel()}if(q.length<3){$('sugg').innerHTML='';return}
- inp.closest('label').after($('sugg')); // the list belongs under the field being typed, not under Ziel
+ const fld=inp.closest('label'), rt=$('route'); // the dropdown floats under the field being typed
+ $('sugg').style.top=Math.round(fld.getBoundingClientRect().bottom-rt.getBoundingClientRect().top+rt.scrollTop-4)+'px';
  tm=setTimeout(async()=>{const r=await (await fetch('/api/geocode?q='+encodeURIComponent(q))).json();
   $('sugg').innerHTML=r.map((x,i)=>`<div data-i="${i}">${esc(x.name)}</div>`).join('');
+  if(r.length)rt.scrollTop=Math.max(rt.scrollTop,fld.offsetTop-12); // room for the dropdown below the field
   $('sugg').onclick=e=>{const x=r[e.target.dataset.i];if(!x)return;set(x);inp.value=x.name;$('sugg').innerHTML='';routeTogLabel()};},400)}}
 suggest($('start'),x=>startPt=x);suggest($('dest'),x=>dest=x);
 
