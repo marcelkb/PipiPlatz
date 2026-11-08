@@ -147,6 +147,8 @@ button{cursor:pointer;border:0;background:none;padding:0}
 #busy .bar{width:200px;height:6px;border-radius:3px;background:var(--skel);overflow:hidden}
 #busy .bar b{display:block;height:100%;width:0;background:var(--chip-on);transition:width .4s linear}
 #busy small{font-weight:500;font-size:.85em;font-variant-numeric:tabular-nums}
+#note{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));z-index:2100;display:none;max-width:min(92vw,520px);padding:12px 16px;border-radius:10px;background:var(--yellow);color:var(--yellow-ink);font-weight:700;line-height:1.3;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+#note.on{display:block}
 @media (prefers-reduced-motion:reduce){.skel i{animation:none}#busy i{animation-duration:2.4s}}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -199,6 +201,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
  <section id="sheet">
   <div id="busy" role="alert" aria-live="polite"><div><i></i><span>Suche läuft…</span><div class="bar"><b id="busyBar"></b></div><small id="busyEta"></small></div></div>
   <div id="status" role="status">Standort wird ermittelt…</div>
+  <div id="note" role="status" aria-live="polite"></div>
   <div id="list"></div>
  </section>
 </div>
@@ -287,6 +290,7 @@ $('list').onclick=e=>{const el=e.target.closest('.poi');if(!el||e.target.closest
 $('list').onkeydown=e=>{if(e.key!=='Enter'||e.target.closest('a'))return;const el=e.target.closest('.poi');if(el)pick(el)};
 
 async function nearby(){
+  alongSeq++;clearTimeout(pollT);note('');
   setStatus('Suche in der Nähe…');skeleton();busy(true,'nearby');
   try{const r=await (await fetch(`/api/nearby?lat=${me[0]}&lon=${me[1]}`)).json();
     if(r.error)throw r.error;
@@ -365,6 +369,34 @@ function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const q=inp.v
   $('sugg').onclick=e=>{const x=r[e.target.dataset.i];if(!x)return;set(x);inp.value=x.name;$('sugg').innerHTML=''};},400)}}
 suggest($('start'),x=>startPt=x);suggest($('dest'),x=>dest=x);
 
+let alongSeq=0,pollT=null,noteT=null;
+function note(t,ms){$('note').textContent=t||'';$('note').classList.toggle('on',!!t);clearTimeout(noteT);
+  if(t&&ms)noteT=setTimeout(()=>$('note').classList.remove('on'),ms)}
+async function alongSearch(body,seq,first){
+  const res=await fetch('/api/along',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const r=await res.json();if(r.error)throw r.error;
+  if(seq!==alongSeq)return null; // a newer search has started
+  pois=r.pois;routeInfo=r;r.vias=via.map((v,i)=>({lat:v.lat,lon:v.lon,a:r.via_along[i]}));
+  if(first){selId=null;routePanel(false)}
+  if(routeLine)map.removeLayer(routeLine);
+  routeLine=L.featureGroup([L.polyline(r.route,{color:'#003b66',weight:10,opacity:.9}),L.polyline(r.route,{color:'#ffd500',weight:5})]).addTo(map);
+  if(first)map.fitBounds(routeLine.getBounds());
+  const n=pois.length?`${pois.length} Stopps entlang der Strecke`:r.pending?'erste Stopps werden noch gesucht':'keine Stopps gefunden';
+  setStatus(`Route ${fmt(r.total)}, ${Math.round(r.duration/60)} min · ${n}${r.pending?' (Rest lädt)':''}`);
+  render();
+  if(first)busyRec();
+  return r;
+}
+const POLL_WAIT=[4000,10000,20000,35000,60000,90000]; // the rest is fetched from the cache while it fills
+async function alongPoll(body,seq,i){
+  if(i>=POLL_WAIT.length)return note('Restliche Stopps nicht erhalten (Server überlastet)',8000);
+  pollT=setTimeout(async()=>{
+    let r;try{r=await alongSearch(body,seq,false)}catch(e){if(seq===alongSeq)setStatus('Fehler: '+e,true);return}
+    if(seq!==alongSeq||!r)return;
+    if(r.pending)alongPoll(body,seq,i+1);
+    else note(r.partial?'Stopps geladen, einige Bereiche fehlen (Server überlastet)':`Alle ${pois.length} Stopps geladen`,6000);
+  },POLL_WAIT[i]);
+}
 $('go').onclick=async()=>{
   const org=startPt?[startPt.lat,startPt.lon]:me;
   if($('start').value&&!startPt)return setStatus('Start aus der Vorschlagsliste wählen',true);
@@ -374,13 +406,11 @@ $('go').onclick=async()=>{
   $('go').disabled=true;
   try{
    if(!alts||altKey!==key){if(await loadRoutes(org,key))return}
-   setStatus('Suche entlang der Strecke… (kann 10-30 s dauern)');skeleton();busy(true,'route');altLayer.clearLayers();
-   const res=await fetch('/api/along',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:org,to:[dest.lat,dest.lon],via:via.map(v=>[v.lat,v.lon]),alt:altSel,radius:+$('rad').value,ahead_km:+$('ahead').value})});
-   const r=await res.json();if(r.error)throw r.error;
-   pois=r.pois;routeInfo=r;r.vias=via.map((v,i)=>({lat:v.lat,lon:v.lon,a:r.via_along[i]}));selId=null;if(routeLine)map.removeLayer(routeLine);
-   routeLine=L.featureGroup([L.polyline(r.route,{color:'#003b66',weight:10,opacity:.9}),L.polyline(r.route,{color:'#ffd500',weight:5})]).addTo(map);
-   routePanel(false);map.fitBounds(routeLine.getBounds());
-   setStatus(`Route ${fmt(r.total)}, ${Math.round(r.duration/60)} min · ${pois.length} Stopps entlang der Strecke`);render();busyRec();
+   const seq=++alongSeq;clearTimeout(pollT);note('');
+   setStatus('Suche entlang der Strecke…');skeleton();busy(true,'route');altLayer.clearLayers();
+   const body={from:org,to:[dest.lat,dest.lon],via:via.map(v=>[v.lat,v.lon]),alt:altSel,radius:+$('rad').value,ahead_km:+$('ahead').value};
+   const r=await alongSearch(body,seq,true);
+   if(r&&r.pending){note('Weitere Stopps werden im Hintergrund geladen…');alongPoll(body,seq,0)}
   }catch(e){setStatus('Fehler: '+e,true);$('list').innerHTML=''}
   finally{$('go').disabled=false;busy(false)}
 };

@@ -59,6 +59,7 @@ EVIDENCE = [
 EVID_RADIUS = {"super": 80, "moebel": 150, "bau": 150}
 
 WORKERS = 5  # public Overpass servers handle only a few requests per client at once
+ALONG_CUT = 30  # s a route search waits before answering with what is ready; the rest finishes in the background
 
 def allQueries(a, limit, merge=False):
     """[(is_evidence, query)] for one search area `a` (an Overpass area filter like '(around:...)').
@@ -73,21 +74,37 @@ def allQueries(a, limit, merge=False):
         qs.append((True, f"[out:json][timeout:25];{src.replace('{a}', a)}->.s;({sets});out center tags {limit};"))
     return qs
 
-def fetchAll(queries, workers):
-    """Run queries in parallel -> (poi elements, evidence elements, number of failed queries)."""
-    from concurrent.futures import ThreadPoolExecutor
-    def one(q):
+def fetchAll(queries, workers, deadline=None):
+    """Run queries in parallel -> (poi elements, evidence elements, failed, pending).
+    With `deadline`, gives up waiting after that many seconds and returns what is ready; the rest
+    keeps running in the background and its answers land in the cache, so the next call gets them
+    without sending a second request."""
+    from concurrent.futures import ThreadPoolExecutor, wait
+    def one(k, q):
         try:
             return overpass(q[1])
         except RuntimeError:
             return None
-    with ThreadPoolExecutor(workers) as ex:
-        res = list(ex.map(one, queries))
-    if all(r is None for r in res):
+        finally:
+            INFLIGHT.discard(k)
+    keys = [overpassKey(q[1]) for q in queries]
+    ex = ThreadPoolExecutor(workers)
+    fs = {}
+    for k, q in zip(keys, queries):
+        if k not in fs and k not in INFLIGHT:  # never two copies of one query at the same time
+            INFLIGHT.add(k)
+            fs[k] = ex.submit(one, k, q)
+    wait(fs.values(), timeout=deadline)
+    ex.shutdown(wait=False)  # the rest keeps running and fills the cache
+    got = {k: f.result() for k, f in fs.items() if f.done()}
+    res = [got.get(k, BUSY) for k in keys]
+    pending = sum(r is BUSY for r in res)
+    if not pending and all(r is None for r in res):
         raise RuntimeError("Alle Overpass-Server nicht erreichbar")
-    pois = [e for (ev, _), r in zip(queries, res) if r and not ev for e in r]
-    evid = [e for (ev, _), r in zip(queries, res) if r and ev for e in r]
-    return pois, evid, sum(r is None for r in res)
+    ok = lambda r: r is not None and r is not BUSY
+    pois = [e for (ev, _q), r in zip(queries, res) if ok(r) and not ev for e in r]
+    evid = [e for (ev, _q), r in zip(queries, res) if ok(r) and ev for e in r]
+    return pois, evid, sum(r is None for r in res), pending
 
 def run_groups(area, limit=300):
     return fetchAll(allQueries(f"({area})", limit), WORKERS)
@@ -181,18 +198,32 @@ def _db():
     c.execute("create table if not exists c(k text primary key, t real, v text)")
     return c
 
+INFLIGHT = set()  # cache keys of queries that are running right now (foreground or background)
+BUSY = object()  # fetchAll marker: this query has not answered yet
+DEAD = {}  # cache key -> time of the last failed attempt, so a poll does not start the same query again
+DEAD_FOR = 120
+
+def overpassKey(query):
+    return hashlib.sha1(query.encode()).hexdigest()
+
 def overpass(query):
-    k = hashlib.sha1(query.encode()).hexdigest()
+    k = overpassKey(query)
     with _db() as c:
         row = c.execute("select t,v from c where k=?", (k,)).fetchone()
     if row and time.time() - row[0] < TTL:
         return json.loads(row[1])
+    if time.time() - DEAD.get(k, 0) < DEAD_FOR:
+        if row:
+            return json.loads(row[1])
+        raise RuntimeError("Overpass: vor Kurzem fehlgeschlagen")
     try:
         data = overpass_live(query)
     except RuntimeError:
+        DEAD[k] = time.time()
         if row:
             return json.loads(row[1])
         raise
+    DEAD.pop(k, None)
     with _db() as c:
         c.execute("insert or replace into c values(?,?,?)", (k, time.time(), json.dumps(data)))
     return data
@@ -295,7 +326,7 @@ def nearby():
     glat, glon = round(lat / SNAP) * SNAP, round(lon / SNAP) * SNAP
     pad = math.ceil(hav((lat, lon), (glat, glon)) / 100) * 100
     while radius <= 24000:  # widen until we have some results
-        els, evid, failed = run_groups(f"around:{radius + pad},{glat:.2f},{glon:.2f}")
+        els, evid, failed, _pending = run_groups(f"around:{radius + pad},{glat:.2f},{glon:.2f}")
         pois = dedupe([p for p in map(to_poi, els) if p])
         enrich(pois, evid + shopEvidence(pois))
         if len(pois) >= 8: break
@@ -450,18 +481,20 @@ def along():
         line = ",".join(f"{la:.5f},{lo:.5f}" for la, lo in chunk)
         jobs += allQueries(f"(around:{radius},{line})", 1500, merge=True)
     try:
-        els, evid, failed = fetchAll(jobs, WORKERS)
+        els, evid, failed, pending = fetchAll(jobs, WORKERS, deadline=ALONG_CUT)
     except RuntimeError:
         return jsonify(error="Overpass-Server nicht erreichbar, bitte später erneut"), 502
     pois = dedupe([p for p in map(to_poi, els) if p])
-    enrich(pois, evid + shopEvidence(pois))
+    # while the rest is still running, do not wait for this second query as well
+    enrich(pois, evid if pending else evid + shopEvidence(pois))
     for p in pois:
         best = min(range(len(spts)), key=lambda i: hav(spts[i], (p["lat"], p["lon"])))
         p["off"] = round(hav(spts[best], (p["lat"], p["lon"])))
         p["along"] = round(scum[best])
     pois.sort(key=lambda p: p["along"])
     return jsonify(route=coords[::max(1, len(coords)//1500)], total=round(total),
-                   duration=round(route["duration"]), pois=pois, partial=failed, via_along=via_along)
+                   duration=round(route["duration"]), pois=pois, partial=failed, pending=pending,
+                   via_along=via_along)
 
 if __name__ == "__main__":
     import os

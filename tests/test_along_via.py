@@ -17,7 +17,7 @@ class AlongVia(unittest.TestCase):
             seen["url"] = url
             return R()
         with mock.patch.object(app.requests, "get", get), \
-             mock.patch.object(app, "fetchAll", lambda q, w: ([], [], 0)):
+             mock.patch.object(app, "fetchAll", lambda q, w, deadline=None: ([], [], 0, 0)):
             r = app.app.test_client().post("/api/along", json=body)
         return r, seen["url"]
 
