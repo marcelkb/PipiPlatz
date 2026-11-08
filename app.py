@@ -66,7 +66,7 @@ WORKERS = 5  # public Overpass servers handle only a few requests per client at 
 ALONG_CUT = 35  # s a route search waits before answering with what is ready; the rest finishes in the background
 OPPOSITE_M = 150  # m: a motorway stop this close but on the left is on the other carriageway
 OPPOSITE_DETOUR = 4000  # m extra when OSRM has to drive past a stop and turn around: other carriageway
-OPPOSITE_CHECK = 24  # stops per search that are verified with OSRM (beyond that the side test decides)
+OPPOSITE_CHECK = 64  # stops per search that are verified with OSRM (beyond that the side test decides)
 MWY_FACILITY = {"raststaette", "rastplatz", "wc"}  # only these are unusable from the other carriageway
 
 def allQueries(a, limit, merge=False):
