@@ -96,6 +96,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 /* map */
 #views{flex:1;position:relative;min-height:90px}
 #map,#gm{position:absolute;inset:0}
+#map{touch-action:manipulation} /* keeps iOS from turning the double tap into a page zoom */
 #gm{display:none;border:0;width:100%;height:100%}
 @media (prefers-color-scheme:dark){.leaflet-tile-pane{filter:brightness(.72) contrast(1.1)}}
 .pin{width:36px;height:36px;border-radius:9px;background:var(--blue);color:#fff;border:2px solid #fff;display:grid;place-items:center;box-shadow:0 2px 5px rgba(0,0,0,.35)}
@@ -337,7 +338,25 @@ function locate(){
 function routePanel(show){$('route').classList.toggle('show',show);$('app').classList.toggle('routing',show);map.invalidateSize()}
 // double click / double tap on the map: full-height map, sheet hidden (again: back)
 function bigMap(on){$('app').classList.toggle('bigmap',on);map.invalidateSize()}
-map.on('dblclick',()=>bigMap(!$('app').classList.contains('bigmap')));
+let bigAt={touch:0,mouse:0};
+function toggleBig(src){
+  const n=Date.now(),other=src==='touch'?'mouse':'touch';
+  if(n-bigAt[other]<450)return; // the same gesture already counted on the other channel
+  bigAt[src]=n;bigMap(!$('app').classList.contains('bigmap'));
+}
+map.on('dblclick',()=>toggleBig('mouse'));
+// iOS Safari does not deliver dblclick for a double tap on the map, so the touches are counted here
+let tapT=0,tapX=0,tapY=0,tapMoved=false;
+const mapEl=$('map');
+mapEl.addEventListener('touchstart',e=>{
+  if(e.touches.length!==1){tapT=0;return} // pinch, not a tap
+  const t=e.touches[0],n=Date.now();
+  if(n-tapT<350&&Math.abs(t.clientX-tapX)<40&&Math.abs(t.clientY-tapY)<40){tapT=0;toggleBig('touch');return} // pair used up
+  tapT=n;tapX=t.clientX;tapY=t.clientY;
+},{passive:true});
+mapEl.addEventListener('touchmove',()=>{tapMoved=true},{passive:true});
+mapEl.addEventListener('touchend',()=>{if(tapMoved){tapT=0;tapMoved=false}},{passive:true}); // a drag is no tap
+
 $('loc').onclick=()=>{setMode('near');routePanel(false);if(me)nearby();locate()};
 $('rt').onclick=()=>{setMode('route');routePanel(!$('route').classList.contains('show'))};
 
