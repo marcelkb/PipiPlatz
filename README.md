@@ -23,6 +23,8 @@ All data is free: OpenStreetMap through Overpass, OSRM for routing, Nominatim fo
 - **"Los"** opens Google Maps navigation to the stop. An optional embedded Google Maps view works
   with your own Maps Embed API key (stored in the browser only).
 - Search overlay with a progress bar and a time estimate learned from your previous searches.
+- **Double click / double tap on the map** hides the list and shows the map over the full height; the
+  same gesture brings the list back. (That is why double click no longer zooms: pinch or the wheel do.)
 - Installable PWA, light and dark theme.
 
 ## How the WC state is decided

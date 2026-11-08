@@ -106,6 +106,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 /* strip-map list */
 #sheet{flex:0 0 46%;display:flex;flex-direction:column;min-height:0;background:var(--panel);border-top:1px solid var(--line)}
 #app.routing #sheet{flex-basis:32%}
+#app.bigmap #sheet{display:none}
 #status{flex:none;padding:10px 14px;font-size:16px;font-weight:600;color:var(--ink2);border-bottom:1px solid var(--line)}
 #status.err{color:var(--err)}
 #list{flex:1;overflow:auto;padding-bottom:env(safe-area-inset-bottom)}
@@ -199,11 +200,11 @@ button{cursor:pointer;border:0;background:none;padding:0}
  <div id="chips" role="group" aria-label="Orte filtern"></div>
  <div id="views"><div id="map"></div><iframe id="gm" title="Google Maps" allowfullscreen loading="lazy"></iframe></div>
  <section id="sheet">
-  <div id="busy" role="alert" aria-live="polite"><div><i></i><span>Suche läuft…</span><div class="bar"><b id="busyBar"></b></div><small id="busyEta"></small></div></div>
   <div id="status" role="status">Standort wird ermittelt…</div>
-  <div id="note" role="status" aria-live="polite"></div>
   <div id="list"></div>
  </section>
+ <div id="busy" role="alert" aria-live="polite"><div><i></i><span>Suche läuft…</span><div class="bar"><b id="busyBar"></b></div><small id="busyEta"></small></div></div>
+ <div id="note" role="status" aria-live="polite"></div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -212,14 +213,14 @@ const DEFAULT_ON=['rastplatz','wc','burger'];
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ico=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
-const map=L.map('map',{zoomControl:false}).setView([51.1,10.4],6);
+const map=L.map('map',{zoomControl:false,doubleClickZoom:false}).setView([51.1,10.4],6);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
 const layer=L.layerGroup().addTo(map); let routeLine=null, me=null, meMarker=null;
 let pois=[], dest=null, routeInfo=null, filt=new Set(DEFAULT_ON), watchId=null, selId=null;
 const markers={};
 
 function setStatus(t,err){const s=$('status');s.textContent=t;s.classList.toggle('err',!!err)}
-function setMode(m){$('loc').setAttribute('aria-pressed',m==='near');$('rt').setAttribute('aria-pressed',m==='route')}
+function setMode(m){$('loc').setAttribute('aria-pressed',m==='near');$('rt').setAttribute('aria-pressed',m==='route');bigMap(false)}
 
 // filter chips
 $('chips').innerHTML='<button class="chip all" id="allBtn"></button>'+Object.entries(KINDS).map(([k,[i,n]])=>`<button class="chip" aria-pressed="${filt.has(k)}" data-k="${k}">${ico(i)}${n}</button>`).join('');
@@ -334,6 +335,9 @@ function locate(){
   },{enableHighAccuracy:false,timeout:8000,maximumAge:120000});
 }
 function routePanel(show){$('route').classList.toggle('show',show);$('app').classList.toggle('routing',show);map.invalidateSize()}
+// double click / double tap on the map: full-height map, sheet hidden (again: back)
+function bigMap(on){$('app').classList.toggle('bigmap',on);map.invalidateSize()}
+map.on('dblclick',()=>bigMap(!$('app').classList.contains('bigmap')));
 $('loc').onclick=()=>{setMode('near');routePanel(false);if(me)nearby();locate()};
 $('rt').onclick=()=>{setMode('route');routePanel(!$('route').classList.contains('show'))};
 
@@ -416,6 +420,7 @@ $('go').onclick=async()=>{
   if(!org)return setStatus('Erst Standort ermitteln oder Start eingeben',true);
   if(!dest)return setStatus('Ziel aus der Vorschlagsliste wählen',true);
   const key=JSON.stringify([org,dest.lat,dest.lon,via.map(v=>[v.lat,v.lon])]);
+  bigMap(false); // the results live in the sheet
   $('go').disabled=true;
   try{
    if(!alts||altKey!==key){if(await loadRoutes(org,key))return}
