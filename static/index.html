@@ -225,7 +225,9 @@ const fmt=m=>m>=1000?de(m/1000)+' km':Math.round(m)+' m';
 const fmtP=m=>m>=1000?[de(m/1000),'km']:[String(Math.round(m)),'m'];
 const gmNav=p=>{ // navigate to POI; if a route is active, keep the final destination as a stop after it
   const base='https://www.google.com/maps/dir/?api=1&travelmode=driving';
-  if(dest&&routeInfo) return `${base}&origin=${me[0]},${me[1]}&destination=${dest.lat},${dest.lon}&waypoints=${p.lat},${p.lon}`;
+  if(dest&&routeInfo){ // stops from a loaded Google route and the POI, in driving order
+    const wp=[...(routeInfo.vias||[]),{lat:p.lat,lon:p.lon,a:p.along||0}].sort((x,y)=>x.a-y.a).map(x=>`${x.lat},${x.lon}`).join('%7C');
+    return `${base}&origin=${me[0]},${me[1]}&destination=${dest.lat},${dest.lon}&waypoints=${wp}`}
   return `${base}&destination=${p.lat},${p.lon}`;
 };
 const pinIcon=(p,sel)=>L.divIcon({html:`<div class="pin${sel?' sel':''}">${ico(KINDS[p.kind][0])}</div>`,className:'',iconSize:[36,36],iconAnchor:[18,18]});
@@ -336,7 +338,7 @@ $('go').onclick=async()=>{
   setStatus('Route + Suche entlang der Strecke… (kann 10-30 s dauern)');skeleton();busy(true,'route');$('go').disabled=true;
   try{const res=await fetch('/api/along',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:org,to:[dest.lat,dest.lon],via:via.map(v=>[v.lat,v.lon]),radius:+$('rad').value,ahead_km:+$('ahead').value})});
    const r=await res.json();if(r.error)throw r.error;
-   pois=r.pois;routeInfo=r;selId=null;if(routeLine)map.removeLayer(routeLine);
+   pois=r.pois;routeInfo=r;r.vias=via.map((v,i)=>({lat:v.lat,lon:v.lon,a:r.via_along[i]}));selId=null;if(routeLine)map.removeLayer(routeLine);
    routeLine=L.featureGroup([L.polyline(r.route,{color:'#003b66',weight:10,opacity:.9}),L.polyline(r.route,{color:'#ffd500',weight:5})]).addTo(map);
    routePanel(false);map.fitBounds(routeLine.getBounds());
    setStatus(`Route ${fmt(r.total)}, ${Math.round(r.duration/60)} min · ${pois.length} Stopps entlang der Strecke`);render();busyRec();
