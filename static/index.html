@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="de"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PipiPlatz">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<title>PipiPlatz</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0}
+#app{display:flex;flex-direction:column;height:100%;padding-top:env(safe-area-inset-top)}
+header{display:flex;gap:6px;padding:8px;align-items:center}
+header b{font-size:18px;margin-right:auto}
+button,input,select{font:inherit;border-radius:10px;border:0;padding:9px 12px}
+button{background:#2563eb;color:#fff}
+button.sec{background:#334155}
+button.on{background:#16a34a}
+#route{display:none;padding:0 8px 8px;gap:6px;flex-wrap:wrap}
+#route.show{display:flex}
+#route input{flex:1;min-width:140px;background:#1e293b;color:#fff}
+#sugg{position:absolute;z-index:1000;background:#1e293b;border-radius:10px;left:8px;right:8px;max-height:40%;overflow:auto;display:none}
+#sugg div{padding:10px;border-bottom:1px solid #334155}
+#chips{display:flex;gap:6px;padding:0 8px 8px;overflow-x:auto}
+.chip{white-space:nowrap;background:#334155;padding:6px 10px;border-radius:99px;font-size:14px}
+.chip.on{background:#2563eb}
+#views{flex:1;position:relative;min-height:0}
+#map,#gm{position:absolute;inset:0}
+#gm{display:none;border:0;width:100%;height:100%}
+#list{height:38%;overflow:auto;background:#0f172a;border-top:2px solid #334155}
+.poi{display:flex;gap:10px;padding:10px;border-bottom:1px solid #1e293b;align-items:center}
+.poi .ic{font-size:26px}
+.poi .t{flex:1;min-width:0}
+.poi .t small{color:#94a3b8;display:block}
+.poi a{background:#16a34a;color:#fff;text-decoration:none;padding:8px 10px;border-radius:10px;font-size:14px}
+.ok{color:#4ade80}.maybe{color:#fbbf24}
+#status{padding:6px 10px;font-size:13px;color:#94a3b8}
+</style></head><body>
+<div id="app">
+ <header>
+  <b>🚻 PipiPlatz</b>
+  <button id="loc">📍 Hier</button>
+  <button id="rt" class="sec">🛣️ Route</button>
+  <button id="gmtab" class="sec">Google</button>
+  <button id="cfg" class="sec">⚙️</button>
+ </header>
+ <div id="route">
+  <input id="start" placeholder="Start (leer = mein Standort)" autocomplete="off">
+  <input id="dest" placeholder="Ziel (Stadt/Adresse)" autocomplete="off">
+  <select id="rad" class="sec"><option value="1000">±1 km</option><option value="2000" selected>±2 km</option><option value="4000">±4 km</option><option value="8000">±8 km</option></select>
+  <select id="ahead" class="sec"><option value="50">50 km</option><option value="150" selected>150 km</option><option value="300">300 km</option></select>
+  <button id="go">Suchen</button>
+ </div>
+ <div id="sugg"></div>
+ <div id="chips"></div>
+ <div id="views"><div id="map"></div><iframe id="gm" allowfullscreen loading="lazy"></iframe></div>
+ <div id="status">Standort wird ermittelt…</div>
+ <div id="list"></div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const KINDS={raststaette:['🏪','Raststätte'],rastplatz:['🅿️','Rastplatz'],wc:['🚻','WC'],burger:['🍔','Burger'],super:['🛒','Supermarkt'],tank:['⛽','Tankstelle'],other:['🍽️','Restaurant']};
+const $=id=>document.getElementById(id);
+const map=L.map('map',{zoomControl:false}).setView([51.1,10.4],6);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+const layer=L.layerGroup().addTo(map); let routeLine=null, me=null, meMarker=null;
+let pois=[], dest=null, routeInfo=null, filt=new Set(Object.keys(KINDS)), watchId=null;
+
+// chips
+$('chips').innerHTML=Object.entries(KINDS).map(([k,[i,n]])=>`<span class="chip on" data-k="${k}">${i} ${n}</span>`).join('');
+$('chips').onclick=e=>{const k=e.target.dataset.k;if(!k)return;filt.has(k)?filt.delete(k):filt.add(k);e.target.classList.toggle('on');render();};
+
+const fmt=m=>m>=1000?(m/1000).toFixed(1)+' km':m+' m';
+const gmNav=p=>{ // navigate to POI; if a route is active, keep the final destination as a stop after it
+  const base='https://www.google.com/maps/dir/?api=1&travelmode=driving';
+  if(dest&&routeInfo) return `${base}&origin=${me[0]},${me[1]}&destination=${dest.lat},${dest.lon}&waypoints=${p.lat},${p.lon}`;
+  return `${base}&destination=${p.lat},${p.lon}`;
+};
+function render(){
+  layer.clearLayers();
+  const rows=pois.filter(p=>filt.has(p.kind));
+  $('list').innerHTML=rows.map(p=>{const [ic]=KINDS[p.kind];
+    const d=p.along!=null?`in ${fmt(p.along)} · ${fmt(p.off)} abseits`:fmt(p.dist);
+    const wc=p.wc===true?'<span class="ok">WC ✔</span>':'<span class="maybe">WC wahrscheinlich</span>';
+    return `<div class="poi" data-id="${p.id}"><span class="ic">${ic}</span><div class="t"><b>${p.name}</b><small>${d} · ${wc}${p.hours?' · '+p.hours:''}${p.fee?' · Gebühr '+p.fee:''}</small></div><a target="_blank" href="${gmNav(p)}">Los</a></div>`}).join('')||'<div class="poi">Nichts gefunden.</div>';
+  rows.forEach(p=>L.marker([p.lat,p.lon],{icon:L.divIcon({html:`<div style="font-size:24px">${KINDS[p.kind][0]}</div>`,className:'',iconSize:[28,28]})}).bindPopup(`<b>${p.name}</b><br><a target=_blank href="${gmNav(p)}">In Google Maps navigieren</a>`).addTo(layer));
+  updateGm();
+}
+$('list').onclick=e=>{const el=e.target.closest('.poi');if(!el||e.target.tagName==='A')return;const p=pois.find(x=>x.id===el.dataset.id);map.setView([p.lat,p.lon],16);};
+
+async function nearby(){
+  $('status').textContent='Suche in der Nähe…';
+  try{const r=await (await fetch(`/api/nearby?lat=${me[0]}&lon=${me[1]}`)).json();
+    pois=r.pois;routeInfo=null;if(routeLine){map.removeLayer(routeLine);routeLine=null}
+    $('status').textContent=`${pois.length} Orte im Umkreis von ${r.radius/1000} km${r.partial?' (teilweise, Server überlastet)':''}`;render();
+  }catch(e){$('status').textContent='Fehler: '+e}
+}
+function setMe(pos,first){
+  me=[pos.coords.latitude,pos.coords.longitude];
+  if(!meMarker)meMarker=L.circleMarker(me,{radius:8,color:'#fff',fillColor:'#2563eb',fillOpacity:1}).addTo(map);else meMarker.setLatLng(me);
+  if(first){map.setView(me,13);nearby();}
+}
+function locate(){
+  if(!navigator.geolocation){$('status').textContent='Keine Geolocation (HTTPS nötig!)';return}
+  navigator.geolocation.getCurrentPosition(p=>{setMe(p,true);
+    if(watchId==null)watchId=navigator.geolocation.watchPosition(q=>setMe(q,false),()=>{}, {enableHighAccuracy:true});},
+    e=>$('status').textContent='Standort fehlgeschlagen: '+e.message+' (HTTPS/Berechtigung?)',{enableHighAccuracy:true,timeout:15000});
+}
+$('loc').onclick=locate;
+$('rt').onclick=()=>{$('route').classList.toggle('show')};
+
+// destination autocomplete
+let startPt=null;
+function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const q=inp.value;if(inp.id==='start')startPt=null;if(q.length<3){$('sugg').style.display='none';return}
+ tm=setTimeout(async()=>{const r=await (await fetch('/api/geocode?q='+encodeURIComponent(q))).json();
+  $('sugg').innerHTML=r.map((x,i)=>`<div data-i="${i}">${x.name}</div>`).join('');$('sugg').style.display=r.length?'block':'none';
+  $('sugg').onclick=e=>{const x=r[e.target.dataset.i];if(!x)return;set(x);inp.value=x.name;$('sugg').style.display='none'};},400)}}
+suggest($('start'),x=>startPt=x);suggest($('dest'),x=>dest=x);
+
+$('go').onclick=async()=>{
+  const org=startPt?[startPt.lat,startPt.lon]:me;if($('start').value&&!startPt)return alert('Start aus der Liste wählen');if(!org)return alert('Erst Standort ermitteln oder Start eingeben');if(!dest)return alert('Ziel wählen');
+  $('status').textContent='Route + Suche entlang der Strecke… (kann 10-30 s dauern)';
+  try{const res=await fetch('/api/along',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:org,to:[dest.lat,dest.lon],radius:+$('rad').value,ahead_km:+$('ahead').value})});
+   const r=await res.json();if(r.error)throw r.error;
+   pois=r.pois;routeInfo=r;if(routeLine)map.removeLayer(routeLine);
+   routeLine=L.polyline(r.route,{color:'#2563eb',weight:5}).addTo(map);map.fitBounds(routeLine.getBounds());
+   $('status').textContent=`Route ${fmt(r.total)}, ${Math.round(r.duration/60)} min · ${pois.length} Stopps entlang der Strecke`;render();
+  }catch(e){$('status').textContent='Fehler: '+e}
+};
+
+// Google Maps embed (needs free Maps Embed API key, optional)
+function updateGm(){
+  const key=localStorage.gmkey;if(!key||!me||!dest)return;
+  const first=pois.filter(p=>filt.has(p.kind)&&p.along!=null)[0];
+  let u=`https://www.google.com/maps/embed/v1/directions?key=${key}&origin=${me[0]},${me[1]}&destination=${dest.lat},${dest.lon}`;
+  if(first)u+=`&waypoints=${first.lat},${first.lon}`;
+  $('gm').src=u;
+}
+let gmOn=false;
+$('gmtab').onclick=()=>{
+  if(!localStorage.gmkey){const k=prompt('Google Maps Embed API Key (kostenlos, optional). Ohne Key bleibt die OSM-Karte.');if(k)localStorage.gmkey=k.trim();else return}
+  gmOn=!gmOn;$('gm').style.display=gmOn?'block':'none';$('gmtab').classList.toggle('on',gmOn);updateGm();
+};
+$('cfg').onclick=()=>{const k=prompt('Google Embed API Key (leer = löschen)',localStorage.gmkey||'');if(k===null)return;k?localStorage.gmkey=k.trim():localStorage.removeItem('gmkey')};
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');
+locate();
+</script></body></html>
