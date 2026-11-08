@@ -213,7 +213,7 @@ function render(){
     if(p.along!=null)meta.push(esc(fmt(p.off))+' abseits');
     if(p.hours)meta.push(esc(p.hours));
     if(p.fee)meta.push('Gebühr '+esc(p.fee));
-    const wc=p.wc===true?`<span class="wc ok">${ico('check')}WC bestätigt</span>`:'<span class="wc maybe">WC wahrscheinlich</span>';
+    const wc=p.wc===true?`<span class="wc ok">${ico('check')}WC vorhanden</span>`:p.wc==='likely'?'<span class="wc maybe">WC wahrscheinlich</span>':'<span class="wc maybe">WC unklar</span>';
     return `<div class="poi${p.id===selId?' sel':''}" data-id="${esc(p.id)}" tabindex="0"><div class="d"><b>${v}</b><span>${u}${p.along!=null?' voraus':''}</span></div><div class="sp"><i></i></div><div class="t"><div class="n">${esc(p.name)}</div><div class="m">${meta.join(' · ')}</div>${wc}</div><a class="go" target="_blank" rel="noopener" aria-label="Navigation zu ${esc(p.name)}" href="${gmNav(p)}">${ico('go')}Los</a></div>`}).join('')
     ||'<div class="empty"><b>Nichts gefunden</b>Filter oben lockern oder bei der Routensuche den seitlichen Abstand vergrößern.</div>';
   rows.forEach(p=>{const m=L.marker([p.lat,p.lon],{icon:pinIcon(p,p.id===selId)}).bindPopup(`<b>${esc(p.name)}</b><br><a target="_blank" rel="noopener" href="${gmNav(p)}">In Google Maps navigieren</a>`).addTo(layer);

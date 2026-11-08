@@ -1,6 +1,6 @@
 """PipiPlatz - nearest toilet stops (Rastplatz, Raststaette, McDonald's, BK, supermarkets) in Germany.
 Free data only: OpenStreetMap (Overpass), OSRM routing, Nominatim geocoding."""
-import math, time, json, sqlite3, hashlib, os
+import math, time, json, sqlite3, hashlib, os, re
 import requests
 from flask import Flask, jsonify, request, send_from_directory
 
@@ -52,7 +52,11 @@ def classify(t):
     if t.get("amenity") == "toilets":
         return "wc", t.get("name") or "Öffentliches WC", True
     if "McDonald" in brand or "Burger King" in brand:
-        return "burger", brand, wc or None
+        # Restaurants have a customer WC; only pop-up / takeaway-only stores usually don't
+        txt = " ".join(t.get(k, "") for k in ("name", "description", "note"))
+        if t.get("takeaway") == "only" or re.search(r"pop.?up|nur drive|drive.?only", txt, re.I):
+            return "burger", brand, wc or None
+        return "burger", brand, True
     if t.get("shop") == "supermarket":
         return "super", brand or "Supermarkt", wc or None
     if t.get("amenity") == "fuel":
@@ -117,6 +121,8 @@ def to_poi(e):
     lon = e.get("lon") or e.get("center", {}).get("lon")
     if lat is None: return None
     kind, name, wc = classify(t)
+    if t.get("toilets") == "no" and kind in ("burger", "super"):
+        return None  # OSM says explicitly: no WC
     return {"id": f'{e["type"]}{e["id"]}', "lat": lat, "lon": lon, "kind": kind,
             "name": name, "wc": wc, "hours": t.get("opening_hours", ""),
             "fee": t.get("toilets:fee") or t.get("fee") or ""}
