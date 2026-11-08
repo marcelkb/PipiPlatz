@@ -69,6 +69,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 #route input:focus,#route select:focus{border-color:var(--link)}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #go{width:100%;min-height:52px;border-radius:8px;background:var(--blue);color:#fff;font-weight:700;font-size:19px;display:flex;align-items:center;justify-content:center;gap:8px}
+#go{position:sticky;bottom:0;box-shadow:0 -10px 14px -8px rgba(0,0,0,.45)} /* form scrolls, "Suchen" stays */
 #go:hover{background:var(--blue-deep)}
 #go[disabled]{opacity:.6;cursor:progress}
 @media (prefers-color-scheme:dark){#go{background:#d6e9f8;color:#06263f}#go:hover{background:#fff}}
