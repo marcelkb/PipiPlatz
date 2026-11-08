@@ -172,21 +172,22 @@ button{cursor:pointer;border:0;background:none;padding:0}
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const KINDS={raststaette:['raststaette','Raststätte'],rastplatz:['rastplatz','Rastplatz'],wc:['wc','WC'],burger:['burger','Burger'],super:['super','Supermarkt'],tank:['tank','Tankstelle'],other:['other','Restaurant']};
+const KINDS={rastplatz:['rastplatz','Rastplatz'],wc:['wc','WC'],burger:['burger','Burger'],raststaette:['raststaette','Raststätte'],tank:['tank','Tankstelle'],super:['super','Supermarkt'],other:['other','Restaurant']};
+const DEFAULT_ON=['rastplatz','wc','burger'];
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ico=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const map=L.map('map',{zoomControl:false}).setView([51.1,10.4],6);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
 const layer=L.layerGroup().addTo(map); let routeLine=null, me=null, meMarker=null;
-let pois=[], dest=null, routeInfo=null, filt=new Set(Object.keys(KINDS)), watchId=null, selId=null;
+let pois=[], dest=null, routeInfo=null, filt=new Set(DEFAULT_ON), watchId=null, selId=null;
 const markers={};
 
 function setStatus(t,err){const s=$('status');s.textContent=t;s.classList.toggle('err',!!err)}
 function setMode(m){$('loc').setAttribute('aria-pressed',m==='near');$('rt').setAttribute('aria-pressed',m==='route')}
 
 // filter chips
-$('chips').innerHTML=Object.entries(KINDS).map(([k,[i,n]])=>`<button class="chip" aria-pressed="true" data-k="${k}">${ico(i)}${n}</button>`).join('');
+$('chips').innerHTML=Object.entries(KINDS).map(([k,[i,n]])=>`<button class="chip" aria-pressed="${filt.has(k)}" data-k="${k}">${ico(i)}${n}</button>`).join('');
 $('chips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;const k=b.dataset.k;
   filt.has(k)?filt.delete(k):filt.add(k);b.setAttribute('aria-pressed',filt.has(k));render();};
 
