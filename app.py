@@ -32,6 +32,8 @@ GROUPS = [
     ['nwr[shop=supermarket]["brand:wikidata"~"^(Q701755|Q16968817|Q685967|Q1541857)$"]{a};'],
     [BIGSHOPS, "nwr[shop=furniture][toilets=yes]{a};", "nwr[shop=doityourself][toilets=yes]{a};"],
     ["nwr[shop=mall]{a};"],
+    ["nwr[railway=station][toilets=yes]{a};",
+     'nwr[railway=station]["railway:station_category"~"^[1-3]$"]{a};'],
 ]
 
 # WC evidence: shops get a WC mostly when a cafe / bakery with seats is next to them.
@@ -122,6 +124,9 @@ def classify(t):
         if t.get("takeaway") == "only" or re.search(r"pop.?up|nur drive|drive.?only", txt, re.I):
             return "burger", brand, wc or None
         return "burger", brand, True
+    if t.get("railway") == "station":
+        # confirmed WC, else only big DB stations (category 1-3) are assumed to have one
+        return "bahnhof", t.get("name") or "Bahnhof", True if t.get("toilets") == "yes" else "likely"
     if t.get("shop") == "mall":
         return "mall", t.get("name") or "Einkaufszentrum", True
     if t.get("shop") == "furniture":
@@ -192,7 +197,7 @@ def to_poi(e):
     lon = e.get("lon") or e.get("center", {}).get("lon")
     if lat is None: return None
     kind, name, wc = classify(t)
-    if t.get("toilets") == "no" and kind in ("burger", "super", "moebel", "bau", "mall"):
+    if t.get("toilets") == "no" and kind in ("burger", "super", "moebel", "bau", "mall", "bahnhof"):
         return None  # OSM says explicitly: no WC
     return {"id": f'{e["type"]}{e["id"]}', "lat": lat, "lon": lon, "kind": kind,
             "name": name, "wc": wc, "hours": t.get("opening_hours", ""),
