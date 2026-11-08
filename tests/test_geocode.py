@@ -37,6 +37,13 @@ class GeoList(unittest.TestCase):
         self.assertEqual(hits[0]["name"], "Frankfurt am Main, Hessen, Deutschland")  # repeat dropped
         self.assertEqual((hits[0]["lat"], hits[0]["lon"]), (50.11, 8.68))  # lon/lat order swapped
 
+    def test_empty_nominatim_answer_falls_back(self):
+        with mock.patch("app.requests.get") as g:  # "muen": valid JSON, zero hits, Photon knows it
+            g.side_effect = [Resp(200, []), phot({"name": "München", "state": "Bayern"})]
+            hits = app.geoList("muen", 5)
+        self.assertEqual(g.call_count, 2)
+        self.assertEqual(hits[0]["name"], "München, Bayern")
+
     def test_photon_name_joins_street_and_number(self):
         with mock.patch("app.requests.get") as g:
             g.side_effect = [Resp(403), phot({"name": "Sternwarte", "street": "Kupferhuette",
