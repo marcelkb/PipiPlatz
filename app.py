@@ -394,6 +394,36 @@ def resample(coords, step=1500):
             out.append(b); cum.append(total); acc = 0
     return out, cum, total
 
+def osrmRoutes(stops, alternatives=False, steps=False):
+    """OSRM driving routes through the stops [[lat, lon], ...]; the first one is the fastest."""
+    coords = ";".join(f"{x[1]},{x[0]}" for x in stops)
+    alt = "&alternatives=3" if alternatives else ""
+    st = "&steps=true" if steps else ("&steps=false" if alternatives else "")
+    r = requests.get(f"{OSRM}{coords}?overview=full&geometries=geojson{alt}{st}", headers=UA, timeout=30).json()
+    return r.get("routes") or []
+
+def mainRoads(route, n=3):
+    """The roads (A 3, B 42 ...) a route spends most of its distance on, longest first."""
+    dist = {}
+    for leg in route.get("legs", []):
+        for st in leg.get("steps", []):
+            ref = (st.get("ref") or "").split(";")[0].strip()
+            if ref: dist[ref] = dist.get(ref, 0) + st.get("distance", 0)
+    return sorted(dist, key=dist.get, reverse=True)[:n]
+
+@app.post("/api/routes")
+def routes():
+    """Route options between start and destination (through via), to choose one before searching."""
+    j = request.get_json()
+    stops = [j["from"]] + (j.get("via") or []) + [j["to"]]
+    rs = osrmRoutes(stops, alternatives=True, steps=True)
+    if not rs:
+        return jsonify(error="Keine Route gefunden"), 400
+    return jsonify(routes=[{"total": round(r["distance"]), "duration": round(r["duration"]),
+                            "roads": mainRoads(r),
+                            "route": [(c[1], c[0]) for c in r["geometry"]["coordinates"][::max(1, len(r["geometry"]["coordinates"]) // 1500)]]}
+                           for r in rs])
+
 @app.post("/api/along")
 def along():
     j = request.get_json()
@@ -401,12 +431,11 @@ def along():
     radius = int(j.get("radius", 2000))
     ahead_km = float(j.get("ahead_km", 150))
     via = j.get("via") or []  # stops between start and destination, e.g. from a Google Maps route
-    stops = [o] + via + [d]
-    url = f"{OSRM}{';'.join(f'{x[1]},{x[0]}' for x in stops)}?overview=full&geometries=geojson"
-    r = requests.get(url, headers=UA, timeout=30).json()
-    if not r.get("routes"):
+    alt = max(0, int(j.get("alt") or 0))  # index of the route option picked in /api/routes
+    rs = osrmRoutes([o] + via + [d], alternatives=alt > 0)
+    if not rs:
         return jsonify(error="Keine Route gefunden"), 400
-    route = r["routes"][0]
+    route = rs[min(alt, len(rs) - 1)]
     coords = [(c[1], c[0]) for c in route["geometry"]["coordinates"]]
     pts, cum, total = resample(coords)
     via_along = [round(cum[min(range(len(pts)), key=lambda i: hav(pts[i], tuple(v)))]) for v in via]
