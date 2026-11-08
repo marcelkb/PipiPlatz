@@ -2,7 +2,8 @@
 <html lang="de"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f172a">
+<meta name="theme-color" content="#00548f">
+<meta name="color-scheme" content="light dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="PipiPlatz">
@@ -10,127 +11,268 @@
 <link rel="apple-touch-icon" href="/icon-180.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <title>PipiPlatz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
+:root{
+ --blue:#00548f;--blue-deep:#003b66;--yellow:#ffd500;--yellow-ink:#14181d;
+ --ink:#14181d;--ink2:#46525d;--ground:#eef0ed;--panel:#fff;--line:#d3d8d4;
+ --link:#00548f;--spine:#9db9cf;--ok-bg:#1a7a3c;--ok-fg:#fff;--maybe:#6b4a00;--err:#b3261e;
+ --chip-on:#00548f;--chip-on-fg:#fff;--chip-off-fg:#2d3842;--skel:#e1e5e2;
+ --sans:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+ --blue:#0a3a5f;--blue-deep:#06263f;--ink:#eef1f3;--ink2:#a9b4bd;--ground:#0d1218;--panel:#151c24;--line:#2a343e;
+ --link:#7bbcf0;--spine:#3b556b;--ok-bg:#2f9e58;--ok-fg:#06140b;--maybe:#f0c050;--err:#ff8a80;
+ --chip-on:#d6e9f8;--chip-on-fg:#06263f;--chip-off-fg:#c5ced6;--skel:#212b35;
+}}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0}
-#app{display:flex;flex-direction:column;height:100%;padding-top:env(safe-area-inset-top)}
-header{display:flex;gap:6px;padding:8px;align-items:center}
-header b{font-size:18px;margin-right:auto}
-button,input,select{font:inherit;border-radius:10px;border:0;padding:9px 12px}
-button{background:#2563eb;color:#fff}
-button.sec{background:#334155}
-button.on{background:#16a34a}
-#route{display:none;padding:0 8px 8px;gap:6px;flex-wrap:wrap}
-#route.show{display:flex}
-#route input{flex:1;min-width:140px;background:#1e293b;color:#fff}
-#sugg{position:absolute;z-index:1000;background:#1e293b;border-radius:10px;left:8px;right:8px;max-height:40%;overflow:auto;display:none}
-#sugg div{padding:10px;border-bottom:1px solid #334155}
-#chips{display:flex;gap:6px;padding:0 8px 8px;overflow-x:auto}
-.chip{white-space:nowrap;background:#334155;padding:6px 10px;border-radius:99px;font-size:14px}
-.chip.on{background:#2563eb}
-#views{flex:1;position:relative;min-height:0}
+html,body{margin:0;height:100%;font-family:var(--sans);font-size:17px;background:var(--ground);color:var(--ink);-webkit-text-size-adjust:100%}
+::selection{background:var(--yellow);color:var(--yellow-ink)}
+input,select{caret-color:var(--blue);accent-color:var(--blue)}
+*{scrollbar-width:thin;scrollbar-color:var(--spine) transparent}
+:focus-visible{outline:3px solid var(--link);outline-offset:2px}
+.bar :focus-visible{outline-color:var(--yellow)}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+
+#app{display:flex;flex-direction:column;height:100%;height:100dvh}
+
+/* shell */
+.bar{background:var(--blue);color:#fff;padding:env(safe-area-inset-top) 12px 10px;flex:none}
+.top{display:flex;align-items:center;gap:4px;min-height:52px}
+.brand{font-size:26px;font-weight:700;letter-spacing:.01em;margin-right:auto}
+.tool{width:48px;height:48px;border-radius:8px;display:grid;place-items:center;color:#fff}
+.tool:hover{background:rgba(255,255,255,.14)}
+.tool[aria-pressed=true]{background:#fff;color:var(--blue)}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--blue-deep);border-radius:10px;padding:3px;gap:3px}
+.seg button{min-height:48px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:18px;color:#d8e6f1}
+.seg button[aria-pressed=true]{background:#fff;color:var(--blue)}
+.seg button:not([aria-pressed=true]):hover{background:rgba(255,255,255,.1)}
+
+/* route form */
+#route{display:none;background:var(--panel);border-bottom:1px solid var(--line);padding:12px;flex:none;max-height:46dvh;overflow:auto}
+#route.show{display:block}
+.fld{display:block;margin-bottom:10px}
+.fld>span{display:block;font-size:14px;font-weight:600;color:var(--ink2);margin-bottom:3px}
+#route input,#route select{width:100%;min-height:48px;border:1.5px solid var(--line);background:var(--ground);border-radius:8px;padding:0 12px}
+#route input:focus,#route select:focus{border-color:var(--link)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#go{width:100%;min-height:52px;border-radius:8px;background:var(--blue);color:#fff;font-weight:700;font-size:19px;display:flex;align-items:center;justify-content:center;gap:8px}
+#go:hover{background:var(--blue-deep)}
+#go[disabled]{opacity:.6;cursor:progress}
+@media (prefers-color-scheme:dark){#go{background:#d6e9f8;color:#06263f}#go:hover{background:#fff}}
+#sugg:empty{display:none}
+#sugg{margin:-4px 0 10px;border:1.5px solid var(--line);border-radius:8px;overflow:hidden}
+#sugg div{padding:13px 12px;min-height:48px;border-bottom:1px solid var(--line);cursor:pointer}
+#sugg div:last-child{border-bottom:0}
+#sugg div:hover{background:var(--ground)}
+
+/* filters */
+#chips{display:flex;gap:6px;padding:8px 12px;overflow-x:auto;flex:none;background:var(--panel);border-bottom:1px solid var(--line)}
+.chip{flex:none;min-height:44px;display:flex;align-items:center;gap:6px;padding:0 14px 0 10px;border-radius:8px;border:1.5px solid var(--line);color:var(--chip-off-fg);font-weight:600;white-space:nowrap}
+.chip svg.i{width:20px;height:20px}
+.chip[aria-pressed=true]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg)}
+
+/* map */
+#views{flex:1;position:relative;min-height:90px}
 #map,#gm{position:absolute;inset:0}
 #gm{display:none;border:0;width:100%;height:100%}
-#list{height:38%;overflow:auto;background:#0f172a;border-top:2px solid #334155}
-.poi{display:flex;gap:10px;padding:10px;border-bottom:1px solid #1e293b;align-items:center}
-.poi .ic{font-size:26px}
-.poi .t{flex:1;min-width:0}
-.poi .t small{color:#94a3b8;display:block}
-.poi a{background:#16a34a;color:#fff;text-decoration:none;padding:8px 10px;border-radius:10px;font-size:14px}
-.ok{color:#4ade80}.maybe{color:#fbbf24}
-#status{padding:6px 10px;font-size:13px;color:#94a3b8}
+@media (prefers-color-scheme:dark){.leaflet-tile-pane{filter:brightness(.72) contrast(1.1)}}
+.pin{width:36px;height:36px;border-radius:9px;background:var(--blue);color:#fff;border:2px solid #fff;display:grid;place-items:center;box-shadow:0 2px 5px rgba(0,0,0,.35)}
+.pin.sel{background:var(--yellow);color:var(--yellow-ink);border-color:var(--yellow-ink)}
+.leaflet-popup-content{font-family:var(--sans);font-size:16px;margin:12px 14px}
+.leaflet-popup-content a{color:var(--link);font-weight:600}
+
+/* strip-map list */
+#sheet{flex:0 0 46%;display:flex;flex-direction:column;min-height:0;background:var(--panel);border-top:1px solid var(--line)}
+#app.routing #sheet{flex-basis:32%}
+#status{flex:none;padding:10px 14px;font-size:16px;font-weight:600;color:var(--ink2);border-bottom:1px solid var(--line)}
+#status.err{color:var(--err)}
+#list{flex:1;overflow:auto;padding-bottom:env(safe-area-inset-bottom)}
+.poi{display:grid;grid-template-columns:78px 22px 1fr auto;align-items:start;column-gap:6px;padding:10px 12px 10px 8px;min-height:84px;border-bottom:1px solid var(--line);cursor:pointer}
+.poi.sel{background:color-mix(in srgb,var(--yellow) 22%,var(--panel))}
+.d{text-align:right;padding-top:4px;font-variant-numeric:tabular-nums;line-height:1}
+.d b{display:block;font-size:30px;font-weight:700;letter-spacing:-.01em}
+.d span{font-size:14px;font-weight:600;color:var(--ink2)}
+.sp{position:relative;align-self:stretch;margin:-10px 0}
+.sp::before{content:"";position:absolute;left:9px;width:4px;top:0;bottom:0;background:var(--spine)}
+.poi:first-child .sp::before{top:25px}
+.poi:last-child .sp::before{bottom:auto;height:25px}
+.poi:only-child .sp::before{display:none}
+.sp i{position:absolute;left:3px;top:19px;width:16px;height:16px;border-radius:50%;background:var(--panel);border:4px solid var(--blue)}
+.poi.sel .sp i{background:var(--yellow);border-color:var(--yellow-ink)}
+@media (prefers-color-scheme:dark){.sp i{border-color:var(--link)}}
+.t{min-width:0;padding-top:2px}
+.n{font-size:19px;font-weight:600;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.m{margin-top:3px;font-size:15px;color:var(--ink2)}
+.m svg.i{width:17px;height:17px;display:inline-block;vertical-align:-3px;margin-right:4px}
+.wc{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:2px 8px;border-radius:6px;font-size:14px;font-weight:700}
+.wc svg.i{width:15px;height:15px;stroke-width:3}
+.wc.ok{background:var(--ok-bg);color:var(--ok-fg)}
+.wc.maybe{border:1.5px dashed var(--maybe);color:var(--maybe)}
+.go{align-self:center;min-width:76px;min-height:52px;padding:0 14px;border-radius:8px;background:var(--yellow);color:var(--yellow-ink);text-decoration:none;font-weight:700;font-size:19px;display:flex;align-items:center;justify-content:center;gap:6px}
+.go:hover{background:#ffe24d}
+.empty{padding:20px 16px;color:var(--ink2);line-height:1.35}
+.empty b{display:block;color:var(--ink);font-size:19px;margin-bottom:4px}
+.skel{display:grid;grid-template-columns:78px 22px 1fr 76px;gap:6px;padding:14px 12px 14px 8px;border-bottom:1px solid var(--line)}
+.skel i{display:block;height:26px;border-radius:5px;background:var(--skel);animation:pulse 1.2s ease-in-out infinite}
+.skel i:nth-child(2){height:16px;width:16px;border-radius:50%;margin-left:3px}
+.skel i:nth-child(4){height:48px}
+@keyframes pulse{50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){.skel i{animation:none}}
 </style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <symbol id="i-wc" viewBox="0 0 24 24"><circle cx="6.5" cy="4" r="1.6"/><path d="M4 9.5h5L8.2 15H9v6H7v-4.5H6V21H4v-6h.8z"/><circle cx="17.5" cy="4" r="1.6"/><path d="M14.5 9.5h6l-1.5 5.5h-3zM16 15v6M19 15v6"/></symbol>
+ <symbol id="i-raststaette" viewBox="0 0 24 24"><path d="M3 11l9-6.5 9 6.5M5.5 9.5V20h13V9.5M10 20v-5h4v5"/></symbol>
+ <symbol id="i-rastplatz" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9.5 17V7.5h3.2a2.7 2.7 0 010 5.4H9.5"/></symbol>
+ <symbol id="i-burger" viewBox="0 0 24 24"><path d="M4 10a8 5 0 0116 0zM3 13.5h18M5 17.5h14v.5a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 015 18z"/></symbol>
+ <symbol id="i-super" viewBox="0 0 24 24"><path d="M3 4h2.5l2 11h10.5l2-8H6.5"/><circle cx="9.5" cy="19.5" r="1.2"/><circle cx="16.5" cy="19.5" r="1.2"/></symbol>
+ <symbol id="i-tank" viewBox="0 0 24 24"><path d="M5 20V5a1 1 0 011-1h7a1 1 0 011 1v15M4 20h11M14 9h2.5a1.5 1.5 0 011.5 1.5v5a1.5 1.5 0 003 0V8l-3-3M7.5 7.5h4"/></symbol>
+ <symbol id="i-other" viewBox="0 0 24 24"><path d="M7 3v8M5 3v5a2 2 0 004 0V3M7 11v10M17 21V3c-2 1-3 4-3 8h3"/></symbol>
+ <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/></symbol>
+ <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M6 16V10a3 3 0 013-3h7M18 8v6a3 3 0 01-3 3h-5"/></symbol>
+ <symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></symbol>
+ <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></symbol>
+ <symbol id="i-go" viewBox="0 0 24 24"><path d="M4 11l16-7-7 16-2-7z"/></symbol>
+ <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+ <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
+</svg>
 <div id="app">
- <header>
-  <b>🚻 PipiPlatz</b>
-  <button id="loc">📍 Hier</button>
-  <button id="rt" class="sec">🛣️ Route</button>
-  <button id="gmtab" class="sec">Google</button>
-  <button id="cfg" class="sec">⚙️</button>
+ <header class="bar">
+  <div class="top">
+   <div class="brand">PipiPlatz</div>
+   <button class="tool" id="gmtab" aria-pressed="false" aria-label="Google-Maps-Ansicht"><svg class="i"><use href="#i-map"/></svg></button>
+   <button class="tool" id="cfg" aria-label="Einstellungen: Google-API-Key"><svg class="i"><use href="#i-sliders"/></svg></button>
+  </div>
+  <div class="seg" role="group" aria-label="Suchmodus">
+   <button id="loc" aria-pressed="true"><svg class="i"><use href="#i-locate"/></svg>In der Nähe</button>
+   <button id="rt" aria-pressed="false"><svg class="i"><use href="#i-route"/></svg>Entlang der Route</button>
+  </div>
  </header>
  <div id="route">
-  <input id="start" placeholder="Start (leer = mein Standort)" autocomplete="off">
-  <input id="dest" placeholder="Ziel (Stadt/Adresse)" autocomplete="off">
-  <select id="rad" class="sec"><option value="1000">±1 km</option><option value="2000" selected>±2 km</option><option value="4000">±4 km</option><option value="8000">±8 km</option></select>
-  <select id="ahead" class="sec"><option value="50">50 km</option><option value="150" selected>150 km</option><option value="300">300 km</option></select>
-  <button id="go">Suchen</button>
+  <label class="fld"><span>Start</span><input id="start" placeholder="leer = mein Standort" autocomplete="off"></label>
+  <label class="fld"><span>Ziel</span><input id="dest" placeholder="Stadt oder Adresse" autocomplete="off"></label>
+  <div id="sugg"></div>
+  <div class="pair">
+   <label class="fld"><span>Seitlich bis</span><select id="rad"><option value="1000">± 1 km</option><option value="2000" selected>± 2 km</option><option value="4000">± 4 km</option><option value="8000">± 8 km</option></select></label>
+   <label class="fld"><span>Vorausschau</span><select id="ahead"><option value="50">50 km</option><option value="150" selected>150 km</option><option value="300">300 km</option></select></label>
+  </div>
+  <button id="go"><svg class="i"><use href="#i-search"/></svg>Suchen</button>
  </div>
- <div id="sugg"></div>
- <div id="chips"></div>
- <div id="views"><div id="map"></div><iframe id="gm" allowfullscreen loading="lazy"></iframe></div>
- <div id="status">Standort wird ermittelt…</div>
- <div id="list"></div>
+ <div id="chips" role="group" aria-label="Orte filtern"></div>
+ <div id="views"><div id="map"></div><iframe id="gm" title="Google Maps" allowfullscreen loading="lazy"></iframe></div>
+ <section id="sheet">
+  <div id="status" role="status">Standort wird ermittelt…</div>
+  <div id="list"></div>
+ </section>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const KINDS={raststaette:['🏪','Raststätte'],rastplatz:['🅿️','Rastplatz'],wc:['🚻','WC'],burger:['🍔','Burger'],super:['🛒','Supermarkt'],tank:['⛽','Tankstelle'],other:['🍽️','Restaurant']};
+const KINDS={raststaette:['raststaette','Raststätte'],rastplatz:['rastplatz','Rastplatz'],wc:['wc','WC'],burger:['burger','Burger'],super:['super','Supermarkt'],tank:['tank','Tankstelle'],other:['other','Restaurant']};
 const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ico=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const map=L.map('map',{zoomControl:false}).setView([51.1,10.4],6);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
 const layer=L.layerGroup().addTo(map); let routeLine=null, me=null, meMarker=null;
-let pois=[], dest=null, routeInfo=null, filt=new Set(Object.keys(KINDS)), watchId=null;
+let pois=[], dest=null, routeInfo=null, filt=new Set(Object.keys(KINDS)), watchId=null, selId=null;
+const markers={};
 
-// chips
-$('chips').innerHTML=Object.entries(KINDS).map(([k,[i,n]])=>`<span class="chip on" data-k="${k}">${i} ${n}</span>`).join('');
-$('chips').onclick=e=>{const k=e.target.dataset.k;if(!k)return;filt.has(k)?filt.delete(k):filt.add(k);e.target.classList.toggle('on');render();};
+function setStatus(t,err){const s=$('status');s.textContent=t;s.classList.toggle('err',!!err)}
+function setMode(m){$('loc').setAttribute('aria-pressed',m==='near');$('rt').setAttribute('aria-pressed',m==='route')}
 
-const fmt=m=>m>=1000?(m/1000).toFixed(1)+' km':m+' m';
+// filter chips
+$('chips').innerHTML=Object.entries(KINDS).map(([k,[i,n]])=>`<button class="chip" aria-pressed="true" data-k="${k}">${ico(i)}${n}</button>`).join('');
+$('chips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;const k=b.dataset.k;
+  filt.has(k)?filt.delete(k):filt.add(k);b.setAttribute('aria-pressed',filt.has(k));render();};
+
+const de=(v)=>v.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
+const fmt=m=>m>=1000?de(m/1000)+' km':Math.round(m)+' m';
+const fmtP=m=>m>=1000?[de(m/1000),'km']:[String(Math.round(m)),'m'];
 const gmNav=p=>{ // navigate to POI; if a route is active, keep the final destination as a stop after it
   const base='https://www.google.com/maps/dir/?api=1&travelmode=driving';
   if(dest&&routeInfo) return `${base}&origin=${me[0]},${me[1]}&destination=${dest.lat},${dest.lon}&waypoints=${p.lat},${p.lon}`;
   return `${base}&destination=${p.lat},${p.lon}`;
 };
+const pinIcon=(p,sel)=>L.divIcon({html:`<div class="pin${sel?' sel':''}">${ico(KINDS[p.kind][0])}</div>`,className:'',iconSize:[36,36],iconAnchor:[18,18]});
+
+function skeleton(){$('list').innerHTML='<div class="skel"><i></i><i></i><i></i><i></i></div>'.repeat(3)}
+
 function render(){
-  layer.clearLayers();
+  layer.clearLayers();for(const k in markers)delete markers[k];
   const rows=pois.filter(p=>filt.has(p.kind));
-  $('list').innerHTML=rows.map(p=>{const [ic]=KINDS[p.kind];
-    const d=p.along!=null?`in ${fmt(p.along)} · ${fmt(p.off)} abseits`:fmt(p.dist);
-    const wc=p.wc===true?'<span class="ok">WC ✔</span>':'<span class="maybe">WC wahrscheinlich</span>';
-    return `<div class="poi" data-id="${p.id}"><span class="ic">${ic}</span><div class="t"><b>${p.name}</b><small>${d} · ${wc}${p.hours?' · '+p.hours:''}${p.fee?' · Gebühr '+p.fee:''}</small></div><a target="_blank" href="${gmNav(p)}">Los</a></div>`}).join('')||'<div class="poi">Nichts gefunden.</div>';
-  rows.forEach(p=>L.marker([p.lat,p.lon],{icon:L.divIcon({html:`<div style="font-size:24px">${KINDS[p.kind][0]}</div>`,className:'',iconSize:[28,28]})}).bindPopup(`<b>${p.name}</b><br><a target=_blank href="${gmNav(p)}">In Google Maps navigieren</a>`).addTo(layer));
+  $('list').innerHTML=rows.map(p=>{
+    const [v,u]=fmtP(p.along!=null?p.along:p.dist);
+    const [icn,kn]=KINDS[p.kind];
+    const meta=[`${ico(icn)}${kn}`];
+    if(p.along!=null)meta.push(esc(fmt(p.off))+' abseits');
+    if(p.hours)meta.push(esc(p.hours));
+    if(p.fee)meta.push('Gebühr '+esc(p.fee));
+    const wc=p.wc===true?`<span class="wc ok">${ico('check')}WC bestätigt</span>`:'<span class="wc maybe">WC wahrscheinlich</span>';
+    return `<div class="poi${p.id===selId?' sel':''}" data-id="${esc(p.id)}" tabindex="0"><div class="d"><b>${v}</b><span>${u}${p.along!=null?' voraus':''}</span></div><div class="sp"><i></i></div><div class="t"><div class="n">${esc(p.name)}</div><div class="m">${meta.join(' · ')}</div>${wc}</div><a class="go" target="_blank" rel="noopener" aria-label="Navigation zu ${esc(p.name)}" href="${gmNav(p)}">${ico('go')}Los</a></div>`}).join('')
+    ||'<div class="empty"><b>Nichts gefunden</b>Filter oben lockern oder bei der Routensuche den seitlichen Abstand vergrößern.</div>';
+  rows.forEach(p=>{const m=L.marker([p.lat,p.lon],{icon:pinIcon(p,p.id===selId)}).bindPopup(`<b>${esc(p.name)}</b><br><a target="_blank" rel="noopener" href="${gmNav(p)}">In Google Maps navigieren</a>`).addTo(layer);
+    m.on('click',()=>select(p.id,true));markers[p.id]=m;});
   updateGm();
 }
-$('list').onclick=e=>{const el=e.target.closest('.poi');if(!el||e.target.tagName==='A')return;const p=pois.find(x=>x.id===el.dataset.id);map.setView([p.lat,p.lon],16);};
+function select(id,scroll){
+  const old=selId;selId=id;
+  for(const k of [old,id]){const p=pois.find(x=>x.id===k);if(p&&markers[k])markers[k].setIcon(pinIcon(p,k===selId));}
+  document.querySelectorAll('.poi').forEach(el=>el.classList.toggle('sel',el.dataset.id===id));
+  if(scroll){const el=document.querySelector(`.poi[data-id="${CSS.escape(id)}"]`);if(el)el.scrollIntoView({block:'nearest'})}
+}
+function pick(el){const p=pois.find(x=>x.id===el.dataset.id);if(!p)return;select(p.id,false);map.setView([p.lat,p.lon],16);}
+$('list').onclick=e=>{const el=e.target.closest('.poi');if(!el||e.target.closest('a'))return;pick(el)};
+$('list').onkeydown=e=>{if(e.key!=='Enter'||e.target.closest('a'))return;const el=e.target.closest('.poi');if(el)pick(el)};
 
 async function nearby(){
-  $('status').textContent='Suche in der Nähe…';
+  setStatus('Suche in der Nähe…');skeleton();
   try{const r=await (await fetch(`/api/nearby?lat=${me[0]}&lon=${me[1]}`)).json();
-    pois=r.pois;routeInfo=null;if(routeLine){map.removeLayer(routeLine);routeLine=null}
-    $('status').textContent=`${pois.length} Orte im Umkreis von ${r.radius/1000} km${r.partial?' (teilweise, Server überlastet)':''}`;render();
-  }catch(e){$('status').textContent='Fehler: '+e}
+    pois=r.pois;routeInfo=null;selId=null;if(routeLine){map.removeLayer(routeLine);routeLine=null}
+    setStatus(`${pois.length} Orte im Umkreis von ${r.radius/1000} km${r.partial?' (teilweise, Server überlastet)':''}`);render();
+  }catch(e){setStatus('Fehler: '+e,true);$('list').innerHTML=''}
 }
 function setMe(pos,first){
   me=[pos.coords.latitude,pos.coords.longitude];
-  if(!meMarker)meMarker=L.circleMarker(me,{radius:8,color:'#fff',fillColor:'#2563eb',fillOpacity:1}).addTo(map);else meMarker.setLatLng(me);
+  if(!meMarker)meMarker=L.circleMarker(me,{radius:9,color:'#fff',weight:3,fillColor:'#00548f',fillOpacity:1}).addTo(map);else meMarker.setLatLng(me);
   if(first){map.setView(me,13);nearby();}
 }
 function locate(){
-  if(!navigator.geolocation){$('status').textContent='Keine Geolocation (HTTPS nötig!)';return}
+  if(!navigator.geolocation){setStatus('Keine Geolocation (HTTPS nötig!)',true);return}
   navigator.geolocation.getCurrentPosition(p=>{setMe(p,true);
     if(watchId==null)watchId=navigator.geolocation.watchPosition(q=>setMe(q,false),()=>{}, {enableHighAccuracy:true});},
-    e=>$('status').textContent='Standort fehlgeschlagen: '+e.message+' (HTTPS/Berechtigung?)',{enableHighAccuracy:true,timeout:15000});
+    e=>setStatus('Standort fehlgeschlagen: '+e.message+' (HTTPS/Berechtigung?)',true),{enableHighAccuracy:true,timeout:15000});
 }
-$('loc').onclick=locate;
-$('rt').onclick=()=>{$('route').classList.toggle('show')};
+function routePanel(show){$('route').classList.toggle('show',show);$('app').classList.toggle('routing',show);map.invalidateSize()}
+$('loc').onclick=()=>{setMode('near');routePanel(false);locate()};
+$('rt').onclick=()=>{setMode('route');routePanel(!$('route').classList.contains('show'))};
 
 // destination autocomplete
 let startPt=null;
-function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const q=inp.value;if(inp.id==='start')startPt=null;if(q.length<3){$('sugg').style.display='none';return}
+function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const q=inp.value;if(inp.id==='start')startPt=null;else dest=null;if(q.length<3){$('sugg').innerHTML='';return}
  tm=setTimeout(async()=>{const r=await (await fetch('/api/geocode?q='+encodeURIComponent(q))).json();
-  $('sugg').innerHTML=r.map((x,i)=>`<div data-i="${i}">${x.name}</div>`).join('');$('sugg').style.display=r.length?'block':'none';
-  $('sugg').onclick=e=>{const x=r[e.target.dataset.i];if(!x)return;set(x);inp.value=x.name;$('sugg').style.display='none'};},400)}}
+  $('sugg').innerHTML=r.map((x,i)=>`<div data-i="${i}">${esc(x.name)}</div>`).join('');
+  $('sugg').onclick=e=>{const x=r[e.target.dataset.i];if(!x)return;set(x);inp.value=x.name;$('sugg').innerHTML=''};},400)}}
 suggest($('start'),x=>startPt=x);suggest($('dest'),x=>dest=x);
 
 $('go').onclick=async()=>{
-  const org=startPt?[startPt.lat,startPt.lon]:me;if($('start').value&&!startPt)return alert('Start aus der Liste wählen');if(!org)return alert('Erst Standort ermitteln oder Start eingeben');if(!dest)return alert('Ziel wählen');
-  $('status').textContent='Route + Suche entlang der Strecke… (kann 10-30 s dauern)';
+  const org=startPt?[startPt.lat,startPt.lon]:me;
+  if($('start').value&&!startPt)return setStatus('Start aus der Vorschlagsliste wählen',true);
+  if(!org)return setStatus('Erst Standort ermitteln oder Start eingeben',true);
+  if(!dest)return setStatus('Ziel aus der Vorschlagsliste wählen',true);
+  setStatus('Route + Suche entlang der Strecke… (kann 10-30 s dauern)');skeleton();$('go').disabled=true;
   try{const res=await fetch('/api/along',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:org,to:[dest.lat,dest.lon],radius:+$('rad').value,ahead_km:+$('ahead').value})});
    const r=await res.json();if(r.error)throw r.error;
-   pois=r.pois;routeInfo=r;if(routeLine)map.removeLayer(routeLine);
-   routeLine=L.polyline(r.route,{color:'#2563eb',weight:5}).addTo(map);map.fitBounds(routeLine.getBounds());
-   $('status').textContent=`Route ${fmt(r.total)}, ${Math.round(r.duration/60)} min · ${pois.length} Stopps entlang der Strecke`;render();
-  }catch(e){$('status').textContent='Fehler: '+e}
+   pois=r.pois;routeInfo=r;selId=null;if(routeLine)map.removeLayer(routeLine);
+   routeLine=L.featureGroup([L.polyline(r.route,{color:'#003b66',weight:10,opacity:.9}),L.polyline(r.route,{color:'#ffd500',weight:5})]).addTo(map);
+   routePanel(false);map.fitBounds(routeLine.getBounds());
+   setStatus(`Route ${fmt(r.total)}, ${Math.round(r.duration/60)} min · ${pois.length} Stopps entlang der Strecke`);render();
+  }catch(e){setStatus('Fehler: '+e,true);$('list').innerHTML=''}
+  finally{$('go').disabled=false}
 };
 
 // Google Maps embed (needs free Maps Embed API key, optional)
@@ -144,10 +286,10 @@ function updateGm(){
 let gmOn=false;
 $('gmtab').onclick=()=>{
   if(!localStorage.gmkey){const k=prompt('Google Maps Embed API Key (kostenlos, optional). Ohne Key bleibt die OSM-Karte.');if(k)localStorage.gmkey=k.trim();else return}
-  gmOn=!gmOn;$('gm').style.display=gmOn?'block':'none';$('gmtab').classList.toggle('on',gmOn);updateGm();
+  gmOn=!gmOn;$('gm').style.display=gmOn?'block':'none';$('gmtab').setAttribute('aria-pressed',gmOn);updateGm();
 };
 $('cfg').onclick=()=>{const k=prompt('Google Embed API Key (leer = löschen)',localStorage.gmkey||'');if(k===null)return;k?localStorage.gmkey=k.trim():localStorage.removeItem('gmkey')};
 
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');
-locate();
+skeleton();locate();
 </script></body></html>
