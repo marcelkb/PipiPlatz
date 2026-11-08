@@ -143,6 +143,7 @@ def classify(t):
 
 DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache.db")
 TTL = 7 * 86400
+SNAP = 0.02  # degrees, ~2 km north-south
 
 def _db():
     c = sqlite3.connect(DB)
@@ -224,8 +225,12 @@ def nearby():
     lat, lon = float(request.args["lat"]), float(request.args["lon"])
     radius = 3000
     pois = []
+    # Query around a ~2 km grid point instead of the exact position, so repeat searches in the
+    # same area hit the Overpass cache. The radius grows by the snap offset, nothing is lost.
+    glat, glon = round(lat / SNAP) * SNAP, round(lon / SNAP) * SNAP
+    pad = math.ceil(hav((lat, lon), (glat, glon)) / 100) * 100
     while radius <= 24000:  # widen until we have some results
-        els, evid, failed = run_groups(f"around:{radius},{lat},{lon}")
+        els, evid, failed = run_groups(f"around:{radius + pad},{glat:.2f},{glon:.2f}")
         pois = dedupe([p for p in map(to_poi, els) if p])
         enrich(pois, evid)
         if len(pois) >= 8: break
