@@ -93,4 +93,5 @@ fair-use limits, so this is meant for personal use. The app sends the User-Agent
 
 - OSM coverage decides everything: a missing or wrong tag gives a wrong WC state.
 - Chain names for furniture and DIY stores are matched by name and may miss some branches.
-- Route searches send several Overpass queries per ~25 route points and can be slow.
+- Route searches send two Overpass queries per ~25 route points (one merged POI query, one for
+  supermarket evidence). A 150 km route took 25 s cold on 2026-11-08; repeats come from the cache.
