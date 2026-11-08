@@ -70,6 +70,14 @@ button{cursor:pointer;border:0;background:none;padding:0}
 #gmlGo{min-height:48px;padding:0 16px;border-radius:8px;border:1.5px solid var(--blue);color:var(--blue);font-weight:700}
 #gmlGo[disabled]{opacity:.6;cursor:progress}
 @media (prefers-color-scheme:dark){#gmlGo{border-color:#d6e9f8;color:#d6e9f8}}
+#alts:empty{display:none}
+#alts{display:grid;gap:8px;margin-bottom:10px}
+.alt{text-align:left;min-height:56px;padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--ground);display:flex;flex-direction:column;gap:2px}
+.alt b{font-size:16px}
+.alt span{font-size:14px;color:var(--ink2)}
+.alt[aria-pressed=true]{border-color:var(--blue);box-shadow:inset 0 0 0 1.5px var(--blue)}
+@media (prefers-color-scheme:dark){.alt[aria-pressed=true]{border-color:#d6e9f8;box-shadow:inset 0 0 0 1.5px #d6e9f8}}
+#route.alts{max-height:64dvh}
 #viaInfo:empty{display:none}
 #viaInfo{margin:-4px 0 10px;font-size:14px;color:var(--ink2)}
 #sugg:empty{display:none}
@@ -183,7 +191,8 @@ button{cursor:pointer;border:0;background:none;padding:0}
    <label class="fld"><span>Seitlich bis</span><select id="rad"><option value="1000">± 1 km</option><option value="2000" selected>± 2 km</option><option value="4000">± 4 km</option><option value="8000">± 8 km</option></select></label>
    <label class="fld"><span>Vorausschau</span><select id="ahead"><option value="50">50 km</option><option value="150" selected>150 km</option><option value="300">300 km</option></select></label>
   </div>
-  <button id="go"><svg class="i"><use href="#i-search"/></svg>Suchen</button>
+  <div id="alts" role="group" aria-label="Routen zur Auswahl"></div>
+  <button id="go"><svg class="i"><use href="#i-search"/></svg><span id="goT">Suchen</span></button>
  </div>
  <div id="chips" role="group" aria-label="Orte filtern"></div>
  <div id="views"><div id="map"></div><iframe id="gm" title="Google Maps" allowfullscreen loading="lazy"></iframe></div>
@@ -318,13 +327,37 @@ $('gmlGo').onclick=async()=>{
   $('gmlGo').disabled=true;setStatus('Link wird gelesen…');
   try{const res=await fetch('/api/gmaps',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
    const r=await res.json();if(r.error)throw r.error;
-   const p=r.points;startPt=p[0];dest=p[p.length-1];via=p.slice(1,-1);
+   const p=r.points;clearAlts();startPt=p[0];dest=p[p.length-1];via=p.slice(1,-1);
    $('start').value=startPt.name;$('dest').value=dest.name;$('sugg').innerHTML='';showVia();
    setStatus(`Route geladen (${p.length} Punkte). Mit „Suchen“ starten.`);
   }catch(e){setStatus('Fehler: '+e,true)}
   finally{$('gmlGo').disabled=false}
 };
-function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const q=inp.value;clearVia();if(inp.id==='start')startPt=null;else dest=null;if(q.length<3){$('sugg').innerHTML='';return}
+// route options (OSRM alternatives): the user picks one before the search along it
+let alts=null, altSel=0, altKey='';
+const altLayer=L.layerGroup().addTo(map);
+const dur=s=>{const m=Math.round(s/60);return m>=60?`${Math.floor(m/60)} h ${String(m%60).padStart(2,'0')} min`:m+' min'};
+function clearAlts(){alts=null;altKey='';$('alts').innerHTML='';altLayer.clearLayers();$('route').classList.remove('alts');$('goT').textContent='Suchen'}
+function drawAlts(){
+  altLayer.clearLayers();
+  [false,true].forEach(sel=>alts.forEach((a,i)=>{if((i===altSel)!==sel)return;
+    const pl=L.polyline(a.route,sel?{color:'#003b66',weight:9,opacity:.95}:{color:'#6b7a89',weight:6,opacity:.75}).addTo(altLayer);
+    pl.on('click',()=>pickAlt(i));
+    if(sel)L.polyline(a.route,{color:'#ffd500',weight:4,interactive:false}).addTo(altLayer)}));
+  $('alts').innerHTML=alts.map((a,i)=>{const d=Math.round((a.duration-alts[0].duration)/60);
+    return `<button type="button" class="alt" aria-pressed="${i===altSel}" data-i="${i}"><b>${a.roads.length?'über '+a.roads.map(esc).join(' · '):'Route '+(i+1)}</b><span>${fmt(a.total)} · ${dur(a.duration)}${i?` · ${d>=0?'+':'−'}${Math.abs(d)} min`:' · schnellste'}</span></button>`}).join('')}
+function pickAlt(i){altSel=i;drawAlts()}
+$('alts').onclick=e=>{const b=e.target.closest('.alt');if(b)pickAlt(+b.dataset.i)};
+async function loadRoutes(org,key){ // true when there is a choice to show
+  setStatus('Routen werden berechnet…');
+  const res=await fetch('/api/routes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:org,to:[dest.lat,dest.lon],via:via.map(v=>[v.lat,v.lon])})});
+  const r=await res.json();if(r.error)throw r.error;
+  alts=r.routes;altKey=key;altSel=0;
+  if(alts.length<2)return false;
+  drawAlts();$('route').classList.add('alts');$('goT').textContent='Entlang dieser Route suchen';
+  setStatus(`${alts.length} Routen gefunden. Route wählen, dann suchen.`);map.invalidateSize();map.fitBounds(altLayer.getLayers()[0].getBounds());
+  return true}
+function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const q=inp.value;clearVia();clearAlts();if(inp.id==='start')startPt=null;else dest=null;if(q.length<3){$('sugg').innerHTML='';return}
  tm=setTimeout(async()=>{const r=await (await fetch('/api/geocode?q='+encodeURIComponent(q))).json();
   $('sugg').innerHTML=r.map((x,i)=>`<div data-i="${i}">${esc(x.name)}</div>`).join('');
   $('sugg').onclick=e=>{const x=r[e.target.dataset.i];if(!x)return;set(x);inp.value=x.name;$('sugg').innerHTML=''};},400)}}
@@ -335,8 +368,12 @@ $('go').onclick=async()=>{
   if($('start').value&&!startPt)return setStatus('Start aus der Vorschlagsliste wählen',true);
   if(!org)return setStatus('Erst Standort ermitteln oder Start eingeben',true);
   if(!dest)return setStatus('Ziel aus der Vorschlagsliste wählen',true);
-  setStatus('Route + Suche entlang der Strecke… (kann 10-30 s dauern)');skeleton();busy(true,'route');$('go').disabled=true;
-  try{const res=await fetch('/api/along',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:org,to:[dest.lat,dest.lon],via:via.map(v=>[v.lat,v.lon]),radius:+$('rad').value,ahead_km:+$('ahead').value})});
+  const key=JSON.stringify([org,dest.lat,dest.lon,via.map(v=>[v.lat,v.lon])]);
+  $('go').disabled=true;
+  try{
+   if(!alts||altKey!==key){if(await loadRoutes(org,key))return}
+   setStatus('Suche entlang der Strecke… (kann 10-30 s dauern)');skeleton();busy(true,'route');altLayer.clearLayers();
+   const res=await fetch('/api/along',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:org,to:[dest.lat,dest.lon],via:via.map(v=>[v.lat,v.lon]),alt:altSel,radius:+$('rad').value,ahead_km:+$('ahead').value})});
    const r=await res.json();if(r.error)throw r.error;
    pois=r.pois;routeInfo=r;r.vias=via.map((v,i)=>({lat:v.lat,lon:v.lon,a:r.via_along[i]}));selId=null;if(routeLine)map.removeLayer(routeLine);
    routeLine=L.featureGroup([L.polyline(r.route,{color:'#003b66',weight:10,opacity:.9}),L.polyline(r.route,{color:'#ffd500',weight:5})]).addTo(map);
