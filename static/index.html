@@ -75,6 +75,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 #chips{display:flex;gap:6px;padding:8px 12px;overflow-x:auto;flex:none;background:var(--panel);border-bottom:1px solid var(--line)}
 .chip{flex:none;min-height:44px;display:flex;align-items:center;gap:6px;padding:0 14px 0 10px;border-radius:8px;border:1.5px solid var(--line);color:var(--chip-off-fg);font-weight:600;white-space:nowrap}
 .chip svg.i{width:20px;height:20px}
+.chip.all{border-style:dashed;padding:0 14px}
 .chip[aria-pressed=true]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg)}
 
 /* map */
@@ -190,9 +191,15 @@ function setStatus(t,err){const s=$('status');s.textContent=t;s.classList.toggle
 function setMode(m){$('loc').setAttribute('aria-pressed',m==='near');$('rt').setAttribute('aria-pressed',m==='route')}
 
 // filter chips
-$('chips').innerHTML=Object.entries(KINDS).map(([k,[i,n]])=>`<button class="chip" aria-pressed="${filt.has(k)}" data-k="${k}">${ico(i)}${n}</button>`).join('');
-$('chips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;const k=b.dataset.k;
-  filt.has(k)?filt.delete(k):filt.add(k);b.setAttribute('aria-pressed',filt.has(k));render();};
+$('chips').innerHTML='<button class="chip all" id="allBtn"></button>'+Object.entries(KINDS).map(([k,[i,n]])=>`<button class="chip" aria-pressed="${filt.has(k)}" data-k="${k}">${ico(i)}${n}</button>`).join('');
+const syncChips=()=>{const all=filt.size===Object.keys(KINDS).length;
+  document.querySelectorAll('#chips .chip[data-k]').forEach(c=>c.setAttribute('aria-pressed',filt.has(c.dataset.k)));
+  $('allBtn').textContent=all?'Alle abwählen':'Alle wählen';};
+$('chips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;
+  if(b.id==='allBtn'){filt=filt.size===Object.keys(KINDS).length?new Set():new Set(Object.keys(KINDS));}
+  else{const k=b.dataset.k;filt.has(k)?filt.delete(k):filt.add(k);}
+  syncChips();render();};
+syncChips();
 
 const de=(v)=>v.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
 const fmt=m=>m>=1000?de(m/1000)+' km':Math.round(m)+' m';
