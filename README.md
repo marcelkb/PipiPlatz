@@ -15,6 +15,9 @@ All data is free: OpenStreetMap through Overpass, OSRM for routing, Nominatim fo
   `maps.app.goo.gl` or long `/maps/dir/` links). Start, destination and the stops in between are read
   from it and the route is searched through them. The road line is calculated again with OSRM, so it
   can differ slightly from Google's, especially for alternative routes.
+- **Route options:** when OSRM finds alternatives, "Suchen" first lists them with their main roads
+  ("über A 3 · A 9"), distance and time, drawn on the map. Pick one, then search along it. OSRM does not
+  always return the road you have in mind; if it is missing, add a stop on it.
 - **Filters** by place type, with an "Alle wählen / Alle abwählen" button. On by default: Rastplatz,
   WC and Burger.
 - **"Los"** opens Google Maps navigation to the stop. An optional embedded Google Maps view works
@@ -57,6 +60,7 @@ store, which fixes `CERTIFICATE_VERIFY_FAILED` errors behind antivirus that insp
 | `GET /api/nearby?lat=&lon=` | Stops around a point; the radius widens from 3 km up to 24 km until enough are found |
 | `POST /api/along` | JSON `{from:[lat,lon], to:[lat,lon], via:[[lat,lon],...], radius, ahead_km}` (`via` optional); routes with OSRM and searches along the line |
 | `GET /api/geocode?q=` | Nominatim address search |
+| `POST /api/routes` | JSON `{from, to, via}`; up to 3 route options with `roads`, `total`, `duration`, `route`; `/api/along` takes `alt` to pick one |
 | `POST /api/gmaps` | JSON `{url}`; reads the stops of a Google Maps route link, returns `points` (start, stops, destination) |
 
 ## Caching and speed
