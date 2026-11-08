@@ -103,19 +103,20 @@ def shopEvidence(pois, limit=25):
         return []
 
 def evidenceOf(e):
-    """cafe / bakery element -> (lat, lon, label, strong) or None. strong = has seats, so likely a WC."""
+    """cafe / bakery / restaurant element -> (lat, lon, label, strong, eatery) or None.
+    strong = has seats, so likely a WC. eatery = restaurant / fast food, which only counts for big stores."""
     t = e.get("tags", {})
     lat = e.get("lat") or e.get("center", {}).get("lat")
     lon = e.get("lon") or e.get("center", {}).get("lon")
     if lat is None: return None
     if t.get("amenity") == "cafe":
-        return lat, lon, "Café", True
+        return lat, lon, "Café", True, False
     if t.get("amenity") in ("restaurant", "fast_food"):
-        return lat, lon, "Restaurant", True
+        return lat, lon, "Restaurant", True, True
     if t.get("shop") == "bakery":
         if t.get("indoor_seating") == "yes":
-            return lat, lon, "Bäcker mit Sitzplätzen", True
-        return lat, lon, "Bäcker", False
+            return lat, lon, "Bäcker mit Sitzplätzen", True, False
+        return lat, lon, "Bäcker", False, False
     return None
 
 def enrich(pois, evid):
@@ -124,7 +125,8 @@ def enrich(pois, evid):
     for p in pois:
         r = EVID_RADIUS.get(p["kind"])
         if not r or p["wc"] is True: continue
-        near = [x for x in ev if hav((p["lat"], p["lon"]), (x[0], x[1])) <= r]
+        big = p["kind"] in ("moebel", "bau")
+        near = [x for x in ev if hav((p["lat"], p["lon"]), (x[0], x[1])) <= r and (big or not x[4])]
         strong = [x for x in near if x[3]]
         if strong:
             p["wc"], p["hint"] = "likely", f"{strong[0][2]} beim Markt"
