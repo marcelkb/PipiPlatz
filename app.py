@@ -40,6 +40,7 @@ CHAIN = {"moebel": re.compile(FURNITURE, re.I), "bau": re.compile(DIY, re.I)}
 GROUPS = [
     ["nwr[highway=rest_area]{a};", "nwr[highway=services]{a};"],
     ["nwr[amenity=toilets][access!=private][access!=customers]{a};"],
+    ["nwr[amenity=fuel]{a};"],  # every petrol station: the WC tag is rare, the shop is the stop
     ["nwr[amenity=parking][toilets=yes]{a};", "nwr[amenity=fuel][toilets=yes]{a};",
      "nwr[amenity=restaurant][toilets=yes]{a};", "nwr[shop=supermarket][toilets=yes]{a};"],
     ['nwr[amenity=fast_food]["brand:wikidata"~"^(Q38076|Q177054)$"]{a};'],
