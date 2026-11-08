@@ -16,7 +16,14 @@ OVERPASS = ["https://ovp.dresel.systems/api/interpreter",
             "https://overpass-api.de/api/interpreter",
             "https://overpass.private.coffee/api/interpreter",
             "https://overpass.kumi.systems/api/interpreter",
+            "https://lz4.overpass-api.de/api/interpreter",
+            "https://z.overpass-api.de/api/interpreter",
+            "https://overpass.openstreetmap.ru/api/interpreter",
+            "https://overpass.osm.jp/api/interpreter",
+            "https://overpass.nchc.org.tw/api/interpreter",
             "https://maps.mail.ru/osm/tools/overpass/api/interpreter"]
+# Only add servers that cover the whole world: a regional one (e.g. overpass.osm.ch, Switzerland only)
+# would answer 200 with an empty result for Germany and be taken as valid.
 OSRM = "https://router.project-osrm.org/route/v1/driving/"
 NOMINATIM = "https://nominatim.openstreetmap.org/search"
 
