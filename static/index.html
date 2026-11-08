@@ -54,7 +54,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .seg button:not([aria-pressed=true]):hover{background:rgba(255,255,255,.1)}
 
 /* route form */
-#route{display:none;background:var(--panel);border-bottom:1px solid var(--line);padding:12px;flex:none;max-height:46dvh;overflow:auto}
+#route{display:none;background:var(--panel);border-bottom:1px solid var(--line);padding:12px;flex:none;max-height:52dvh;overflow:auto}
 #route.show{display:block}
 .fld{display:block;margin-bottom:10px}
 .fld>span{display:block;font-size:14px;font-weight:600;color:var(--ink2);margin-bottom:3px}
@@ -65,6 +65,13 @@ button{cursor:pointer;border:0;background:none;padding:0}
 #go:hover{background:var(--blue-deep)}
 #go[disabled]{opacity:.6;cursor:progress}
 @media (prefers-color-scheme:dark){#go{background:#d6e9f8;color:#06263f}#go:hover{background:#fff}}
+.pasterow{display:flex;gap:8px}
+.pasterow input{flex:1;min-width:0}
+#gmlGo{min-height:48px;padding:0 16px;border-radius:8px;border:1.5px solid var(--blue);color:var(--blue);font-weight:700}
+#gmlGo[disabled]{opacity:.6;cursor:progress}
+@media (prefers-color-scheme:dark){#gmlGo{border-color:#d6e9f8;color:#d6e9f8}}
+#viaInfo:empty{display:none}
+#viaInfo{margin:-4px 0 10px;font-size:14px;color:var(--ink2)}
 #sugg:empty{display:none}
 #sugg{margin:-4px 0 10px;border:1.5px solid var(--line);border-radius:8px;overflow:hidden}
 #sugg div{padding:13px 12px;min-height:48px;border-bottom:1px solid var(--line);cursor:pointer}
@@ -167,6 +174,8 @@ button{cursor:pointer;border:0;background:none;padding:0}
   </div>
  </header>
  <div id="route">
+  <div class="fld"><div class="pasterow"><input id="gml" type="url" inputmode="url" aria-label="Google-Maps-Link" placeholder="Google-Maps-Link der geplanten Route" autocomplete="off"><button id="gmlGo" type="button">Laden</button></div></div>
+  <div id="viaInfo" aria-live="polite"></div>
   <label class="fld"><span>Start</span><input id="start" placeholder="leer = mein Standort" autocomplete="off"></label>
   <label class="fld"><span>Ziel</span><input id="dest" placeholder="Stadt oder Adresse" autocomplete="off"></label>
   <div id="sugg"></div>
@@ -299,8 +308,21 @@ $('loc').onclick=()=>{setMode('near');routePanel(false);locate()};
 $('rt').onclick=()=>{setMode('route');routePanel(!$('route').classList.contains('show'))};
 
 // destination autocomplete
-let startPt=null;
-function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const q=inp.value;if(inp.id==='start')startPt=null;else dest=null;if(q.length<3){$('sugg').innerHTML='';return}
+let startPt=null, via=[]; // via: stops between start and destination, from a Google Maps link
+function showVia(){$('viaInfo').textContent=via.length?'Route über: '+via.map(v=>v.name).join(' → '):''}
+function clearVia(){if(via.length){via=[];showVia()}}
+$('gmlGo').onclick=async()=>{
+  const url=$('gml').value.trim();if(!url)return setStatus('Erst einen Google-Maps-Link einfügen',true);
+  $('gmlGo').disabled=true;setStatus('Link wird gelesen…');
+  try{const res=await fetch('/api/gmaps',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+   const r=await res.json();if(r.error)throw r.error;
+   const p=r.points;startPt=p[0];dest=p[p.length-1];via=p.slice(1,-1);
+   $('start').value=startPt.name;$('dest').value=dest.name;$('sugg').innerHTML='';showVia();
+   setStatus(`Route geladen (${p.length} Punkte). Mit „Suchen“ starten.`);
+  }catch(e){setStatus('Fehler: '+e,true)}
+  finally{$('gmlGo').disabled=false}
+};
+function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const q=inp.value;clearVia();if(inp.id==='start')startPt=null;else dest=null;if(q.length<3){$('sugg').innerHTML='';return}
  tm=setTimeout(async()=>{const r=await (await fetch('/api/geocode?q='+encodeURIComponent(q))).json();
   $('sugg').innerHTML=r.map((x,i)=>`<div data-i="${i}">${esc(x.name)}</div>`).join('');
   $('sugg').onclick=e=>{const x=r[e.target.dataset.i];if(!x)return;set(x);inp.value=x.name;$('sugg').innerHTML=''};},400)}}
@@ -312,7 +334,7 @@ $('go').onclick=async()=>{
   if(!org)return setStatus('Erst Standort ermitteln oder Start eingeben',true);
   if(!dest)return setStatus('Ziel aus der Vorschlagsliste wählen',true);
   setStatus('Route + Suche entlang der Strecke… (kann 10-30 s dauern)');skeleton();busy(true,'route');$('go').disabled=true;
-  try{const res=await fetch('/api/along',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:org,to:[dest.lat,dest.lon],radius:+$('rad').value,ahead_km:+$('ahead').value})});
+  try{const res=await fetch('/api/along',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:org,to:[dest.lat,dest.lon],via:via.map(v=>[v.lat,v.lon]),radius:+$('rad').value,ahead_km:+$('ahead').value})});
    const r=await res.json();if(r.error)throw r.error;
    pois=r.pois;routeInfo=r;selId=null;if(routeLine)map.removeLayer(routeLine);
    routeLine=L.featureGroup([L.polyline(r.route,{color:'#003b66',weight:10,opacity:.9}),L.polyline(r.route,{color:'#ffd500',weight:5})]).addTo(map);
