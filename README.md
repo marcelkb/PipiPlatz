@@ -19,6 +19,8 @@ All data is free: OpenStreetMap through Overpass, OSRM for routing, Nominatim fo
 - **Route options:** when OSRM finds alternatives, "Suchen" first lists them with their main roads
   ("über A 3 · A 9"), distance and time, drawn on the map. Pick one, then search along it. OSRM does not
   always return the road you have in mind; if it is missing, add a stop on it.
+- **The route form folds away**: tap the grip above it, or swipe it up, and only that bar stays; the map
+  gets the room. Swipe it down or tap it again to open it, and the grip shows the chosen destination.
 - **Filters** by place type, with an "Alle wählen / Alle abwählen" button. On by default: Rastplatz,
   WC and Burger.
 - **"Los"** opens Google Maps navigation to the stop. An optional embedded Google Maps view works

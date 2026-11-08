@@ -56,6 +56,13 @@ button{cursor:pointer;border:0;background:none;padding:0}
 /* route form */
 #route{display:none;background:var(--panel);border-bottom:1px solid var(--line);padding:12px;flex:none;max-height:52dvh;overflow:auto}
 #route.show{display:block}
+/* grip: tap or swipe up/down to fold the form away and give the map the space */
+#routeTog{display:flex;align-items:center;gap:8px;width:100%;min-height:34px;padding:0 0 8px;border:0;background:none;color:var(--ink2);font:inherit;font-weight:700;text-align:left;cursor:pointer;touch-action:pan-y}
+#routeTog span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#route.collapsed{padding:8px 12px;max-height:none;overflow:visible}
+#route.collapsed #routeTog{padding:0}
+#route.collapsed #routeTog .i{transform:rotate(180deg)}
+#route.collapsed>:not(#routeTog){display:none}
 .fld{display:block;margin-bottom:10px}
 .fld>span{display:block;font-size:14px;font-weight:600;color:var(--ink2);margin-bottom:3px}
 #route input,#route select{width:100%;min-height:48px;border:1.5px solid var(--line);background:var(--ground);border-radius:8px;padding:0 12px}
@@ -170,6 +177,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
  <symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/></symbol>
  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></symbol>
  <symbol id="i-go" viewBox="0 0 24 24"><path d="M4 11l16-7-7 16-2-7z"/></symbol>
+ <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol>
  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
 </svg>
@@ -186,6 +194,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
   </div>
  </header>
  <div id="route">
+  <button id="routeTog" type="button" aria-expanded="true" title="Formular hochschieben"><svg class="i"><use href="#i-chevron"/></svg><span id="routeTogT">Route</span></button>
   <div class="fld"><div class="pasterow"><input id="gml" type="url" inputmode="url" aria-label="Google-Maps-Link" placeholder="Google-Maps-Link der geplanten Route" autocomplete="off"><button id="gmlGo" type="button">Laden</button></div></div>
   <div id="viaInfo" aria-live="polite"></div>
   <label class="fld"><span>Start</span><input id="start" placeholder="leer = mein Standort" autocomplete="off"></label>
@@ -335,7 +344,25 @@ function locate(){
     g.getCurrentPosition(ok,fail,{enableHighAccuracy:true,timeout:30000});
   },{enableHighAccuracy:false,timeout:8000,maximumAge:120000});
 }
-function routePanel(show){$('route').classList.toggle('show',show);$('app').classList.toggle('routing',show);map.invalidateSize()}
+function routePanel(show){$('route').classList.toggle('show',show);$('app').classList.toggle('routing',show);bigMap(false);if(show)routeFold(false);routeTogLabel();map.invalidateSize()}
+// fold the route form away: tap the grip or swipe it up (down again to open)
+const routeEl=$('route'),routeTog=$('routeTog');
+function routeFold(up){
+  routeEl.classList.toggle('collapsed',up);
+  routeTog.setAttribute('aria-expanded',String(!up));
+  routeTog.title=up?'Formular aufklappen':'Formular hochschieben';
+  map.invalidateSize();
+}
+function routeTogLabel(){const t=dest&&dest.name?'Route: '+dest.name:'Route';if($('routeTogT').textContent!==t)$('routeTogT').textContent=t}
+let rTogY=null,rTogAt=0;
+routeTog.onclick=()=>{if(Date.now()-rTogAt<400)return;routeFold(!routeEl.classList.contains('collapsed'))};
+routeTog.addEventListener('touchstart',e=>{rTogY=e.touches[0].clientY},{passive:true});
+routeTog.addEventListener('touchend',e=>{
+  if(rTogY==null)return;
+  const dy=e.changedTouches[0].clientY-rTogY;rTogY=null;
+  if(Math.abs(dy)<25)return; // a tap, handled by onclick
+  rTogAt=Date.now();routeFold(dy<0);
+},{passive:true});
 // double click / double tap on the map: full-height map, sheet hidden (again: back)
 function bigMap(on){$('app').classList.toggle('bigmap',on);map.invalidateSize()}
 let bigAt={touch:0,mouse:0};
@@ -371,7 +398,7 @@ $('gmlGo').onclick=async()=>{
    const r=await res.json().catch(()=>({error:`Server antwortet nicht wie erwartet (HTTP ${res.status}) – bitte nochmal versuchen`}));
    if(r.error)throw r.error;
    const p=r.points;clearAlts();startPt=p[0];dest=p[p.length-1];via=p.slice(1,-1);
-   $('start').value=startPt.name;$('dest').value=dest.name;$('sugg').innerHTML='';showVia();
+   $('start').value=startPt.name;$('dest').value=dest.name;$('sugg').innerHTML='';showVia();routeTogLabel();
    setStatus(`Route geladen (${p.length} Punkte). Mit „Suchen“ starten.`);
   }catch(e){setStatus('Fehler: '+e,true)}
   finally{$('gmlGo').disabled=false}
@@ -400,10 +427,10 @@ async function loadRoutes(org,key){ // true when there is a choice to show
   drawAlts();$('route').classList.add('alts');$('goT').textContent='Entlang dieser Route suchen';
   setStatus(`${alts.length} Routen gefunden. Route wählen, dann suchen.`);map.invalidateSize();map.fitBounds(altLayer.getLayers()[0].getBounds());
   return true}
-function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const q=inp.value;clearVia();clearAlts();if(inp.id==='start')startPt=null;else dest=null;if(q.length<3){$('sugg').innerHTML='';return}
+function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const q=inp.value;clearVia();clearAlts();if(inp.id==='start')startPt=null;else{dest=null;routeTogLabel()}if(q.length<3){$('sugg').innerHTML='';return}
  tm=setTimeout(async()=>{const r=await (await fetch('/api/geocode?q='+encodeURIComponent(q))).json();
   $('sugg').innerHTML=r.map((x,i)=>`<div data-i="${i}">${esc(x.name)}</div>`).join('');
-  $('sugg').onclick=e=>{const x=r[e.target.dataset.i];if(!x)return;set(x);inp.value=x.name;$('sugg').innerHTML=''};},400)}}
+  $('sugg').onclick=e=>{const x=r[e.target.dataset.i];if(!x)return;set(x);inp.value=x.name;$('sugg').innerHTML='';routeTogLabel()};},400)}}
 suggest($('start'),x=>startPt=x);suggest($('dest'),x=>dest=x);
 
 let alongSeq=0,pollT=null,noteT=null;
