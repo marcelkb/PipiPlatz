@@ -326,13 +326,16 @@ def along():
     o, d = j["from"], j["to"]
     radius = int(j.get("radius", 2000))
     ahead_km = float(j.get("ahead_km", 150))
-    url = f"{OSRM}{o[1]},{o[0]};{d[1]},{d[0]}?overview=full&geometries=geojson"
+    via = j.get("via") or []  # stops between start and destination, e.g. from a Google Maps route
+    stops = [o] + via + [d]
+    url = f"{OSRM}{';'.join(f'{x[1]},{x[0]}' for x in stops)}?overview=full&geometries=geojson"
     r = requests.get(url, headers=UA, timeout=30).json()
     if not r.get("routes"):
         return jsonify(error="Keine Route gefunden"), 400
     route = r["routes"][0]
     coords = [(c[1], c[0]) for c in route["geometry"]["coordinates"]]
     pts, cum, total = resample(coords)
+    via_along = [round(cum[min(range(len(pts)), key=lambda i: hav(pts[i], tuple(v)))]) for v in via]
     keep = [i for i, c in enumerate(cum) if c <= ahead_km * 1000] or [0]
     spts, scum = [pts[i] for i in keep], [cum[i] for i in keep]
     # Overpass: chunk the polyline so queries stay small
@@ -355,7 +358,7 @@ def along():
         p["along"] = round(scum[best])
     pois.sort(key=lambda p: p["along"])
     return jsonify(route=coords[::max(1, len(coords)//1500)], total=round(total),
-                   duration=round(route["duration"]), pois=pois, partial=failed)
+                   duration=round(route["duration"]), pois=pois, partial=failed, via_along=via_along)
 
 if __name__ == "__main__":
     import os
