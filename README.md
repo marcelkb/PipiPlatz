@@ -11,6 +11,10 @@ All data is free: OpenStreetMap through Overpass, OSRM for routing, Nominatim fo
 - **In der Nähe**: stops around your position, sorted by distance.
 - **Entlang der Route**: enter start and destination, get stops along the way with the distance ahead
   and the detour to each one. Radius and "how far ahead" are adjustable.
+- **Google-Maps-Link laden**: paste the share link of a route planned in Google Maps (short
+  `maps.app.goo.gl` or long `/maps/dir/` links). Start, destination and the stops in between are read
+  from it and the route is searched through them. The road line is calculated again with OSRM, so it
+  can differ slightly from Google's, especially for alternative routes.
 - **Filters** by place type, with an "Alle wählen / Alle abwählen" button. On by default: Rastplatz,
   WC and Burger.
 - **"Los"** opens Google Maps navigation to the stop. An optional embedded Google Maps view works
@@ -51,8 +55,9 @@ store, which fixes `CERTIFICATE_VERIFY_FAILED` errors behind antivirus that insp
 | Endpoint | Purpose |
 |---|---|
 | `GET /api/nearby?lat=&lon=` | Stops around a point; the radius widens from 3 km up to 24 km until enough are found |
-| `POST /api/along` | JSON `{from:[lat,lon], to:[lat,lon], radius, ahead_km}`; routes with OSRM and searches along the line |
+| `POST /api/along` | JSON `{from:[lat,lon], to:[lat,lon], via:[[lat,lon],...], radius, ahead_km}` (`via` optional); routes with OSRM and searches along the line |
 | `GET /api/geocode?q=` | Nominatim address search |
+| `POST /api/gmaps` | JSON `{url}`; reads the stops of a Google Maps route link, returns `points` (start, stops, destination) |
 
 ## Caching and speed
 
@@ -91,6 +96,9 @@ fair-use limits, so this is meant for personal use. The app sends the User-Agent
 
 ## Known limits
 
+- Google links give stops, not the road line. Stops given only by name are looked up in Nominatim and can
+  be matched wrongly. Short links are followed from the server, which Google may answer with a
+  consent page; then paste the long link.
 - OSM coverage decides everything: a missing or wrong tag gives a wrong WC state.
 - Chain names for furniture and DIY stores are matched by name and may miss some branches.
 - Route searches send two Overpass queries per ~25 route points (one merged POI query, one for
