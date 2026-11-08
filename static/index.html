@@ -382,7 +382,7 @@ async function alongSearch(body,seq,first){
   routeLine=L.featureGroup([L.polyline(r.route,{color:'#003b66',weight:10,opacity:.9}),L.polyline(r.route,{color:'#ffd500',weight:5})]).addTo(map);
   if(first)map.fitBounds(routeLine.getBounds());
   const n=pois.length?`${pois.length} Stopps entlang der Strecke`:r.pending?'erste Stopps werden noch gesucht':'keine Stopps gefunden';
-  setStatus(`Route ${fmt(r.total)}, ${Math.round(r.duration/60)} min · ${n}${r.pending?' (Rest lädt)':''}`);
+  setStatus(`Route ${fmt(r.total)}, ${dur(r.duration)} · ${n}${r.pending?' (Rest lädt)':''}`);
   render();
   if(first)busyRec();
   return r;
