@@ -244,9 +244,17 @@ function setMe(pos,first){
 }
 function locate(){
   if(!navigator.geolocation){setStatus('Keine Geolocation (HTTPS nötig!)',true);return}
-  navigator.geolocation.getCurrentPosition(p=>{setMe(p,true);
-    if(watchId==null)watchId=navigator.geolocation.watchPosition(q=>setMe(q,false),()=>{}, {enableHighAccuracy:true});},
-    e=>setStatus('Standort fehlgeschlagen: '+e.message+' (HTTPS/Berechtigung?)',true),{enableHighAccuracy:true,timeout:15000});
+  const g=navigator.geolocation;
+  const ok=p=>{setMe(p,true);if(watchId==null)watchId=g.watchPosition(q=>setMe(q,false),()=>{},{enableHighAccuracy:true,maximumAge:10000})};
+  const fail=e=>setStatus(e.code===1?'Standort-Zugriff verweigert. In den Browser-Einstellungen für diese Seite erlauben (HTTPS nötig).'
+    :e.code===3?'Kein Standort gefunden (Zeitüberschreitung). Kein GPS-Empfang? Nochmal auf „In der Nähe“ tippen.'
+    :'Standort nicht verfügbar: '+e.message,true);
+  // fast coarse fix first (wifi/cell, may be a bit old); GPS only if that fails, with a longer limit
+  g.getCurrentPosition(ok,e=>{
+    if(e.code===1)return fail(e);
+    setStatus('GPS-Signal wird gesucht…');
+    g.getCurrentPosition(ok,fail,{enableHighAccuracy:true,timeout:30000});
+  },{enableHighAccuracy:false,timeout:8000,maximumAge:120000});
 }
 function routePanel(show){$('route').classList.toggle('show',show);$('app').classList.toggle('routing',show);map.invalidateSize()}
 $('loc').onclick=()=>{setMode('near');routePanel(false);locate()};
