@@ -27,6 +27,9 @@ OVERPASS = ["https://ovp.dresel.systems/api/interpreter",
 # would answer 200 with an empty result for Germany and be taken as valid.
 OSRM = "https://router.project-osrm.org/route/v1/driving/"
 NOMINATIM = "https://nominatim.openstreetmap.org/search"
+PHOTON = "https://photon.komoot.io/api/"
+# The two geocoders cover the same footprint as the old countrycodes list (de,at,nl,be,lu,fr,ch,cz,pl,dk).
+EU_BBOX = "5.86,45.8,24.15,55.1"
 
 LIKELY_SUPER = "Edeka|EDEKA|Rewe|REWE|Kaufland|Globus|Marktkauf|Famila|HIT|real|E center|E-Center"
 BURGER = "McDonald's|Burger King"
@@ -341,12 +344,41 @@ def nearby():
     pois.sort(key=lambda p: p["dist"])
     return jsonify(pois=pois[:80], radius=radius, partial=failed)
 
+def geoList(q, limit):
+    # Nominatim answers a datacentre IP with its block page instead of JSON (a Render deploy gets
+    # nothing but 502s), so Photon - a different host, different operator - is the fallback.
+    r = requests.get(NOMINATIM, params={"q": q, "format": "json",
+                     "countrycodes": "de,at,nl,be,lu,fr,ch,cz,pl,dk", "limit": limit},
+                     headers=UA, timeout=20)
+    try:
+        return [{"name": x["display_name"], "lat": float(x["lat"]), "lon": float(x["lon"])} for x in r.json()]
+    except (ValueError, KeyError, TypeError):
+        p = requests.get(PHOTON, params={"q": q, "lang": "de", "limit": limit, "bbox": EU_BBOX},
+                         headers=UA, timeout=20)
+        try:
+            feats = p.json()["features"]
+        except (ValueError, KeyError, TypeError):
+            raise ValueError(f"Ortssuche nicht erreichbar (Nominatim HTTP {r.status_code}, "
+                             f"Photon HTTP {p.status_code})")
+        out = []
+        for f in feats:
+            pr = f.get("properties", {})
+            street = " ".join(s for s in (pr.get("street"), pr.get("housenumber")) if s)
+            parts = [pr.get("name"), street, pr.get("city"), pr.get("state"), pr.get("country")]
+            name, seen = [], set()
+            for part in parts:  # drop gaps and repeats; Photon often repeats name in city
+                if part and part not in seen:
+                    name.append(part)
+                    seen.add(part)
+            if not name:
+                continue
+            c = f["geometry"]["coordinates"]
+            out.append({"name": ", ".join(name), "lat": float(c[1]), "lon": float(c[0])})
+        return out[:limit]
+
 @app.get("/api/geocode")
 def geocode():
-    r = requests.get(NOMINATIM, params={"q": request.args["q"], "format": "json",
-                     "countrycodes": "de,at,nl,be,lu,fr,ch,cz,pl,dk", "limit": 5},
-                     headers=UA, timeout=20)
-    return jsonify([{"name": x["display_name"], "lat": float(x["lat"]), "lon": float(x["lon"])} for x in r.json()])
+    return jsonify(geoList(request.args["q"], 5))
 
 GMAPS_HOSTS = ("google.com", "google.de", "goo.gl", "g.co")  # only these are ever fetched
 COORD = re.compile(r"^(-?\d{1,3}(?:\.\d+)?),\s*(-?\d{1,3}(?:\.\d+)?)$")
@@ -423,10 +455,9 @@ def gmaps():
         stops = gmapsStops(gmapsResolve(url))
         for st in stops:
             if st["lat"] is None:
-                r = requests.get(NOMINATIM, params={"q": st["name"], "format": "json", "limit": 1,
-                                 "countrycodes": "de,at,nl,be,lu,fr,ch,cz,pl,dk"}, headers=UA, timeout=20).json()
-                if not r: raise ValueError(f"Ort nicht gefunden: {st['name']}")
-                st["lat"], st["lon"] = float(r[0]["lat"]), float(r[0]["lon"])
+                hits = geoList(st["name"], 1)
+                if not hits: raise ValueError(f"Ort nicht gefunden: {st['name']}")
+                st["lat"], st["lon"] = hits[0]["lat"], hits[0]["lon"]
     except ValueError as e:
         return jsonify(error=str(e)), 400
     except requests.RequestException:
