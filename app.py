@@ -1,6 +1,7 @@
 """PipiPlatz - nearest toilet stops (Rastplatz, Raststaette, McDonald's, BK, supermarkets) in Germany.
 Free data only: OpenStreetMap (Overpass), OSRM routing, Nominatim geocoding."""
 import math, time, json, sqlite3, hashlib, os, re
+from urllib.parse import urlparse, parse_qs, unquote, unquote_plus, urljoin
 import requests
 try:  # use the OS certificate store: Python's bundled CAs fail behind TLS-inspecting antivirus
     import truststore
@@ -310,6 +311,79 @@ def geocode():
                      "countrycodes": "de,at,nl,be,lu,fr,ch,cz,pl,dk", "limit": 5},
                      headers=UA, timeout=20)
     return jsonify([{"name": x["display_name"], "lat": float(x["lat"]), "lon": float(x["lon"])} for x in r.json()])
+
+GMAPS_HOSTS = ("google.com", "google.de", "goo.gl", "g.co")  # only these are ever fetched
+COORD = re.compile(r"^(-?\d{1,3}(?:\.\d+)?),\s*(-?\d{1,3}(?:\.\d+)?)$")
+
+def hostOk(url):
+    u = urlparse(url)
+    h = (u.hostname or "").lower()
+    return u.scheme == "https" and any(h == x or h.endswith("." + x) for x in GMAPS_HOSTS)
+
+def gmapsResolve(url):
+    """Follow a short Google Maps link (maps.app.goo.gl/...) to the full /maps/dir/ URL.
+    Refuses every host that is not Google, also in redirects (no fetching of arbitrary URLs)."""
+    for _ in range(6):
+        if not hostOk(url):
+            raise ValueError("Das ist kein Google-Maps-Link")
+        u = urlparse(url)
+        if (u.hostname or "").startswith("consent."):  # consent wall: the real URL is in ?continue=
+            nxt = parse_qs(u.query).get("continue", [""])[0]
+            if not nxt: raise ValueError("Google verlangt eine Zustimmung, bitte den langen Link einfügen")
+            url = nxt
+            continue
+        if "/maps/dir" in u.path or "api=1" in u.query:
+            return url
+        r = requests.get(url, headers=UA, timeout=10, allow_redirects=False)
+        loc = r.headers.get("Location")
+        if not (300 <= r.status_code < 400 and loc):
+            return url
+        url = urljoin(url, loc)
+    raise ValueError("Zu viele Weiterleitungen")
+
+def stopOf(text):
+    text = text.strip()
+    m = COORD.match(text)
+    return {"name": text, "lat": float(m[1]) if m else None, "lon": float(m[2]) if m else None}
+
+def gmapsStops(url):
+    """Full Google Maps directions URL -> [{name, lat, lon}] (lat / lon None when only a name is known)."""
+    u = urlparse(url)
+    q = parse_qs(u.query)
+    if q.get("api") == ["1"] and q.get("destination"):
+        raw = q.get("origin", []) + (q.get("waypoints", [""])[0].split("|") if q.get("waypoints") else []) + q["destination"]
+    elif "/dir/" in u.path:
+        raw = []
+        for seg in u.path.split("/dir/", 1)[1].split("/"):
+            if seg.startswith("@") or seg.startswith("data="): break
+            if seg.strip(): raw.append(unquote_plus(seg))
+    else:
+        raw = []
+    stops = [stopOf(x) for x in raw if x.strip()]
+    if len(stops) < 2:
+        raise ValueError("Kein Google-Maps-Routenlink: Start und Ziel fehlen")
+    # a route link also carries exact coordinates per stop; use them only if they match one to one
+    pairs = re.findall(r"!2m2!1d(-?\d+\.?\d*)!2d(-?\d+\.?\d*)", unquote(url))
+    if len(pairs) == len(stops):
+        for st, (lon, lat) in zip(stops, pairs):
+            if st["lat"] is None: st["lat"], st["lon"] = float(lat), float(lon)
+    return stops
+
+@app.post("/api/gmaps")
+def gmaps():
+    """Google Maps route link -> ordered stops with coordinates (start, via..., destination)."""
+    try:
+        url = ((request.get_json(silent=True) or {}).get("url") or "").strip()
+        stops = gmapsStops(gmapsResolve(url))
+        for st in stops:
+            if st["lat"] is None:
+                r = requests.get(NOMINATIM, params={"q": st["name"], "format": "json", "limit": 1,
+                                 "countrycodes": "de,at,nl,be,lu,fr,ch,cz,pl,dk"}, headers=UA, timeout=20).json()
+                if not r: raise ValueError(f"Ort nicht gefunden: {st['name']}")
+                st["lat"], st["lon"] = float(r[0]["lat"]), float(r[0]["lon"])
+    except ValueError as e:
+        return jsonify(error=str(e)), 400
+    return jsonify(points=stops)
 
 def resample(coords, step=1500):
     """coords: [(lat,lon)] -> points every ~step metres plus cumulative distance."""
