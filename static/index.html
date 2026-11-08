@@ -144,6 +144,10 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .go:hover{background:#ffe24d}
 .empty{padding:20px 16px;color:var(--ink2);line-height:1.35}
 .empty b{display:block;color:var(--ink);font-size:19px;margin-bottom:4px}
+.opp{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line);color:var(--ink2);font-size:14px}
+.opp span{flex:1}
+.oppTog{padding:5px 11px;border:1.5px solid var(--line);border-radius:7px;color:var(--link);font-weight:700;font-size:14px;background:none}
+.oppTag{color:var(--maybe);font-weight:700}
 .skel{display:grid;grid-template-columns:78px 22px 1fr 76px;gap:6px;padding:14px 12px 14px 8px;border-bottom:1px solid var(--line)}
 .skel i{display:block;height:26px;border-radius:5px;background:var(--skel);animation:pulse 1.2s ease-in-out infinite}
 .skel i:nth-child(2){height:16px;width:16px;border-radius:50%;margin-left:3px}
@@ -221,13 +225,14 @@ button{cursor:pointer;border:0;background:none;padding:0}
 <script>
 const KINDS={rastplatz:['rastplatz','Rastplatz'],wc:['wc','WC'],burger:['burger','Burger'],raststaette:['raststaette','Raststätte'],tank:['tank','Tankstelle'],super:['super','Supermarkt'],moebel:['moebel','Möbelhaus'],bau:['bau','Baumarkt'],mall:['mall','Einkaufszentrum'],bahnhof:['bahnhof','Bahnhof'],other:['other','Restaurant']};
 const DEFAULT_ON=['rastplatz','wc','burger'];
+const MWY_FACILITY=new Set(['raststaette','rastplatz','wc']); // only these are unusable from the other carriageway
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ico=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const map=L.map('map',{zoomControl:false,doubleClickZoom:false}).setView([51.1,10.4],6);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
 const layer=L.layerGroup().addTo(map); let routeLine=null, me=null, meMarker=null;
-let pois=[], dest=null, routeInfo=null, filt=new Set(DEFAULT_ON), watchId=null, selId=null;
+let pois=[], dest=null, routeInfo=null, filt=new Set(DEFAULT_ON), watchId=null, selId=null, showOpp=false;
 const markers={};
 
 function setStatus(t,err){const s=$('status');s.textContent=t;s.classList.toggle('err',!!err)}
@@ -276,12 +281,16 @@ function skeleton(){$('list').innerHTML='<div class="skel"><i></i><i></i><i></i>
 
 function render(){
   layer.clearLayers();for(const k in markers)delete markers[k];
-  const rows=pois.filter(p=>filt.has(p.kind));
-  $('list').innerHTML=rows.map(p=>{
+  const all=pois.filter(p=>filt.has(p.kind));
+  const opp=all.filter(p=>p.opp&&MWY_FACILITY.has(p.kind));   // not reachable without turning around
+  const rows=showOpp?all:all.filter(p=>!(p.opp&&MWY_FACILITY.has(p.kind)));
+  const banner=opp.length?`<div class="opp"><span>${opp.length} Raststätte/Rastplatz/WC auf der Gegenfahrbahn${showOpp?'':' ausgeblendet'}</span><button class="oppTog" type="button">${showOpp?'ausblenden':'anzeigen'}</button></div>`:'';
+  $('list').innerHTML=banner+rows.map(p=>{
     const [v,u]=fmtP(p.along!=null?p.along:p.dist);
     const [icn,kn]=KINDS[p.kind];
     const meta=[`${ico(icn)}${kn}`];
     if(p.along!=null)meta.push(esc(fmt(p.off))+' abseits');
+    if(p.opp)meta.push(`<b class="oppTag">${MWY_FACILITY.has(p.kind)?'Gegenfahrbahn':'andere Seite'}</b>`);
     if(p.hours)meta.push(esc(p.hours));
     if(p.fee)meta.push('Gebühr '+esc({yes:'Ja',no:'Nein'}[String(p.fee).toLowerCase()]||p.fee));
     if(p.hint)meta.push(esc(p.hint));
@@ -299,7 +308,8 @@ function select(id,scroll){
   if(scroll){const el=document.querySelector(`.poi[data-id="${CSS.escape(id)}"]`);if(el)el.scrollIntoView({block:'nearest'})}
 }
 function pick(el){const p=pois.find(x=>x.id===el.dataset.id);if(!p)return;select(p.id,false);map.setView([p.lat,p.lon],16);}
-$('list').onclick=e=>{const el=e.target.closest('.poi');if(!el||e.target.closest('a'))return;pick(el)};
+$('list').onclick=e=>{if(e.target.closest('.oppTog')){showOpp=!showOpp;render();return}
+  const el=e.target.closest('.poi');if(!el||e.target.closest('a'))return;pick(el)};
 $('list').onkeydown=e=>{if(e.key!=='Enter'||e.target.closest('a'))return;const el=e.target.closest('.poi');if(el)pick(el)};
 
 async function nearby(){

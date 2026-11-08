@@ -58,7 +58,7 @@ class AlongAlt(Base):
         r, url = self.call("/api/along", dict(self.body, alt=1))
         self.assertEqual(r.get_json()["duration"], 15900)
         self.assertIn("alternatives=3", url)
-        self.assertIn("steps=false", url)
+        self.assertIn("steps=true", url)  # the steps carry the road type for the direction check
 
     def test_alt_out_of_range_falls_back_to_last(self):
         r, _ = self.call("/api/along", dict(self.body, alt=7))

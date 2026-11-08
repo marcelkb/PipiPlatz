@@ -19,6 +19,11 @@ All data is free: OpenStreetMap through Overpass, OSRM for routing, Nominatim fo
 - **Route options:** when OSRM finds alternatives, "Suchen" first lists them with their main roads
   ("über A 3 · A 9"), distance and time, drawn on the map. Pick one, then search along it. OSRM does not
   always return the road you have in mind; if it is missing, add a stop on it.
+- **Driving direction:** the "abseits" distance is measured to the road line itself, and a motorway
+  stop that lies left of your direction within 150 m is on the other carriageway (the mirrored
+  Raststätte). Those are hidden behind a "anzeigen" bar; other places in the opposite direction stay
+  in the list with an "andere Seite" note. A stop 1 km off the motorway is a normal detour over an
+  exit and is never hidden.
 - **The route form folds away**: tap the grip above it, or swipe it up, and only that bar stays; the map
   gets the room. Swipe it down or tap it again to open it, and the grip shows the chosen destination.
 - **Filters** by place type, with an "Alle wählen / Alle abwählen" button. On by default: Rastplatz,

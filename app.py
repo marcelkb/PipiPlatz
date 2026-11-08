@@ -1,6 +1,6 @@
 """PipiPlatz - nearest toilet stops (Rastplatz, Raststaette, McDonald's, BK, supermarkets) in Germany.
 Free data only: OpenStreetMap (Overpass), OSRM routing, Nominatim geocoding."""
-import math, time, json, sqlite3, hashlib, os, re
+import math, time, json, sqlite3, hashlib, os, re, bisect
 from urllib.parse import urlparse, parse_qs, unquote, unquote_plus, urljoin
 import requests
 try:  # use the OS certificate store: Python's bundled CAs fail behind TLS-inspecting antivirus
@@ -60,6 +60,7 @@ EVID_RADIUS = {"super": 80, "moebel": 150, "bau": 150}
 
 WORKERS = 5  # public Overpass servers handle only a few requests per client at once
 ALONG_CUT = 35  # s a route search waits before answering with what is ready; the rest finishes in the background
+OPPOSITE_M = 150  # m: a motorway stop this close but on the left is on the other carriageway
 
 def allQueries(a, limit, merge=False):
     """[(is_evidence, query)] for one search area `a` (an Overpass area filter like '(around:...)').
@@ -445,6 +446,37 @@ def osrmRoutes(stops, alternatives=False, steps=False):
     r = requests.get(f"{OSRM}{coords}?overview=full&geometries=geojson{alt}{st}", headers=UA, timeout=30).json()
     return r.get("routes") or []
 
+MWY = re.compile(r"^A\s*\d")  # Autobahn refs ("A 3", "A 555"); B/L/K roads are not divided like that
+
+def segList(route):
+    """Every segment of the route with its position and whether it is a motorway.
+    [(a, b, start_m, length_m, motorway)] - built from the OSRM steps, so the road is known."""
+    out, cum = [], 0.0
+    for leg in route.get("legs", []):
+        for st in leg.get("steps", []):
+            mway = any(MWY.match(r.strip()) for r in (st.get("ref") or "").split(";") if r.strip())
+            cs = [(c[1], c[0]) for c in (st.get("geometry") or {}).get("coordinates", [])]
+            for a, b in zip(cs, cs[1:]):
+                d = hav(a, b)
+                if d < 1:
+                    continue
+                out.append((a, b, cum, d, mway)); cum += d
+    return out, cum
+
+def nearestSeg(segs, pt, lo=0, hi=None):
+    """Closest piece of the route to pt: (distance m, metres along the route, left of driving?, motorway)."""
+    la = math.radians(pt[0]); kx = 111320 * math.cos(la); ky = 111320
+    px, py = pt[1] * kx, pt[0] * ky
+    best = (1e18, 0.0, False, False)
+    for a, b, st, L, mway in segs[lo:hi]:
+        ax, ay = a[1] * kx, a[0] * ky
+        dx, dy = b[1] * kx - ax, b[0] * ky - ay
+        t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+        d = math.hypot(px - ax - t * dx, py - ay - t * dy)
+        if d < best[0]:
+            best = (d, st + t * L, dx * (py - ay) - dy * (px - ax) > 0, mway)
+    return best
+
 def mainRoads(route, n=3):
     """The roads (A 3, B 42 ...) a route spends most of its distance on, longest first."""
     dist = {}
@@ -475,7 +507,7 @@ def along():
     ahead_km = float(j.get("ahead_km", 150))
     via = j.get("via") or []  # stops between start and destination, e.g. from a Google Maps route
     alt = max(0, int(j.get("alt") or 0))  # index of the route option picked in /api/routes
-    rs = osrmRoutes([o] + via + [d], alternatives=alt > 0)
+    rs = osrmRoutes([o] + via + [d], alternatives=alt > 0, steps=True)
     if not rs:
         return jsonify(error="Keine Route gefunden"), 400
     route = rs[min(alt, len(rs) - 1)]
@@ -499,10 +531,22 @@ def along():
     pois = dedupe([p for p in map(to_poi, els) if p])
     # while the rest is still running, do not wait for this second query as well
     enrich(pois, evid if pending else evid + shopEvidence(pois))
+    segs, _ = segList(route)
+    starts = [s[2] for s in segs]
     for p in pois:
         best = min(range(len(spts)), key=lambda i: hav(spts[i], (p["lat"], p["lon"])))
-        p["off"] = round(hav(spts[best], (p["lat"], p["lon"])))
-        p["along"] = round(scum[best])
+        if segs:  # the road itself, not the 1.5 km grid: true distance, side and road type
+            lo = bisect.bisect_left(starts, scum[best] - 1600)
+            hi = bisect.bisect_right(starts, scum[best] + 1600)
+            d, along, left, mway = nearestSeg(segs, (p["lat"], p["lon"]), lo, hi)
+            if d > 1e17:  # nothing in that window (step and overview distances drift): use the whole line
+                d, along, left, mway = nearestSeg(segs, (p["lat"], p["lon"]))
+            p["off"], p["along"] = round(d), round(along)
+            if left and mway and d <= OPPOSITE_M:
+                p["opp"] = True  # across the median: only the other carriageway gets there
+        else:
+            p["off"] = round(hav(spts[best], (p["lat"], p["lon"])))
+            p["along"] = round(scum[best])
     pois.sort(key=lambda p: p["along"])
     return jsonify(route=coords[::max(1, len(coords)//1500)], total=round(total),
                    duration=round(route["duration"]), pois=pois, partial=failed, pending=pending,
