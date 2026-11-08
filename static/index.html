@@ -102,15 +102,26 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .chip[aria-pressed=true]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg)}
 
 /* map */
-#views{flex:1;position:relative;min-height:90px}
+#views{flex:1;position:relative;min-height:90px;overflow:hidden}
 #map,#gm{position:absolute;inset:0}
-#map{touch-action:manipulation} /* keeps iOS from turning the double tap into a page zoom */
+#map{touch-action:manipulation;inset:calc(-1*var(--pady,0px)) calc(-1*var(--padx,0px));transform:rotate(var(--rot,0deg));transform-origin:50% 50%;will-change:transform} /* two-finger rotation, see setRot */
 #gm{display:none;border:0;width:100%;height:100%}
 @media (prefers-color-scheme:dark){.leaflet-tile-pane{filter:brightness(.72) contrast(1.1)}}
 .pin{width:36px;height:36px;border-radius:9px;background:var(--blue);color:#fff;border:2px solid #fff;display:grid;place-items:center;box-shadow:0 2px 5px rgba(0,0,0,.35)}
 .pin.sel{background:var(--yellow);color:var(--yellow-ink);border-color:var(--yellow-ink)}
 .leaflet-popup-content{font-family:var(--sans);font-size:16px;margin:12px 14px}
 .leaflet-popup-content a{color:var(--link);font-weight:600}
+/* the map turns, its labels do not: an inner layer is turned back, because a rotation on the
+   Leaflet-positioned element itself would swing it around a second centre and displace it.
+   The popup turns around its tip, so the pointer stays glued to the stop at any angle. */
+.unturn{width:100%;height:100%;rotate:calc(-1*var(--rot,0deg))}
+.leaflet-popup-content-wrapper{transform-origin:50% calc(100% + 11.93px);rotate:calc(-1*var(--rot,0deg))}
+.leaflet-popup-tip-container{transform-origin:20px 12.93px;rotate:calc(-1*var(--rot,0deg))}
+.leaflet-control-container{position:absolute;inset:var(--pady,0px) var(--padx,0px);rotate:calc(-1*var(--rot,0deg));z-index:1000;pointer-events:none} /* stays viewport-sized, so the controls keep their corners; clicks pass through to the map */
+.leaflet-control{pointer-events:auto}
+.north{width:44px;height:44px;border-radius:50%;background:var(--panel);color:var(--blue);border:1.5px solid var(--line);display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.north svg{width:22px;height:22px;fill:currentColor}
+.north[hidden]{display:none}
 
 /* strip-map list */
 #sheet{flex:0 0 46%;display:flex;flex-direction:column;min-height:0;background:var(--panel);border-top:1px solid var(--line)}
@@ -231,6 +242,61 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const ico=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const map=L.map('map',{zoomControl:false,doubleClickZoom:false}).setView([51.1,10.4],6);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+
+// Two-finger rotation, as in Google Maps. The container is turned and given 22% extra on every side
+// (1.44x covers a 45 degree turn) so no corner shows through; pins, popups and controls are turned
+// back so they stay upright. Scaling the container instead would keep the view identical, but a
+// scaled raster tile grid rounds differently per tile and leaves a visible seam across the map.
+const mapBox=$('map');
+let rot=0, rot0=0, ang0=0, spinning=false, padded=false;
+function padMap(on){
+  if(on===padded)return;
+  padded=on;
+  const box=mapBox.parentElement; // the viewport the map is seen through
+  const c=map.getCenter(), z=map.getZoom();
+  mapBox.style.setProperty('--padx',(on?0.22*box.clientWidth:0)+'px');
+  mapBox.style.setProperty('--pady',(on?0.22*box.clientHeight:0)+'px');
+  map.invalidateSize({pan:false}); // the container changed size: load tiles for the new area
+  map.setView(c,z,{animate:false,reset:true}); // invalidateSize shifts the centre; put it back
+  if(map._popup)map._popup.update(); // the open popup keeps its place on the re-laid-out map
+}
+function setRot(deg){
+  rot=((deg+180)%360+360)%360-180;
+  mapBox.style.setProperty('--rot',rot.toFixed(2)+'deg');
+  const nb=$('north'); if(nb)nb.hidden=Math.abs(rot)<0.5;
+}
+// Leaflet reads a pointer through the container's bounding box, which is the axis-aligned box of a
+// turned element. Undo the turn around the centre so taps and drags stay exact.
+const mec=map.mouseEventToContainerPoint.bind(map);
+map.mouseEventToContainerPoint=e=>{
+  if(!rot)return mec(e);
+  const r=mapBox.getBoundingClientRect(), w=mapBox.offsetWidth, h=mapBox.offsetHeight;
+  const cx=r.left+r.width/2, cy=r.top+r.height/2, a=-rot*Math.PI/180, dx=e.clientX-cx, dy=e.clientY-cy;
+  return L.point(w/2+dx*Math.cos(a)-dy*Math.sin(a), h/2+dx*Math.sin(a)+dy*Math.cos(a));
+};
+const two=e=>e.touches.length===2?[e.touches[0],e.touches[1]]:null;
+const ang=t=>Math.atan2(t[1].clientY-t[0].clientY,t[1].clientX-t[0].clientX)*180/Math.PI;
+mapBox.addEventListener('touchstart',e=>{const t=two(e);if(!t)return;spinning=true;ang0=ang(t);rot0=rot},{passive:true});
+mapBox.addEventListener('touchmove',e=>{
+  if(!spinning)return; const t=two(e); if(!t)return;
+  let d=ang(t)-ang0; d=((d+180)%360+360)%360-180;  // shortest way round
+  setRot(rot0+d);
+  if(Math.abs(rot)>3)padMap(true); // a plain pinch never gets here, so it keeps its size
+  e.preventDefault();
+},{passive:false});
+mapBox.addEventListener('touchend',e=>{
+  if(e.touches.length>=2)return;
+  spinning=false;
+  if(Math.abs(rot)<=0.5){setRot(0);padMap(false)}
+},{passive:true});
+mapBox.addEventListener('touchcancel',()=>{spinning=false},{passive:true});
+const North=L.Control.extend({options:{position:'topright'},onAdd(){
+  const b=L.DomUtil.create('button','north'); b.id='north'; b.type='button'; b.hidden=true;
+  b.title='Nach Norden'; b.setAttribute('aria-label','Karte nach Norden drehen');
+  b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l5 16-5-4-5 4z"/></svg>';
+  L.DomEvent.disableClickPropagation(b); L.DomEvent.on(b,'click',()=>{setRot(0);padMap(false)});
+  return b;}});
+new North().addTo(map);
 const layer=L.layerGroup().addTo(map); let routeLine=null, me=null, meMarker=null;
 let pois=[], dest=null, routeInfo=null, filt=new Set(DEFAULT_ON), watchId=null, selId=null, showOpp=false;
 const markers={};
@@ -260,7 +326,7 @@ const gmNav=p=>{ // navigate to POI; if a route is active, keep the final destin
     return `${base}${o?`&origin=${o[0]},${o[1]}`:''}&destination=${dest.lat},${dest.lon}&waypoints=${wp}`}
   return `${base}&destination=${p.lat},${p.lon}`;
 };
-const pinIcon=(p,sel)=>L.divIcon({html:`<div class="pin${sel?' sel':''}">${ico(KINDS[p.kind][0])}</div>`,className:'',iconSize:[36,36],iconAnchor:[18,18]});
+const pinIcon=(p,sel)=>L.divIcon({html:`<div class="unturn"><div class="pin${sel?' sel':''}">${ico(KINDS[p.kind][0])}</div></div>`,className:'',iconSize:[36,36],iconAnchor:[18,18]});
 
 // time estimate: median of the last durations per search mode, kept in localStorage
 const DEF_EST={nearby:6,route:25};
