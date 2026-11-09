@@ -465,6 +465,8 @@ def gmapsStops(url):
     stops = [stopOf(x) for x in raw if x.strip()]
     if len(stops) < 2:
         raise ValueError("Kein Google-Maps-Routenlink: Start und Ziel fehlen")
+    if len(stops) > MAX_VIA + 2:  # each unnamed stop costs a geocoder request; /api/along takes no more anyway
+        raise ValueError(f"Zu viele Stopps im Link (höchstens {MAX_VIA + 2}, mit Start und Ziel)")
     # a route link also carries exact coordinates per stop; use them only if they match one to one
     pairs = re.findall(r"!2m2!1d(-?\d+\.?\d*)!2d(-?\d+\.?\d*)", unquote(url))
     if len(pairs) == len(stops):

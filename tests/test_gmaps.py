@@ -96,6 +96,36 @@ class Resolve(unittest.TestCase):
             with self.assertRaises(ValueError):
                 app.gmapsResolve("https://maps.app.goo.gl/abc")
 
+class StopCap(unittest.TestCase):
+    """A link with hundreds of stops would geocode hundreds of names against Nominatim (B8)."""
+    LIMIT = app.MAX_VIA + 2          # start + via + destination: what /api/along accepts
+
+    def post(self, n, names):
+        calls = []
+        def get(u, **kw):
+            calls.append(u)
+            return Resp(data=[{"display_name": "x", "lat": "50.0", "lon": "8.0"}])
+        seg = (lambda i: "Ort%d" % i) if names else (lambda i: "50.%d,8.%d" % (i, i))
+        with mock.patch.object(app.requests, "get", get):
+            r = app.app.test_client().post("/api/gmaps", json={"url": DIR + "/".join(seg(i) for i in range(n))})
+        return r, calls
+
+    def test_too_many_stops_are_refused_before_any_geocoding(self):
+        r, calls = self.post(self.LIMIT + 1, names=True)
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("Stopps", r.get_json()["error"])
+        self.assertEqual(calls, [], "names were geocoded for a refused link")
+
+    def test_a_huge_link_is_refused_too(self):
+        r, calls = self.post(500, names=True)
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(calls, [])
+
+    def test_the_largest_allowed_route_still_works(self):
+        r, _ = self.post(self.LIMIT, names=False)
+        self.assertEqual(r.status_code, 200, r.get_json())
+        self.assertEqual(len(r.get_json()["points"]), self.LIMIT)
+
 class Endpoint(unittest.TestCase):
     def test_geocodes_names_without_coordinates(self):
         def get(u, **kw):
