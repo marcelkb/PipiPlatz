@@ -27,6 +27,14 @@ class AlongCut(unittest.TestCase):
         mock.patch.object(app, "WORKERS", 2).start()
 
     def tearDown(self):
+        # The searches leave queued queries in the background. Let them finish against a stub that
+        # fails at once, while the temp DB and the mocks are still in place: otherwise they run after
+        # stopall() against the real Overpass servers and write into the production cache.db.
+        def refuse(q):
+            raise RuntimeError("test over")
+        with mock.patch.object(app, "overpass_live", refuse):
+            self.waitBackground(timeout=30)
+        self.assertFalse(app.INFLIGHT, "background queries are still running")
         app.INFLIGHT.clear()
         app.DEAD.clear()
         mock.patch.stopall()
