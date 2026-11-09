@@ -296,6 +296,26 @@ map.mouseEventToContainerPoint=e=>{
   const cx=r.left+r.width/2, cy=r.top+r.height/2, a=-rot*Math.PI/180, dx=e.clientX-cx, dy=e.clientY-cy;
   return L.point(w/2+dx*Math.cos(a)-dy*Math.sin(a), h/2+dx*Math.sin(a)+dy*Math.cos(a));
 };
+// Dragging has the same problem: Leaflet's Draggable moves the map pane by the raw screen delta of
+// the pointer, but the pane lives in the turned frame, so on a turned map the content slid off at an
+// angle to the finger. Turn the delta back before Leaflet sees it.
+// <pan-rotation>
+function unturn(dx,dy,deg){
+  const a=-deg*Math.PI/180, c=Math.cos(a), s=Math.sin(a);
+  return [dx*c-dy*s, dx*s+dy*c];
+}
+// </pan-rotation>
+const dragMove=L.Draggable.prototype._onMove;
+L.Draggable.prototype._onMove=function(e){
+  if(!rot||(e.touches&&e.touches.length!==1))return dragMove.call(this,e); // pinch: Leaflet ignores it anyway
+  const p=e.touches?e.touches[0]:e, s=this._startPoint;
+  const [dx,dy]=unturn(p.clientX-s.x,p.clientY-s.y,rot);
+  // Leaflet divides the delta by the CSS scale it measures (bounding box / layout size), which for a
+  // turned box is bigger than 1 although nothing is scaled: multiply it back in.
+  const k=this._parentScale||{x:1,y:1};
+  return dragMove.call(this,{clientX:s.x+dx*k.x,clientY:s.y+dy*k.y,preventDefault:()=>e.preventDefault(),
+    target:e.target,type:e.type,originalEvent:e});
+};
 const two=e=>e.touches.length===2?[e.touches[0],e.touches[1]]:null;
 const ang=t=>Math.atan2(t[1].clientY-t[0].clientY,t[1].clientX-t[0].clientX)*180/Math.PI;
 mapBox.addEventListener('touchstart',e=>{const t=two(e);if(!t)return;spinning=true;ang0=ang(t);rot0=rot},{passive:true});
