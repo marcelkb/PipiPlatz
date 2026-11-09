@@ -314,8 +314,9 @@ def to_poi(e):
         return None  # only the big chains, or shops that say they have a WC
     if t.get("toilets") == "no" and kind in ("burger", "super", "moebel", "bau", "mall", "bahnhof"):
         return None  # OSM says explicitly: no WC
+    own = t.get("name", "")  # a rest area is titled "Rastplatz"; its own name goes in small letters below
     return {"id": f'{e["type"]}{e["id"]}', "lat": lat, "lon": lon, "kind": kind,
-            "name": name, "wc": wc, "hours": t.get("opening_hours", ""),
+            "name": name, "sub": own if own and own != name else "", "wc": wc, "hours": t.get("opening_hours", ""),
             "fee": t.get("toilets:fee") or t.get("fee") or ""}
 
 def dedupe(pois):
