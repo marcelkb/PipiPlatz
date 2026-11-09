@@ -23,8 +23,8 @@ ROUTES = [
 
 pool = ThreadPoolExecutor(8)
 
-def drive(name, a, b):
-    r = requests.post(f"{BASE}/api/along", json={"from": a, "to": b, "via": [],
+def drive(name, a, b, via=None):
+    r = requests.post(f"{BASE}/api/along", json={"from": a, "to": b, "via": via or [],
                       "alt": 0, "radius": 1000, "ahead_km": 150}, timeout=300)
     r.raise_for_status()
     j = r.json()
@@ -33,7 +33,8 @@ def drive(name, a, b):
 
 def audit(j):
     """Recompute side and detour for every motorway-facility stop on the true route."""
-    route = app.osrmRoutes([j["from"], j["to"]], steps=True)  # steps: segList needs them for side/road type
+    # same stops the app searched along (via points included); steps: segList needs them for side/road type
+    route = app.osrmRoutes([j["from"], *(j.get("via") or []), j["to"]], steps=True)
     if not route: raise RuntimeError("OSRM gave no route")
     coords = [(c[1], c[0]) for c in route[0]["geometry"]["coordinates"]]
     segs, _ = app.segList(route[0])
@@ -49,7 +50,12 @@ def audit(j):
     dts = {id(r["p"]): pool.submit(app.accessDetour, coords, (r["p"]["lat"], r["p"]["lon"])) for r in rows}
     problems, edge = [], []
     for r in rows:
-        det = dts[id(r["p"])].result()
+        try:
+            det = dts[id(r["p"])].result()
+            r["det_failed"] = False
+        except Exception:  # one OSRM error leaves this stop unverified, like det=None
+            det = None
+            r["det_failed"] = True
         r["det"] = round(det) if det else None
         r["incut"] = id(r["p"]) in incut
         if det is None or not r["mway"]:  # unverified or not on the motorway: the side test decides
@@ -70,16 +76,24 @@ def audit(j):
                for q in rows if q is not p): twins += 1
     return rows, problems, edge, twins
 
+def saveEvidence(out):
+    with open(os.environ.get("TEMP", "/tmp") + "/opposite_evidence.json", "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, indent=1)
+
 def main():
     out, allprob = [], []
-    for name, a, b in ROUTES:
+    for name, a, b, *rest in ROUTES:  # an optional 4th element carries the via points
+        via = rest[0] if rest else []
         t0 = time.time()
         try:
-            j = drive(name, a, b)
+            j = drive(name, a, b, via)
         except Exception as e:
             print(f"{name}: FAILED to search ({e})"); continue
-        j["from"], j["to"] = a, b
-        rows, problems, edge, twins = audit(j)
+        j["from"], j["to"], j["via"] = a, b, via
+        try:
+            rows, problems, edge, twins = audit(j)
+        except Exception as e:
+            print(f"{name}: FAILED to audit ({e})"); continue
         flagged = [r for r in rows if r["got"]]
         allprob += [(name, r) for r in problems]
         print(f"\n== {name}  ({time.time()-t0:.0f} s, {len(j['pois'])} stops, "
@@ -98,11 +112,11 @@ def main():
                 print(f"   MISSED-BY-150M {r['name']} d={r['d']} det={r['det']}  <- really across, never checked")
         out.append({"route": name, "rows": rows, "problems": problems, "edge": edge,
                     "pending": j.get("pending"), "total_stops": len(j["pois"])})
+        saveEvidence(out)  # after every route, so a crash later keeps what was measured
     print("\n==== VERDICT")
     print(f"routes: {len(out)}/{len(ROUTES)} audited, mismatches: {len(allprob)}, "
           f"missed-by-150m: {sum(len(o['edge']) for o in out)}")
-    with open(os.environ.get("TEMP", "/tmp") + "/opposite_evidence.json", "w", encoding="utf-8") as f:
-        json.dump(out, f, ensure_ascii=False, indent=1)
+    saveEvidence(out)
     print("evidence: %TEMP%/opposite_evidence.json")
 
 if __name__ == "__main__":
