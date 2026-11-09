@@ -395,10 +395,26 @@ $('list').onclick=e=>{if(e.target.closest('.oppTog')){showOpp=!showOpp;render();
   const el=e.target.closest('.poi');if(!el||e.target.closest('a'))return;pick(el)};
 $('list').onkeydown=e=>{if(e.key!=='Enter'||e.target.closest('a'))return;const el=e.target.closest('.poi');if(el)pick(el)};
 
+// fetch + JSON. A dropped connection (Safari: "TypeError: Load failed", Chrome: "Failed to fetch") or a
+// 5xx page from a sleeping server is retried twice, then it ends as a readable message, never a raw TypeError.
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const RETRY_WAIT=[1500,4000];
+async function api(url,opt){
+  for(let k=0;;k++){
+    let res;
+    try{res=await fetch(url,opt)}
+    catch(e){if(k<RETRY_WAIT.length){await sleep(RETRY_WAIT[k]);continue}throw 'Verbindung zum Server unterbrochen – bitte nochmal versuchen'}
+    const r=await res.json().catch(()=>null);
+    if(r!==null)return r;
+    if(res.status>=500&&k<RETRY_WAIT.length){await sleep(RETRY_WAIT[k]);continue}
+    throw `Server antwortet nicht wie erwartet (HTTP ${res.status}) – bitte nochmal versuchen`}
+}
+const postJson=(url,body)=>api(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+
 async function nearby(){
   alongSeq++;clearTimeout(pollT);note('');
   setStatus('Suche in der Nähe…');skeleton();busy(true,'nearby');
-  try{const r=await (await fetch(`/api/nearby?lat=${me[0]}&lon=${me[1]}`)).json();
+  try{const r=await api(`/api/nearby?lat=${me[0]}&lon=${me[1]}`);
     if(r.error)throw r.error;
     pois=r.pois;routeInfo=null;selId=null;if(routeLine){map.removeLayer(routeLine);routeLine=null}
     setStatus(`${pois.length} Orte im Umkreis von ${r.radius/1000} km${r.partial?' (teilweise, Server überlastet)':''}`);render();busyRec();
@@ -507,8 +523,7 @@ function clearVia(){if(via.length){via=[];showVia()}}
 $('gmlGo').onclick=async()=>{
   const url=$('gml').value.trim();if(!url)return setStatus('Erst einen Google-Maps-Link einfügen',true);
   $('gmlGo').disabled=true;setStatus('Link wird gelesen…');
-  try{const res=await fetch('/api/gmaps',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
-   const r=await res.json().catch(()=>({error:`Server antwortet nicht wie erwartet (HTTP ${res.status}) – bitte nochmal versuchen`}));
+  try{const r=await postJson('/api/gmaps',{url});
    if(r.error)throw r.error;
    const p=r.points;clearAlts();startPt=p[0];dest=p[p.length-1];via=p.slice(1,-1);
    $('start').value=startPt.name;$('dest').value=dest.name;$('sugg').innerHTML='';showVia();routeTogLabel();
@@ -533,8 +548,7 @@ function pickAlt(i){altSel=i;drawAlts()}
 $('alts').onclick=e=>{const b=e.target.closest('.alt');if(b)pickAlt(+b.dataset.i)};
 async function loadRoutes(org,key){ // true when there is a choice to show
   setStatus('Routen werden berechnet…');
-  const res=await fetch('/api/routes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:org,to:[dest.lat,dest.lon],via:via.map(v=>[v.lat,v.lon])})});
-  const r=await res.json();if(r.error)throw r.error;
+  const r=await postJson('/api/routes',{from:org,to:[dest.lat,dest.lon],via:via.map(v=>[v.lat,v.lon])});if(r.error)throw r.error;
   alts=r.routes;altKey=key;altSel=0;
   if(alts.length<2)return false;
   drawAlts();$('route').classList.add('alts');$('goT').textContent='Entlang dieser Route suchen';
@@ -554,8 +568,7 @@ function note(t,ms){$('note').textContent=t||'';$('note').classList.toggle('on',
   if(t&&ms)noteT=setTimeout(()=>$('note').classList.remove('on'),ms)}
 $('note').onclick=()=>note(''); // a tap clears the bubble; the search itself keeps running in the background
 async function alongSearch(body,seq,first){
-  const res=await fetch('/api/along',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  const r=await res.json();if(r.error)throw r.error;
+  const r=await postJson('/api/along',body);if(r.error)throw r.error;
   if(seq!==alongSeq)return null; // a newer search has started
   pois=r.pois;routeInfo=r;r.vias=via.map((v,i)=>({lat:v.lat,lon:v.lon,a:r.via_along[i]}));
   if(first){selId=null;routePanel(false)}
@@ -569,15 +582,29 @@ async function alongSearch(body,seq,first){
   return r;
 }
 const POLL_WAIT=[4000,10000,20000,35000,60000,90000]; // the rest is fetched from the cache while it fills
-async function alongPoll(body,seq,i){
-  if(i>=POLL_WAIT.length)return note('Restliche Stopps nicht erhalten (Server überlastet)',8000);
-  pollT=setTimeout(async()=>{
-    let r;try{r=await alongSearch(body,seq,false)}catch(e){if(seq===alongSeq)setStatus('Fehler: '+e,true);return}
-    if(seq!==alongSeq||!r)return;
-    if(r.pending)alongPoll(body,seq,i+1);
-    else note(r.partial?'Stopps geladen, einige Bereiche fehlen (Server überlastet)':`Alle ${pois.length} Stopps geladen`,6000);
-  },POLL_WAIT[i]);
+let pollJob=null; // the poll that is waiting for its timer
+function alongPoll(body,seq,i,wait){
+  clearTimeout(pollT);
+  if(i>=POLL_WAIT.length){pollJob=null;return note('Restliche Stopps nicht erhalten (Server überlastet)',8000)}
+  pollJob={body,seq,i};
+  pollT=setTimeout(()=>pollRun(body,seq,i),wait===undefined?POLL_WAIT[i]:wait);
 }
+async function pollRun(body,seq,i){
+  pollJob=null;
+  let r;
+  try{r=await alongSearch(body,seq,false)}
+  catch(e){ // a failed poll keeps the stops already shown and just tries again later
+    if(seq!==alongSeq)return;
+    note('Verbindung unterbrochen – neuer Versuch folgt…',4000);
+    return alongPoll(body,seq,i+1)}
+  if(seq!==alongSeq||!r)return;
+  if(r.pending)alongPoll(body,seq,i+1);
+  else note(r.partial?'Stopps geladen, einige Bereiche fehlen (Server überlastet)':`Alle ${pois.length} Stopps geladen`,6000);
+}
+// iOS freezes timers and fetches while the page is in the background: poll at once when it comes back
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden||!pollJob||pollJob.seq!==alongSeq)return;
+  const j=pollJob;alongPoll(j.body,j.seq,j.i,0)});
 $('go').onclick=async()=>{
   if($('start').value&&!startPt)return setStatus('Start aus der Vorschlagsliste wählen',true);
   if(!dest)return setStatus('Ziel aus der Vorschlagsliste wählen',true);
