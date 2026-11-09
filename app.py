@@ -9,6 +9,7 @@ try:  # use the OS certificate store: Python's bundled CAs fail behind TLS-inspe
 except ImportError:
     pass
 from flask import Flask, jsonify, request, send_from_directory
+from werkzeug.exceptions import HTTPException
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 UA = {"User-Agent": "PipiPlatz/1.0 (personal use)"}
@@ -327,9 +328,16 @@ def dedupe(pois):
             seen.add(k); out.append(p)
     return out
 
+@app.errorhandler(HTTPException)
+def httpErr(e):
+    """404, 405, a missing query parameter (400) ...: the client's mistake keeps its own status."""
+    return jsonify(error=(e.description or e.name)[:200]), e.code
+
 @app.errorhandler(Exception)
 def err(e):
-    return jsonify(error=str(e)[:200]), 502
+    """Anything else: the detail goes to the log, the client gets no paths or upstream bodies."""
+    app.logger.exception("unhandled error on %s %s", request.method, request.path)
+    return jsonify(error="Interner Fehler – bitte nochmal versuchen"), 502
 
 @app.get("/")
 def index():
