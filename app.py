@@ -69,6 +69,16 @@ OPPOSITE_DETOUR = 4000  # m extra when OSRM has to drive past a stop and turn ar
 OPPOSITE_CHECK = 64  # stops per search that are verified with OSRM (beyond that the side test decides)
 MWY_FACILITY = {"raststaette", "rastplatz", "wc"}  # only these are unusable from the other carriageway
 
+ROUTE_CHUNK = 16  # route points (1.5 km apart) per Overpass query, ~22 km of road
+BBOX_SLACK = 500  # m added to the side distance: the road bends between two sample points
+
+def bboxOf(points, pad_m):
+    """Overpass bounding box '(south,west,north,east)' around [(lat, lon)], grown by pad_m metres."""
+    lats, lons = [p[0] for p in points], [p[1] for p in points]
+    dlat = pad_m / 111320
+    dlon = pad_m / (111320 * math.cos(math.radians(sum(lats) / len(lats))))
+    return "(%.5f,%.5f,%.5f,%.5f)" % (min(lats) - dlat, min(lons) - dlon, max(lats) + dlat, max(lons) + dlon)
+
 def allQueries(a, limit, merge=False):
     """[(is_evidence, query)] for one search area `a` (an Overpass area filter like '(around:...)').
     merge=True puts all POI groups into one query: fewer requests for long route searches."""
@@ -575,21 +585,19 @@ def along():
     via_along = [round(cum[min(range(len(pts)), key=lambda i: hav(pts[i], tuple(v)))]) for v in via]
     keep = [i for i, c in enumerate(cum) if c <= ahead_km * 1000] or [0]
     spts, scum = [pts[i] for i in keep], [cum[i] for i in keep]
-    # Overpass: chunk the polyline so queries stay small
-    CH = 26
+    # Overpass: one bounding box per stretch of the route. An `around:` polyline is checked point by
+    # point and timed out on every server in dense areas (the first 70 km of a long route came
+    # back empty); a box is cheap, and the true distance is measured below.
     jobs = []
-    for s in range(0, len(spts), CH - 1):
-        chunk = spts[s:s + CH]
+    for s in range(0, len(spts), ROUTE_CHUNK - 1):
+        chunk = spts[s:s + ROUTE_CHUNK]
         if len(chunk) < 2: chunk = chunk * 2
-        line = ",".join(f"{la:.5f},{lo:.5f}" for la, lo in chunk)
-        jobs += allQueries(f"(around:{radius},{line})", 1500, merge=True)
+        jobs += allQueries(bboxOf(chunk, radius + BBOX_SLACK), 1500, merge=True)
     try:
         els, evid, failed, pending = fetchAll(jobs, WORKERS, deadline=ALONG_CUT)
     except RuntimeError:
         return jsonify(error="Overpass-Server nicht erreichbar, bitte später erneut"), 502
     pois = dedupe([p for p in map(to_poi, els) if p])
-    # while the rest is still running, do not wait for this second query as well
-    enrich(pois, evid if pending else evid + shopEvidence(pois))
     segs, _ = segList(route)
     starts = [s[2] for s in segs]
     for p in pois:
@@ -606,6 +614,10 @@ def along():
         else:
             p["off"] = round(hav(spts[best], (p["lat"], p["lon"])))
             p["along"] = round(scum[best])
+    # the boxes are wider than the side distance: only what is really within it stays
+    pois = [p for p in pois if p["off"] <= radius]
+    # while the rest is still running, do not wait for this second query as well
+    enrich(pois, evid if pending else evid + shopEvidence(pois))
     # The side test cannot see a stop that lies across an interchange: there the road line curves
     # and the cross product says the wrong thing. OSRM knows: driving through such a stop means
     # leaving at the next exit and coming back. Rest areas come first: they are the mirrored pairs,

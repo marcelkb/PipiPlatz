@@ -9,7 +9,8 @@ ROUTE = [{"geometry": {"coordinates": [[8.68 + (11.58 - 8.68) * i / N, 50.11 + (
           "duration": 9000}]
 
 def elem(i):
-    return {"type": "node", "id": i, "lat": 49.0 + (i % 40) * 0.01, "lon": 9.5,
+    t = (i % 40) / 40  # a point on the route: stops further than the side distance are dropped
+    return {"type": "node", "id": i, "lat": 50.11 + (48.14 - 50.11) * t, "lon": 8.68 + (11.58 - 8.68) * t,
             "tags": {"highway": "rest_area"}}
 
 class AlongCut(unittest.TestCase):
