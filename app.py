@@ -629,18 +629,23 @@ def along():
         from concurrent.futures import ThreadPoolExecutor, wait
         ex = ThreadPoolExecutor(WORKERS)
         fut = {ex.submit(accessDetour, coords, (p["lat"], p["lon"])): p for p in cand}
-        wait(fut, timeout=10)
-        for f, p in fut.items():
-            if not f.done():
-                continue
-            d = f.result()
-            if d is None:
-                continue
-            if d > OPPOSITE_DETOUR:
-                p["opp"] = True
-            else:
-                p.pop("opp", None)  # on the way after all: a detour over the exit, not the wrong lane
-        ex.shutdown(wait=False)
+        try:
+            wait(fut, timeout=10)
+            for f, p in fut.items():
+                if not f.done():
+                    continue
+                try:
+                    d = f.result()
+                except Exception:  # one failed check leaves that stop as the side test judged it
+                    continue
+                if d is None:
+                    continue
+                if d > OPPOSITE_DETOUR:
+                    p["opp"] = True
+                else:
+                    p.pop("opp", None)  # on the way after all: a detour over the exit, not the wrong lane
+        finally:
+            ex.shutdown(wait=False)
     for p in pois:
         p.pop("_mway", None)
     pois.sort(key=lambda p: p["along"])

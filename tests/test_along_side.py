@@ -78,6 +78,54 @@ class AlongDetour(unittest.TestCase):
         got = along([poi(1, 50.504, 8.007, "Autohof")], detour=5200)  # ~2 km in and out
         self.assertFalse(got["way1"].get("opp"))
 
+class AlongDetourFails(unittest.TestCase):
+    """One failing direction check must not take the whole search down (review finding B1)."""
+
+    def run_along(self, boom):
+        from concurrent.futures import ThreadPoolExecutor
+        spies = []
+
+        class Spy(ThreadPoolExecutor):
+            def __init__(self, *a, **kw):
+                super().__init__(*a, **kw)
+                self.shutdowns = 0
+                spies.append(self)
+            def shutdown(self, *a, **kw):
+                self.shutdowns += 1
+                super().shutdown(*a, **kw)
+
+        def get(url, **kw):
+            class R:
+                def json(self):
+                    path = url.split("?")[0]
+                    if path.count(";") + 1 > 2:
+                        lon = round(float(path.split(";")[1].split(",")[0]), 3)
+                        if lon == 8.002:
+                            raise boom
+                        return {"routes": [{"distance": 13870, "duration": 600}]}
+                    return fakeRoute("A 3")
+            return R()
+
+        els = [poi(1, 50.5, 8.002, "Kaputt"), poi(2, 50.504, 8.007, "Toresberg")]
+        with mock.patch.object(app.requests, "get", get), \
+             mock.patch("concurrent.futures.ThreadPoolExecutor", Spy), \
+             mock.patch.object(app, "fetchAll", lambda q, w, deadline=None: (els, [], 0, 0)), \
+             mock.patch.object(app, "shopEvidence", lambda p, limit=25: []):
+            r = app.app.test_client().post("/api/along", json={"from": [51.0, 8.0], "to": [50.0, 8.0]})
+        return r, spies
+
+    def test_a_failing_check_drops_only_that_stop(self):
+        r, _ = self.run_along(ConnectionError("osrm down"))
+        self.assertEqual(r.status_code, 200, r.get_json())
+        got = {p["id"]: p for p in r.get_json()["pois"]}
+        self.assertEqual(set(got), {"way1", "way2"})
+        self.assertTrue(got["way2"]["opp"])          # the healthy check still counted
+
+    def test_the_executor_is_shut_down_when_a_check_fails(self):
+        _, spies = self.run_along(ConnectionError("osrm down"))
+        self.assertEqual(len(spies), 1)
+        self.assertGreaterEqual(spies[0].shutdowns, 1)
+
 class AlongNoNames(unittest.TestCase):
     def test_a_plain_wc_node_is_checked_too(self):
         # the wrong-side test is about the carriageway, not the place type
