@@ -580,10 +580,14 @@ async function loadRoutes(org,key){ // true when there is a choice to show
   drawAlts();$('route').classList.add('alts');$('goT').textContent='Entlang dieser Route suchen';
   setStatus(`${alts.length} Routen gefunden. Route wählen, dann suchen.`);map.invalidateSize();map.fitBounds(altLayer.getLayers()[0].getBounds());
   return true}
-function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const q=inp.value;clearVia();clearAlts();if(inp.id==='start')startPt=null;else{dest=null;routeTogLabel()}if(q.length<3){$('sugg').innerHTML='';return}
+let suggSeq=0; // both fields share #sugg: only the answer to the latest keystroke may fill it
+function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const mine=++suggSeq,q=inp.value;clearVia();clearAlts();if(inp.id==='start')startPt=null;else{dest=null;routeTogLabel()}if(q.length<3){$('sugg').innerHTML='';return}
  const fld=inp.closest('label'), rt=$('route'); // the dropdown floats under the field being typed
  $('sugg').style.top=Math.round(fld.getBoundingClientRect().bottom-rt.getBoundingClientRect().top+rt.scrollTop-4)+'px';
- tm=setTimeout(async()=>{const r=await (await fetch('/api/geocode?q='+encodeURIComponent(q))).json();
+ tm=setTimeout(async()=>{
+  let r;try{r=await api('/api/geocode?q='+encodeURIComponent(q))}catch(e){r=null} // a suggestion is optional: no message
+  if(mine!==suggSeq)return; // typed on, or moved to the other field, while this was on its way
+  if(!Array.isArray(r)){$('sugg').innerHTML='';return} // {error} from the geocoder
   $('sugg').innerHTML=r.map((x,i)=>`<div data-i="${i}">${esc(x.name)}</div>`).join('');
   if(r.length)rt.scrollTop=Math.max(rt.scrollTop,fld.offsetTop-12); // room for the dropdown below the field
   $('sugg').onclick=e=>{const x=r[e.target.dataset.i];if(!x)return;set(x);inp.value=x.name;$('sugg').innerHTML='';routeTogLabel()};},400)}}
