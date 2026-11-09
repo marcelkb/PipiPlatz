@@ -253,19 +253,30 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribu
 // leaves a visible seam across the map.
 const mapBox=$('map');
 let rot=0, rot0=0, ang0=0, spinning=false, padded=false;
-function padMap(on){
-  if(on===padded)return;
-  padded=on;
+// (Re)compute the padding for the viewport's size right now. Called when the turn starts and again
+// whenever the viewport changes size while turned: the route form folds, the results close it, the
+// map goes full height, the phone is turned or Safari's toolbar slides away - with the padding of the
+// moment the turn began, the revealed corners stayed grey in all of those.
+function layoutPad(){
   const box=mapBox.parentElement; // the viewport the map is seen through
-  const diag=on?Math.hypot(box.clientWidth,box.clientHeight):0;
-  if(on&&!diag)return; // no box to measure against; retry on the next gesture event
+  const diag=padded?Math.hypot(box.clientWidth,box.clientHeight)+4:0; // +4: sub-pixel rounding must not leave a hairline
+  if(padded&&diag<5)return false; // no box to measure against
   const c=map.getCenter(), z=map.getZoom();
-  mapBox.style.setProperty('--padx',on?((diag-box.clientWidth)/2).toFixed(1)+'px':'0px');
-  mapBox.style.setProperty('--pady',on?((diag-box.clientHeight)/2).toFixed(1)+'px':'0px');
+  mapBox.style.setProperty('--padx',padded?((diag-box.clientWidth)/2).toFixed(1)+'px':'0px');
+  mapBox.style.setProperty('--pady',padded?((diag-box.clientHeight)/2).toFixed(1)+'px':'0px');
   map.invalidateSize({pan:false}); // the container changed size: load tiles for the new area
   map.setView(c,z,{animate:false,reset:true}); // invalidateSize shifts the centre; put it back
   if(map._popup)map._popup.update(); // the open popup keeps its place on the re-laid-out map
+  return true;
 }
+function padMap(on){
+  if(on===padded)return;
+  padded=on;
+  if(on&&!layoutPad())padded=false; // retry on the next gesture event
+  else if(!on)layoutPad();
+}
+let padRaf=0;
+new ResizeObserver(()=>{if(!padded||padRaf)return;padRaf=requestAnimationFrame(()=>{padRaf=0;if(padded)layoutPad()})}).observe(mapBox.parentElement);
 function setRot(deg){
   rot=((deg+180)%360+360)%360-180;
   mapBox.style.setProperty('--rot',rot.toFixed(2)+'deg');
