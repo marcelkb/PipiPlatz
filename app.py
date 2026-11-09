@@ -180,7 +180,7 @@ def classify(t):
     brand = t.get("brand") or t.get("name") or ""
     wc = t.get("toilets") == "yes" or t.get("amenity") == "toilets"
     if t.get("highway") == "services":
-        return "raststaette", "Raststätte", True
+        return "raststaette", "Raststätte", t.get("toilets") != "no"
     if t.get("highway") == "rest_area":
         return "rastplatz", "Rastplatz", t.get("toilets") != "no"
     if t.get("amenity") == "toilets":
@@ -313,7 +313,7 @@ def to_poi(e):
     kind, name, wc = classify(t)
     if kind in CHAIN and t.get("toilets") != "yes" and not CHAIN[kind].search(t.get("name", "")):
         return None  # only the big chains, or shops that say they have a WC
-    if t.get("toilets") == "no" and kind in ("burger", "super", "moebel", "bau", "mall", "bahnhof"):
+    if t.get("toilets") == "no" and kind in ("burger", "super", "moebel", "bau", "mall", "bahnhof", "tank"):
         return None  # OSM says explicitly: no WC
     own = t.get("name", "")  # a rest area is titled "Rastplatz"; its own name goes in small letters below
     return {"id": f'{e["type"]}{e["id"]}', "lat": lat, "lon": lon, "kind": kind,
