@@ -8,7 +8,7 @@ try:  # use the OS certificate store: Python's bundled CAs fail behind TLS-inspe
     truststore.inject_into_ssl()
 except ImportError:
     pass
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, abort, jsonify, request, send_from_directory
 from werkzeug.exceptions import HTTPException
 
 app = Flask(__name__, static_folder="static", static_url_path="")
@@ -564,11 +564,59 @@ def mainRoads(route, n=3):
             if ref: dist[ref] = dist.get(ref, 0) + st.get("distance", 0)
     return sorted(dist, key=dist.get, reverse=True)[:n]
 
+MAX_VIA = 25  # the share link refuses more as well; a Google route rarely has more than ~10
+RADIUS_RANGE = (500, 8000)  # m: the form offers 1000 - 8000
+AHEAD_RANGE = (1, 300)  # km: the form offers 50 - 300
+MAX_ALT = 3  # OSRM returns at most this many alternatives
+
+def badRequest(what):
+    abort(400, f"Ungültige Anfrage: {what}")
+
+def num(v, what):
+    """A finite number from a JSON value; bool, None, text and NaN/inf are the client's mistake."""
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        badRequest(what)
+    try:
+        v = float(v)
+    except OverflowError:
+        badRequest(what)
+    if not math.isfinite(v):
+        badRequest(what)
+    return v
+
+def point(v, what):
+    if not isinstance(v, (list, tuple)) or len(v) != 2:
+        badRequest(what)
+    lat, lon = num(v[0], what), num(v[1], what)
+    if abs(lat) > 90 or abs(lon) > 180:
+        badRequest(what)
+    return [lat, lon]
+
+def routeBody():
+    """Validated JSON body of /api/routes and /api/along -> (json, [start, via..., destination]).
+    A wrong shape is a 400 before anything is fetched; a number that is only too big is clamped by
+    the callers, so one request cannot make the server ask a continent of Overpass or OSRM."""
+    j = request.get_json(silent=True)
+    if not isinstance(j, dict):
+        badRequest("JSON-Objekt erwartet")
+    via = j.get("via") or []
+    if not isinstance(via, list) or len(via) > MAX_VIA:
+        badRequest(f"via (höchstens {MAX_VIA} Zwischenstopps)")
+    if "from" not in j or "to" not in j:
+        badRequest("from und to fehlen")
+    stops = [point(j["from"], "from")] + [point(v, "via") for v in via] + [point(j["to"], "to")]
+    return j, stops
+
+def clamped(j, key, default, lo, hi, cast=float):
+    v = j.get(key, default)
+    if v is None and key == "alt":
+        v = default
+    return cast(min(hi, max(lo, num(v, key))))
+
 @app.post("/api/routes")
 def routes():
     """Route options between start and destination (through via), to choose one before searching."""
-    j = request.get_json()
-    stops = [j["from"]] + (j.get("via") or []) + [j["to"]]
+    _j, stops = routeBody()
     rs = osrmRoutes(stops, alternatives=True, steps=True)
     if not rs:
         return jsonify(error="Keine Route gefunden"), 400
@@ -579,13 +627,12 @@ def routes():
 
 @app.post("/api/along")
 def along():
-    j = request.get_json()
-    o, d = j["from"], j["to"]
-    radius = int(j.get("radius", 2000))
-    ahead_km = float(j.get("ahead_km", 150))
-    via = j.get("via") or []  # stops between start and destination, e.g. from a Google Maps route
-    alt = max(0, int(j.get("alt") or 0))  # index of the route option picked in /api/routes
-    rs = osrmRoutes([o] + via + [d], alternatives=alt > 0, steps=True)
+    j, stops = routeBody()
+    radius = clamped(j, "radius", 2000, *RADIUS_RANGE, cast=int)
+    ahead_km = clamped(j, "ahead_km", 150, *AHEAD_RANGE)
+    via = stops[1:-1]  # stops between start and destination, e.g. from a Google Maps route
+    alt = clamped(j, "alt", 0, 0, MAX_ALT, cast=int)  # index of the route option picked in /api/routes
+    rs = osrmRoutes(stops, alternatives=alt > 0, steps=True)
     if not rs:
         return jsonify(error="Keine Route gefunden"), 400
     route = rs[min(alt, len(rs) - 1)]
