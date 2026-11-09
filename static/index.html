@@ -48,6 +48,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .top{display:flex;align-items:center;gap:4px;min-height:52px}
 .brand{font-size:26px;font-weight:700;letter-spacing:.01em;margin-right:auto}
 .tool{width:48px;height:48px;border-radius:8px;display:grid;place-items:center;color:#fff}
+.tool[hidden]{display:none}
 .tool:hover{background:rgba(255,255,255,.14)}
 .tool[aria-pressed=true]{background:#fff;color:var(--blue)}
 .seg{display:grid;grid-template-columns:1fr 1fr;background:var(--blue-deep);border-radius:10px;padding:3px;gap:3px}
@@ -200,13 +201,15 @@ button{cursor:pointer;border:0;background:none;padding:0}
  <symbol id="i-go" viewBox="0 0 24 24"><path d="M4 11l16-7-7 16-2-7z"/></symbol>
  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol>
  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
- <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
+ <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></symbol>
+ <symbol id="i-search"viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
 </svg>
 <div id="app">
  <header class="bar">
   <div class="top">
    <div class="brand">PipiPlatz</div>
-   <button class="tool" id="gmtab" aria-pressed="false" aria-label="Google-Maps-Ansicht"><svg class="i"><use href="#i-map"/></svg></button>
+   <button class="tool" id="share" hidden aria-label="Route teilen"><svg class="i"><use href="#i-share"/></svg></button>
+   <button class="tool" id="gmtab"aria-pressed="false" aria-label="Google-Maps-Ansicht"><svg class="i"><use href="#i-map"/></svg></button>
    <button class="tool" id="cfg" aria-label="Einstellungen: Google-API-Key"><svg class="i"><use href="#i-sliders"/></svg></button>
   </div>
   <div class="seg" role="group" aria-label="Suchmodus">
@@ -416,6 +419,7 @@ const postJson=(url,body)=>api(url,{method:'POST',headers:{'Content-Type':'appli
 async function nearby(){
   alongSeq++;clearTimeout(pollT);note('');
   setStatus('Suche in der Nähe…');skeleton();busy(true,'nearby');
+  lastRoute=null;$('share').hidden=true; // the list is no longer the route that was shared
   try{const r=await api(`/api/nearby?lat=${me[0]}&lon=${me[1]}`);
     if(r.error)throw r.error;
     pois=r.pois;routeInfo=null;selId=null;if(routeLine){map.removeLayer(routeLine);routeLine=null}
@@ -565,6 +569,56 @@ function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const q=inp.v
   $('sugg').onclick=e=>{const x=r[e.target.dataset.i];if(!x)return;set(x);inp.value=x.name;$('sugg').innerHTML='';routeTogLabel()};},400)}}
 suggest($('start'),x=>startPt=x);suggest($('dest'),x=>dest=x);
 
+const routeKey=org=>JSON.stringify([org,dest.lat,dest.lon,via.map(v=>[v.lat,v.lon])]);
+
+// Share link: the planned route as a #fragment, so nothing is stored on the server and the
+// fragment never reaches it. The start is the resolved position (as in Google's links), so an
+// empty "Start" shares where the sender was. Whatever comes back out is untrusted input.
+// <share-codec>
+const SHARE_RAD=[1000,2000,4000,8000],SHARE_AHEAD=[50,150,300],SHARE_VIA_MAX=25;
+const r5=n=>(+n).toFixed(5);
+function encodeShare(r){ // r: {org:[lat,lon], on, dest:{lat,lon,name}, via:[{lat,lon,name}], alt, rad, ahead}
+  const p=new URLSearchParams();
+  p.set('s',r5(r.org[0])+','+r5(r.org[1]));if(r.on)p.set('sn',r.on.slice(0,120));
+  r.via.forEach(v=>{p.append('v',r5(v.lat)+','+r5(v.lon));p.append('vn',(v.name||'').slice(0,120))});
+  p.set('d',r5(r.dest.lat)+','+r5(r.dest.lon));p.set('dn',(r.dest.name||'').slice(0,120));
+  p.set('alt',r.alt);p.set('rad',r.rad);p.set('ahead',r.ahead);
+  return p.toString()}
+function sharePt(s){const m=/^(-?\d{1,3}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)$/.exec(s||'');if(!m)return null;
+  const a=+m[1],b=+m[2];return Math.abs(a)<=90&&Math.abs(b)<=180?[a,b]:null}
+function decodeShare(hash){ // the route, or null when the fragment is not a usable shared route
+  const p=new URLSearchParams(String(hash||'').replace(/^#/,''));
+  const org=sharePt(p.get('s')),d=sharePt(p.get('d'));if(!org||!d)return null;
+  const vp=p.getAll('v').map(sharePt);if(vp.length>SHARE_VIA_MAX||vp.includes(null))return null;
+  const vn=p.getAll('vn'),nm=s=>String(s||'').slice(0,120);
+  const pick=(list,x,def)=>list.includes(+x)?+x:def;
+  return {org,on:nm(p.get('sn')),dest:{lat:d[0],lon:d[1],name:nm(p.get('dn'))},
+    via:vp.map((v,i)=>({lat:v[0],lon:v[1],name:nm(vn[i])})),
+    alt:Math.max(0,Math.min(9,parseInt(p.get('alt'),10)||0)),
+    rad:pick(SHARE_RAD,p.get('rad'),2000),ahead:pick(SHARE_AHEAD,p.get('ahead'),150)}}
+// </share-codec>
+
+let lastRoute=null; // what the last successful route search used: the share button sends this, not the form
+$('share').onclick=async()=>{
+  if(!lastRoute)return;
+  const url=location.origin+location.pathname+'#'+encodeShare(lastRoute);
+  try{if(navigator.share){await navigator.share({title:'PipiPlatz: Route nach '+(lastRoute.dest.name||'Ziel'),url});return}}
+  catch(e){if(e&&e.name==='AbortError')return} // the person closed the share sheet
+  try{await navigator.clipboard.writeText(url);note('Link kopiert',3000)}
+  catch(e){prompt('Link zur Route:',url)}
+};
+// open a shared route: fill the form, pick the shared alternative, then search as the Suchen button would
+async function openShared(s){
+  startPt={lat:s.org[0],lon:s.org[1],name:s.on||'Start der geteilten Route'};
+  dest={...s.dest,name:s.dest.name||'Ziel der geteilten Route'};via=s.via;
+  $('start').value=startPt.name;$('dest').value=dest.name;$('rad').value=s.rad;$('ahead').value=s.ahead;
+  showVia();routeTogLabel();setMode('route');clearAlts();
+  setStatus('Geteilte Route wird geladen…');
+  try{await loadRoutes(s.org,routeKey(s.org));
+    if(alts&&alts.length>1){altSel=Math.min(s.alt,alts.length-1);drawAlts()}
+  }catch(e){return setStatus('Fehler: '+e,true)}
+  $('go').click()}
+
 let alongSeq=0,pollT=null,noteT=null;
 function note(t,ms){$('note').textContent=t||'';$('note').classList.toggle('on',!!t);clearTimeout(noteT);
   if(t&&ms)noteT=setTimeout(()=>$('note').classList.remove('on'),ms)}
@@ -618,12 +672,13 @@ $('go').onclick=async()=>{
      setStatus('Standort wird ermittelt…');
      try{org=await currentFix()}catch(e){return setStatus(geoMsg(e)+'\nOder einen Start eingeben.',true)}
    }
-   const key=JSON.stringify([org,dest.lat,dest.lon,via.map(v=>[v.lat,v.lon])]);
+   const key=routeKey(org);
    if(!alts||altKey!==key){if(await loadRoutes(org,key))return}
    const seq=++alongSeq;clearTimeout(pollT);note('');
    setStatus('Suche entlang der Strecke…');skeleton();busy(true,'route');altLayer.clearLayers();
    const body={from:org,to:[dest.lat,dest.lon],via:via.map(v=>[v.lat,v.lon]),alt:altSel,radius:+$('rad').value,ahead_km:+$('ahead').value};
    const r=await alongSearch(body,seq,true);
+   if(r){lastRoute={org,on:startPt?startPt.name:'',dest,via:via.slice(),alt:altSel,rad:body.radius,ahead:body.ahead_km};$('share').hidden=false}
    if(r&&r.pending){note('Weitere Stopps werden im Hintergrund geladen…');alongPoll(body,seq,0)}
   }catch(e){setStatus('Fehler: '+e,true);$('list').innerHTML=''}
   finally{$('go').disabled=false;busy(false)}
@@ -645,5 +700,8 @@ $('gmtab').onclick=()=>{
 $('cfg').onclick=()=>{const k=prompt('Google Embed API Key (leer = löschen)',localStorage.gmkey||'');if(k===null)return;k?localStorage.gmkey=k.trim():localStorage.removeItem('gmkey')};
 
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');
-skeleton();locate();
+// a shared route skips the startup locate(): its first fix would run nearby(), which cancels the route search
+const shared=decodeShare(location.hash);
+if(shared){history.replaceState(null,'',location.pathname+location.search);openShared(shared)}
+else{skeleton();locate()}
 </script></body></html>
