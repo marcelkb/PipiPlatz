@@ -30,8 +30,8 @@ All data is free: OpenStreetMap through Overpass, OSRM for routing, Nominatim fo
   exit and is never hidden.
 - **The route form folds away**: tap the grip above it, or swipe it up, and only that bar stays; the map
   gets the room. Swipe it down or tap it again to open it, and the grip shows the chosen destination.
-- **Filters** by place type, with an "Alle wählen / Alle abwählen" button. On by default: Rastplatz,
-  WC and Burger.
+- **Filters** by place type, with an "Alle wählen / Alle abwählen" button. All types are on by
+  default.
 - **"Los"** opens Google Maps navigation to the stop. An optional embedded Google Maps view works
   with your own Maps Embed API key (stored in the browser only).
 - Search overlay with a progress bar and a time estimate learned from your previous searches.

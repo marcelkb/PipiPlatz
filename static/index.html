@@ -243,7 +243,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const KINDS={rastplatz:['rastplatz','Rastplatz'],wc:['wc','WC'],burger:['burger','Burger'],raststaette:['raststaette','Raststätte'],tank:['tank','Tankstelle'],super:['super','Supermarkt'],moebel:['moebel','Möbelhaus'],bau:['bau','Baumarkt'],mall:['mall','Einkaufszentrum'],bahnhof:['bahnhof','Bahnhof'],other:['other','Restaurant']};
-const DEFAULT_ON=['rastplatz','wc','burger'];
+const DEFAULT_ON=Object.keys(KINDS);
 const MWY_FACILITY=new Set(['raststaette','rastplatz','wc']); // only these are unusable from the other carriageway
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
