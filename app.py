@@ -345,7 +345,9 @@ def index():
 
 NEARBY_M = 3000  # m: the "in der Nähe" radius
 NEARBY_MWY_M = 10000  # m: on an Autobahn the next stop is far away, so look wider
-MWY_CHECK_M = 30  # m: a position this close to a motorway way counts as "on the Autobahn"
+NEARBY_MWY_LIMIT = 1000  # Overpass elements per query on the Autobahn (300 elsewhere)
+MWY_RANK = {"raststaette": 0, "rastplatz": 0, "wc": 1, "burger": 1}  # kept first when the list is cut; everything else rank 2
+MWY_CHECK_M = 30 # m: a position this close to a motorway way counts as "on the Autobahn"
 MWY_CHECK_WAIT = 6  # s: no answer by then = not on the Autobahn, the search must not hang on it
 
 def onMotorway(lat, lon):
@@ -364,14 +366,16 @@ def onMotorway(lat, lon):
 @app.get("/api/nearby")
 def nearby():
     lat, lon = float(request.args["lat"]), float(request.args["lon"])
-    radius = NEARBY_MWY_M if onMotorway(lat, lon) else NEARBY_M
+    mway = onMotorway(lat, lon)
+    radius = NEARBY_MWY_M if mway else NEARBY_M
+    limit = NEARBY_MWY_LIMIT if mway else 300  # Overpass cuts an answer at `limit` in no particular order
     pois = []
     # Query around a ~2 km grid point instead of the exact position, so repeat searches in the
     # same area hit the Overpass cache. The radius grows by the snap offset, nothing is lost.
     glat, glon = round(lat / SNAP) * SNAP, round(lon / SNAP) * SNAP
     pad = math.ceil(hav((lat, lon), (glat, glon)) / 100) * 100
     while radius <= 24000:  # widen until we have some results
-        els, evid, failed, _pending = run_groups(f"around:{radius + pad},{glat:.2f},{glon:.2f}")
+        els, evid, failed, _pending = run_groups(f"around:{radius + pad},{glat:.2f},{glon:.2f}", limit)
         pois = dedupe([p for p in map(to_poi, els) if p])
         enrich(pois, evid + shopEvidence(pois))
         if len(pois) >= 8: break
@@ -379,6 +383,9 @@ def nearby():
     for p in pois:
         p["dist"] = round(hav((lat, lon), (p["lat"], p["lon"])))
     pois.sort(key=lambda p: p["dist"])
+    if mway:  # the cut to 80 must not drop a Raststätte for a Burger King: facilities first, then WCs
+        pois = sorted(pois, key=lambda p: MWY_RANK.get(p["kind"], 2))[:80]  # stable: distance order inside a rank
+        pois.sort(key=lambda p: p["dist"])
     return jsonify(pois=pois[:80], radius=radius, partial=failed)
 
 def geoList(q, limit):

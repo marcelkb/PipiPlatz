@@ -44,6 +44,36 @@ class NearbyOnMotorway(unittest.TestCase):
         self.assertEqual(d["radius"], 3000)
         self.assertTrue(self.radii and max(self.radii) < 4000, self.radii)
 
+    def test_the_cut_keeps_facilities_and_wcs_before_other_stops(self):
+        """90 petrol stations nearer than a Raststaette, a WC and a Burger King: on the Autobahn the
+        cut to 80 must keep all three before it keeps the rest."""
+        fuel = [{"type": "node", "id": 100 + i, "lat": 51.5 + i * 5e-4, "lon": 7.0,
+                 "tags": {"amenity": "fuel", "name": f"Tankstelle {i}"}} for i in range(90)]
+        far = [{"type": "node", "id": 1, "lat": 51.55, "lon": 7.0, "tags": {"highway": "rest_area"}},
+               {"type": "node", "id": 2, "lat": 51.56, "lon": 7.0, "tags": {"amenity": "toilets"}},
+               {"type": "node", "id": 3, "lat": 51.57, "lon": 7.0,
+                "tags": {"amenity": "fast_food", "name": "Burger King", "brand:wikidata": "Q177054"}}]
+        def live(q):
+            if "motorway" in q:
+                return [{"type": "way", "id": 1}]
+            return fuel + far
+        mock.patch.object(app, "overpass_live", live).start()
+        kinds = [p["kind"] for p in self.search()["pois"]]
+        for k in ("rastplatz", "wc", "burger"):
+            self.assertIn(k, kinds)
+        self.assertEqual(len(kinds), 80)
+
+    def test_elsewhere_the_cut_is_by_distance_only(self):
+        self.motorway = False
+        burger = [{"type": "node", "id": 100 + i, "lat": 51.5 + i * 2e-4, "lon": 7.0,
+                   "tags": {"amenity": "fast_food", "name": "Burger King", "brand:wikidata": "Q177054"}}
+                  for i in range(90)]
+        far = [{"type": "node", "id": 1, "lat": 51.52, "lon": 7.0, "tags": {"highway": "rest_area"}}]
+        def live(q):
+            return burger + far if "rest_area" in q or "fast_food" in q else []
+        mock.patch.object(app, "overpass_live", live).start()
+        self.assertNotIn("rastplatz", [p["kind"] for p in self.search()["pois"]])
+
     def test_a_failed_check_falls_back_to_3_km(self):
         self.motorway = None
         self.assertEqual(self.search()["radius"], 3000)
