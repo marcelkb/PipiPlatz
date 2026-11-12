@@ -343,10 +343,28 @@ def err(e):
 def index():
     return send_from_directory("static", "index.html")
 
+NEARBY_M = 3000  # m: the "in der Nähe" radius
+NEARBY_MWY_M = 10000  # m: on an Autobahn the next stop is far away, so look wider
+MWY_CHECK_M = 30  # m: a position this close to a motorway way counts as "on the Autobahn"
+MWY_CHECK_WAIT = 6  # s: no answer by then = not on the Autobahn, the search must not hang on it
+
+def onMotorway(lat, lon):
+    """True when (lat, lon) is on a motorway or its ramp. Any failure or a slow Overpass says False."""
+    from concurrent.futures import ThreadPoolExecutor
+    q = (f'[out:json][timeout:10];way(around:{MWY_CHECK_M},{lat:.4f},{lon:.4f})'
+         f'[highway~"^(motorway|motorway_link)$"];out ids 1;')
+    ex = ThreadPoolExecutor(1)
+    try:
+        return bool(ex.submit(overpass, q).result(timeout=MWY_CHECK_WAIT))
+    except Exception:  # RuntimeError (all servers failed) or the timeout
+        return False
+    finally:
+        ex.shutdown(wait=False)
+
 @app.get("/api/nearby")
 def nearby():
     lat, lon = float(request.args["lat"]), float(request.args["lon"])
-    radius = 3000
+    radius = NEARBY_MWY_M if onMotorway(lat, lon) else NEARBY_M
     pois = []
     # Query around a ~2 km grid point instead of the exact position, so repeat searches in the
     # same area hit the Overpass cache. The radius grows by the snap offset, nothing is lost.
