@@ -594,6 +594,26 @@ def segList(route):
                 out.append((a, b, cum, d, mway)); cum += d
     return out, cum
 
+def timeline(route):
+    """[(metres along, seconds driven)] at every step end, over the same pieces as segList,
+    so a stop's `along` reads straight off it."""
+    out, m, s = [(0.0, 0.0)], 0.0, 0.0
+    for leg in route.get("legs", []):
+        for st in leg.get("steps", []):
+            cs = [(c[1], c[0]) for c in (st.get("geometry") or {}).get("coordinates", [])]
+            m += sum(d for d in (hav(a, b) for a, b in zip(cs, cs[1:])) if d >= 1)
+            s += st.get("duration", 0)
+            out.append((m, s))
+    return out
+
+def etaAt(tl, m):
+    """Seconds driven to reach `m` metres along the route, interpolated inside the step."""
+    i = bisect.bisect_left([x[0] for x in tl], m)
+    if i <= 0: return tl[0][1]
+    if i >= len(tl): return tl[-1][1]
+    (m0, s0), (m1, s1) = tl[i - 1], tl[i]
+    return s0 + (s1 - s0) * (m - m0) / (m1 - m0) if m1 > m0 else s1
+
 def nearestSeg(segs, pt, lo=0, hi=None):
     """Closest piece of the route to pt: (distance m, metres along the route, left of driving?, motorway)."""
     la = math.radians(pt[0]); kx = 111320 * math.cos(la); ky = 111320
@@ -773,8 +793,10 @@ def along():
                     p.pop("opp", None)  # on the way after all: a detour over the exit, not the wrong lane
         finally:
             ex.shutdown(wait=False)
+    tl = timeline(route) if segs else [(0.0, 0.0), (total, route["duration"])]
     for p in pois:
         p.pop("_mway", None)
+        p["eta"] = round(etaAt(tl, p["along"]))  # driving time from the start, by the speeds OSRM plans with
     pois.sort(key=lambda p: p["along"])
     return jsonify(route=coords[::max(1, len(coords)//1500)], total=round(total),
                    duration=round(route["duration"]), pois=pois, partial=failed, pending=pending,
