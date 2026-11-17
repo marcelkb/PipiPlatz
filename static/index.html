@@ -452,6 +452,7 @@ async function nearby(){
 }
 function setMe(pos,first){
   const old=me;me=[pos.coords.latitude,pos.coords.longitude];
+  try{localStorage.setItem('pp-me',JSON.stringify(me))}catch(e){} // only for the first map view of the next visit
   if(!meMarker)meMarker=L.circleMarker(me,{radius:9,color:'#fff',weight:3,fillColor:'#00548f',fillOpacity:1}).addTo(map);else meMarker.setLatLng(me);
   // search on a fresh fix only when there is no position yet or it really moved (no double search on a cached fix)
   if(first&&(!old||Math.abs(old[0]-me[0])>0.002||Math.abs(old[1]-me[1])>0.002)){map.setView(me,13);nearby();}
@@ -556,7 +557,7 @@ $('gmlGo').onclick=async()=>{
    if(r.error)throw r.error;
    const p=r.points;clearAlts();startPt=p[0];dest=p[p.length-1];via=p.slice(1,-1);
    $('start').value=startPt.name;$('dest').value=dest.name;$('sugg').innerHTML='';showVia();routeTogLabel();
-   setStatus(`Route geladen (${p.length} Punkte). Mit „Suchen“ starten.`);
+   setStatus(`Route geladen (${p.length} Punkte). Mit „Suchen“ starten.`);saveForm();
   }catch(e){setStatus('Fehler: '+e,true)}
   finally{$('gmlGo').disabled=false}
 };
@@ -584,7 +585,7 @@ async function loadRoutes(org,key){ // true when there is a choice to show
   setStatus(`${alts.length} Routen gefunden. Route wählen, dann suchen.`);map.invalidateSize();map.fitBounds(altLayer.getLayers()[0].getBounds());
   return true}
 let suggSeq=0; // both fields share #sugg: only the answer to the latest keystroke may fill it
-function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const mine=++suggSeq,q=inp.value;clearVia();clearAlts();if(inp.id==='start')startPt=null;else{dest=null;routeTogLabel()}if(q.length<3){$('sugg').innerHTML='';return}
+function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const mine=++suggSeq,q=inp.value;clearVia();clearAlts();if(inp.id==='start')startPt=null;else{dest=null;routeTogLabel()}saveForm();if(q.length<3){$('sugg').innerHTML='';return}
  const fld=inp.closest('label'), rt=$('route'); // the dropdown floats under the field being typed
  $('sugg').style.top=Math.round(fld.getBoundingClientRect().bottom-rt.getBoundingClientRect().top+rt.scrollTop-4)+'px';
  tm=setTimeout(async()=>{
@@ -593,7 +594,7 @@ function suggest(inp,set){let tm;inp.oninput=()=>{clearTimeout(tm);const mine=++
   if(!Array.isArray(r)){$('sugg').innerHTML='';return} // {error} from the geocoder
   $('sugg').innerHTML=r.map((x,i)=>`<div data-i="${i}">${esc(x.name)}</div>`).join('');
   if(r.length)rt.scrollTop=Math.max(rt.scrollTop,fld.offsetTop-12); // room for the dropdown below the field
-  $('sugg').onclick=e=>{const x=r[e.target.dataset.i];if(!x)return;set(x);inp.value=x.name;$('sugg').innerHTML='';routeTogLabel()};},400)}}
+  $('sugg').onclick=e=>{const x=r[e.target.dataset.i];if(!x)return;set(x);inp.value=x.name;$('sugg').innerHTML='';routeTogLabel();saveForm()};},400)}}
 suggest($('start'),x=>startPt=x);suggest($('dest'),x=>dest=x);
 
 const routeKey=org=>JSON.stringify([org,dest.lat,dest.lon,via.map(v=>[v.lat,v.lon])]);
@@ -625,6 +626,28 @@ function decodeShare(hash){ // the route, or null when the fragment is not a usa
     rad:pick(SHARE_RAD,p.get('rad'),2000),ahead:pick(SHARE_AHEAD,p.get('ahead'),150)}}
 // </share-codec>
 
+// The route form is remembered between visits (localStorage: a cookie would travel to the server,
+// sessionStorage dies when iOS closes the app). Read back as untrusted input, like a share link.
+// <form-memory>
+const memPt=x=>{if(!x||typeof x!=='object')return null;const a=+x.lat,b=+x.lon;
+  return Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a)<=90&&Math.abs(b)<=180?{lat:a,lon:b,name:String(x.name||'').slice(0,120)}:null};
+function readForm(raw){ // the remembered form, or null
+  let f;try{f=JSON.parse(raw)}catch(e){return null}
+  if(!f||typeof f!=='object')return null;
+  const via=Array.isArray(f.via)?f.via.slice(0,SHARE_VIA_MAX).map(memPt):[];
+  return {start:memPt(f.start),dest:memPt(f.dest),via:via.includes(null)?[]:via,
+    rad:SHARE_RAD.includes(+f.rad)?+f.rad:2000,ahead:SHARE_AHEAD.includes(+f.ahead)?+f.ahead:150,
+    gml:typeof f.gml==='string'?f.gml.slice(0,2000):''}}
+// </form-memory>
+function saveForm(){try{localStorage.setItem('pp-form',JSON.stringify({start:startPt,dest,via,rad:$('rad').value,ahead:$('ahead').value,gml:$('gml').value}))}catch(e){}}
+function restoreForm(){
+  let f=null;try{f=readForm(localStorage.getItem('pp-form'))}catch(e){}
+  if(!f)return;
+  startPt=f.start;dest=f.dest;via=f.via; // an empty Start stays empty: "my position" at search time
+  $('start').value=startPt?startPt.name:'';$('dest').value=dest?dest.name:'';
+  $('rad').value=f.rad;$('ahead').value=f.ahead;$('gml').value=f.gml;showVia();routeTogLabel()}
+$('route').addEventListener('change',e=>{if(e.target.matches('select,#gml'))saveForm()});
+
 let lastRoute=null; // what the last successful route search used: the share button sends this, not the form
 $('share').onclick=async()=>{
   if(!lastRoute)return;
@@ -639,7 +662,7 @@ async function openShared(s){
   startPt={lat:s.org[0],lon:s.org[1],name:s.on||'Start der geteilten Route'};
   dest={...s.dest,name:s.dest.name||'Ziel der geteilten Route'};via=s.via;
   $('start').value=startPt.name;$('dest').value=dest.name;$('rad').value=s.rad;$('ahead').value=s.ahead;
-  showVia();routeTogLabel();setMode('route');clearAlts();
+  showVia();routeTogLabel();setMode('route');clearAlts();saveForm();
   setStatus('Geteilte Route wird geladen…');
   try{await loadRoutes(s.org,routeKey(s.org));
     if(alts&&alts.length>1){altSel=Math.min(s.alt,alts.length-1);drawAlts()}
@@ -730,5 +753,10 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');
 // a shared route skips the startup locate(): its first fix would run nearby(), which cancels the route search
 const shared=decodeShare(location.hash);
 if(shared){history.replaceState(null,'',location.pathname+location.search);openShared(shared)}
-else{skeleton();locate()}
+else{
+  restoreForm();
+  // last visit's position for the first map view only: `me` stays empty until a real fix, so an
+  // empty Start never routes from where the phone was yesterday
+  try{const p=sharePt((JSON.parse(localStorage.getItem('pp-me'))||[]).join(','));if(p)map.setView(p,13)}catch(e){}
+  skeleton();locate()}
 </script></body></html>
