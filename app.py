@@ -53,6 +53,10 @@ GROUPS = [
     ["nwr[shop=mall]{a};"],
     ["nwr[railway=station][toilets=yes]{a};",
      'nwr[railway=station]["railway:station_category"~"^[1-3]$"]{a};'],
+    # charging parks: big sites (8+ points) or ones that say they have a WC; most of them get theirs
+    # from a cafe / public toilet next door, see shopEvidence and chargers
+    ['nwr[amenity=charging_station][access!=private][access!=customers]["capacity"~"^([89]|[1-9][0-9]+)$"]{a};',
+     "nwr[amenity=charging_station][toilets=yes][access!=private][access!=customers]{a};"],
 ]
 
 # WC evidence: shops get a WC mostly when a cafe / bakery with seats is next to them.
@@ -61,7 +65,8 @@ EVIDENCE = [
     ('nwr[shop=supermarket]["brand:wikidata"~"^(Q701755|Q16968817|Q685967|Q1541857)$"]{a}',
      ["nwr[shop=bakery]", "nwr[amenity=cafe]"], 80),
 ]
-EVID_RADIUS = {"super": 80, "moebel": 150, "bau": 150}
+EVID_RADIUS = {"super": 80, "moebel": 150, "bau": 150, "ladepark": 150}
+PARK_MERGE_M = 150  # m: charging stations this close are one park (Kreuz Hilden: one station per operator)
 
 WORKERS = 5  # public Overpass servers handle only a few requests per client at once
 ALONG_CUT = 35  # s a route search waits before answering with what is ready; the rest finishes in the background
@@ -129,13 +134,18 @@ def run_groups(area, limit=300):
     return fetchAll(allQueries(f"({area})", limit), WORKERS)
 
 def shopEvidence(pois, limit=25):
-    """Cafes / restaurants within 150 m of each furniture / DIY chain store: one small query, cached."""
-    stores = [p for p in pois if p["kind"] in ("moebel", "bau") and p["wc"] is not True][:limit]
-    if not stores:
+    """Cafes / restaurants within 150 m of each furniture / DIY chain store and charging park, plus
+    bakeries and public toilets for the parks: one small query, cached."""
+    open_ = [p for p in pois if p["wc"] is not True]
+    stores = [p for p in open_ if p["kind"] in ("moebel", "bau")][:limit]
+    parks = [p for p in open_ if p["kind"] == "ladepark"][:limit * 2]
+    if not stores and not parks:
         return []
     r = EVID_RADIUS["moebel"]
     body = "".join(f'nwr[amenity~"^(cafe|restaurant|fast_food)$"](around:{r},{p["lat"]:.5f},{p["lon"]:.5f});'
-                   for p in stores)
+                   for p in stores + parks)
+    body += "".join(f'nwr[amenity=toilets][access!=private][access!=customers](around:{r},{p["lat"]:.5f},{p["lon"]:.5f});'
+                    f'nwr[shop=bakery](around:{r},{p["lat"]:.5f},{p["lon"]:.5f});' for p in parks)
     try:
         return overpass(f"[out:json][timeout:25];({body});out center tags 300;")
     except RuntimeError:
@@ -143,11 +153,14 @@ def shopEvidence(pois, limit=25):
 
 def evidenceOf(e):
     """cafe / bakery / restaurant element -> (lat, lon, label, strong, eatery) or None.
-    strong = has seats, so likely a WC. eatery = restaurant / fast food, which only counts for big stores."""
+    strong = has seats, so likely a WC. eatery = restaurant / fast food, which only counts for big stores;
+    "wc" = a public toilet, which only counts for charging parks."""
     t = e.get("tags", {})
     lat = e.get("lat") or e.get("center", {}).get("lat")
     lon = e.get("lon") or e.get("center", {}).get("lon")
     if lat is None: return None
+    if t.get("amenity") == "toilets":
+        return lat, lon, "Öffentliches WC", True, "wc"
     if t.get("amenity") == "cafe":
         return lat, lon, "Café", True, False
     if t.get("amenity") in ("restaurant", "fast_food"):
@@ -164,17 +177,41 @@ def enrich(pois, evid):
     for p in pois:
         r = EVID_RADIUS.get(p["kind"])
         if not r or p["wc"] is True: continue
-        big = p["kind"] in ("moebel", "bau")
-        near = [x for x in ev if hav((p["lat"], p["lon"]), (x[0], x[1])) <= r and (big or not x[4])]
+        park = p["kind"] == "ladepark"
+        big = p["kind"] in ("moebel", "bau") or park
+        near = [x for x in ev if hav((p["lat"], p["lon"]), (x[0], x[1])) <= r and (big or not x[4])
+                and (park or x[4] != "wc")]
         strong = [x for x in near if x[3]]
         if strong:
-            p["wc"], p["hint"] = "likely", f"{strong[0][2]} beim Markt"
+            p["wc"], p["hint"] = "likely", f"{strong[0][2]} {'nebenan' if park else 'beim Markt'}"
         elif p["kind"] == "moebel":
             p["wc"], p["hint"] = "likely", "großes Möbelhaus"
         elif near:
             p["wc"], p["hint"] = None, "nur Bäcker-Theke beim Markt"
         else:
             p["wc"], p["hint"] = None, "kein Café/Bäcker erfasst"
+
+def chargers(pois):
+    """Charging parks only with a WC (tagged, or a cafe / public toilet next door), one row per park.
+    Runs after enrich: the WC evidence for the parks only arrives there."""
+    out, parks = [], []
+    for p in pois:
+        if p["kind"] != "ladepark":
+            out.append(p); continue
+        if p["wc"] not in (True, "likely"):
+            continue
+        park = next((q for q in parks if hav((q["lat"], q["lon"]), (p["lat"], p["lon"])) <= PARK_MERGE_M), None)
+        if park is None:
+            parks.append(p); out.append(p)
+            continue
+        park["_ops"] += [o for o in p["_ops"] if o not in park["_ops"]]
+        park["_cap"] += p["_cap"]
+        if p["wc"] is True and park["wc"] is not True:
+            park["wc"], park["hint"] = True, ""
+    for p in parks:
+        ops, cap = [o for o in p.pop("_ops") if o != p["name"]], p.pop("_cap")  # the title already says it
+        p["sub"] = " · ".join(x for x in (", ".join(ops), f"{cap} Ladepunkte" if cap else "") if x)
+    return out
 
 def classify(t):
     brand = t.get("brand") or t.get("name") or ""
@@ -206,6 +243,8 @@ def classify(t):
         return "tank", brand or "Tankstelle", True
     if t.get("amenity") == "parking":
         return "rastplatz", t.get("name") or "Parkplatz mit WC", True
+    if t.get("amenity") == "charging_station":
+        return "ladepark", t.get("name") or t.get("brand") or t.get("operator") or "Ladepark", True if wc else None
     return "other", brand or "Restaurant", wc
 
 DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache.db")
@@ -313,10 +352,14 @@ def to_poi(e):
     kind, name, wc = classify(t)
     if kind in CHAIN and t.get("toilets") != "yes" and not CHAIN[kind].search(t.get("name", "")):
         return None  # only the big chains, or shops that say they have a WC
-    if t.get("toilets") == "no" and kind in ("burger", "super", "moebel", "bau", "mall", "bahnhof", "tank"):
+    if t.get("toilets") == "no" and kind in ("burger", "super", "moebel", "bau", "mall", "bahnhof", "tank", "ladepark"):
         return None  # OSM says explicitly: no WC
     own = t.get("name", "")  # a rest area is titled "Rastplatz"; its own name goes in small letters below
-    return {"id": f'{e["type"]}{e["id"]}', "lat": lat, "lon": lon, "kind": kind,
+    extra = {}
+    if kind == "ladepark":  # chargers() merges a park's stations and writes operators + points into sub
+        cap = t.get("capacity", "")
+        extra = {"_ops": [t.get("brand") or t.get("operator") or name], "_cap": int(cap) if cap.isdigit() else 0}
+    return {**extra, "id": f'{e["type"]}{e["id"]}', "lat": lat, "lon": lon, "kind": kind,
             "name": name, "sub": own if own and own != name else "", "wc": wc, "hours": t.get("opening_hours", ""),
             "fee": t.get("toilets:fee") or t.get("fee") or ""}
 
@@ -346,7 +389,7 @@ def index():
 NEARBY_M = 3000  # m: the "in der Nähe" radius
 NEARBY_MWY_M = 10000  # m: on an Autobahn the next stop is far away, so look wider
 NEARBY_MWY_LIMIT = 1000  # Overpass elements per query on the Autobahn (300 elsewhere)
-MWY_RANK = {"raststaette": 0, "rastplatz": 0, "wc": 1, "burger": 1}  # kept first when the list is cut; everything else rank 2
+MWY_RANK = {"raststaette": 0, "rastplatz": 0, "wc": 1, "burger": 1, "ladepark": 1}  # kept first when the list is cut; everything else rank 2
 MWY_CHECK_M = 30 # m: a position this close to a motorway way counts as "on the Autobahn"
 MWY_CHECK_WAIT = 6  # s: no answer by then = not on the Autobahn, the search must not hang on it
 
@@ -378,6 +421,7 @@ def nearby():
         els, evid, failed, _pending = run_groups(f"around:{radius + pad},{glat:.2f},{glon:.2f}", limit)
         pois = dedupe([p for p in map(to_poi, els) if p])
         enrich(pois, evid + shopEvidence(pois))
+        pois = chargers(pois)
         if len(pois) >= 8: break
         radius *= 2
     for p in pois:
@@ -701,6 +745,7 @@ def along():
     pois = [p for p in pois if p["off"] <= radius]
     # while the rest is still running, do not wait for this second query as well
     enrich(pois, evid if pending else evid + shopEvidence(pois))
+    pois = chargers(pois)
     # The side test cannot see a stop that lies across an interchange: there the road line curves
     # and the cross product says the wrong thing. OSRM knows: driving through such a stop means
     # leaving at the next exit and coming back. Rest areas come first: they are the mirrored pairs,
