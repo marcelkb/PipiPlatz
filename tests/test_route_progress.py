@@ -37,5 +37,13 @@ class RouteProgress(unittest.TestCase):
         self.assertEqual(run("etaAt(%s,99999)" % tl), 540)
         self.assertEqual(run("etaAt(undefined,5)"), 0)
 
+    def test_a_nearby_list_is_re_measured_and_sorted_from_the_new_position(self):
+        stops = [{"id": "a", "lat": 50.0, "lon": 8.0, "dist": 100}, {"id": "b", "lat": 50.02, "lon": 8.0, "dist": 2300}]
+        r = run("rebaseNear(%s,[50.02,8.0])" % json.dumps(stops))
+        self.assertEqual([p["id"] for p in r], ["b", "a"])
+        self.assertEqual(r[0]["dist"], 0)
+        self.assertAlmostEqual(r[1]["dist"], 2224, delta=3)
+        self.assertEqual(stops[0]["dist"], 100)  # the input is not changed
+
 if __name__ == "__main__":
     unittest.main()

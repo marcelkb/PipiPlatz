@@ -413,8 +413,21 @@ function progressOf(info,pt){ // metres already driven along the route, or null 
   if(!info||!info.route||info.route.length<2||!pt)return null;
   const r=alongOf(info.route,pt,info.total);
   return r.off<=ROUTE_ON_M&&r.along>PASSED_M?r.along:null}
+const havM=(a,b)=>{const r=Math.PI/180,dp=(b[0]-a[0])*r,dl=(b[1]-a[1])*r,
+  h=Math.sin(dp/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dl/2)**2;return 2*6371000*Math.asin(Math.sqrt(h))};
+function rebaseNear(list,pt){ // the stops of the last nearby search, measured and sorted from pt: no new fetch
+  return list.map(p=>({...p,dist:Math.round(havM(pt,[p.lat,p.lon]))})).sort((a,b)=>a.dist-b.dist)}
 // </route-progress>
 let shownBase=null; // the progress the list was last drawn for
+// The nearby list follows a new position from the data it already has; only a search the
+// person starts ("In der Nähe", the first fix) fetches again.
+let nearAt=null,nearRadius=0,nearShownAt=null;
+function refilterNear(){
+  if(routeInfo||!nearAt||!pois.length)return;
+  pois=rebaseNear(pois,me);nearShownAt=me.slice();render();
+  const d=havM(me,nearAt);
+  setStatus(d>nearRadius?`${pois.length} Orte der letzten Suche, ${fmt(d)} von hier entfernt. Für Orte hier „In der Nähe“ tippen.`
+    :`${pois.length} Orte der letzten Suche, Entfernungen ab hier`)}
 function render(){
   layer.clearLayers();for(const k in markers)delete markers[k];
   const base=progressOf(routeInfo,me);shownBase=base;
@@ -474,6 +487,7 @@ async function nearby(){
   try{const r=await api(`/api/nearby?lat=${me[0]}&lon=${me[1]}`);
     if(r.error)throw r.error;
     pois=r.pois;routeInfo=null;selId=null;if(routeLine){map.removeLayer(routeLine);routeLine=null}
+    nearAt=me.slice();nearShownAt=me.slice();nearRadius=r.radius;
     setStatus(`${pois.length} Orte im Umkreis von ${r.radius/1000} km${r.partial?' (teilweise, Server überlastet)':''}`);render();busyRec();
   }catch(e){setStatus('Fehler: '+e,true);$('list').innerHTML=''}
   finally{busy(false)}
@@ -485,6 +499,7 @@ function setMe(pos,first){
   if(routeInfo&&!(map._popup&&map._popup.isOpen())){ // driving on: count from here (not while a popup is read, a redraw closes it)
     const b=progressOf(routeInfo,me);
     if((b==null)!==(shownBase==null)||Math.abs((b||0)-(shownBase||0))>500)render()}
+  else if(!routeInfo&&nearShownAt&&!(map._popup&&map._popup.isOpen())&&havM(me,nearShownAt)>200)refilterNear();
   // search on a fresh fix only when there is no position yet or it really moved (no double search on a cached fix)
   if(first&&(!old||Math.abs(old[0]-me[0])>0.002||Math.abs(old[1]-me[1])>0.002)){map.setView(me,13);nearby();}
 }
@@ -713,10 +728,12 @@ document.addEventListener('visibilitychange',()=>{
   if(!hiddenAt||Date.now()-hiddenAt<RESUME_AFTER||geoGate())return;
   hiddenAt=0;
   navigator.geolocation.getCurrentPosition(p=>{
-    const near=!routeInfo&&$('loc').getAttribute('aria-pressed')==='true'; // a route list is kept, it counts from here
-    setMe(p,near); // nearby: searches when the position really moved
+    // the lists already loaded are only re-measured from here; a search runs only when nothing was found yet
+    const near=!routeInfo&&!nearAt&&$('loc').getAttribute('aria-pressed')==='true';
+    setMe(p,near);
     map.setView(me,Math.max(map.getZoom(),13));
-    if(routeInfo){render();$('list').scrollTop=0}
+    if(routeInfo)render();else refilterNear();
+    $('list').scrollTop=0;
   },()=>{},{enableHighAccuracy:true,maximumAge:15000,timeout:20000}); // a 2-minute-old fix is 4 km on the Autobahn
 });
 async function alongSearch(body,seq,first){
