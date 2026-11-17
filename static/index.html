@@ -390,14 +390,41 @@ function busy(on,mode){
   tick();busyT=setInterval(tick,500)}
 function skeleton(){$('list').innerHTML='<div class="skel"><i></i><i></i><i></i><i></i></div>'.repeat(3)}
 
+// Where the car is on the searched route: the list then counts from here, not from the start,
+// and drops the stops already passed (reopened at the first Raststätte, it showed the list of the start).
+// <route-progress>
+const ROUTE_ON_M=1500, PASSED_M=300;
+function alongOf(route,pt,total){ // closest point of the polyline [[lat,lon]] to pt: {off, along}, along scaled to `total`
+  const kx=111320*Math.cos(pt[0]*Math.PI/180),ky=111320,px=pt[1]*kx,py=pt[0]*ky;
+  let cum=0,best={off:Infinity,a:0};
+  for(let i=0;i<route.length-1;i++){
+    const ax=route[i][1]*kx,ay=route[i][0]*ky,dx=route[i+1][1]*kx-ax,dy=route[i+1][0]*ky-ay,L=Math.hypot(dx,dy);
+    const t=L?Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/(L*L))):0,d=Math.hypot(px-ax-t*dx,py-ay-t*dy);
+    if(d<best.off)best={off:d,a:cum+t*L};
+    cum+=L}
+  // the polyline is thinned out and cuts corners: stretch to the length the stops are measured in
+  return {off:best.off,along:cum&&total?best.a*total/cum:best.a}}
+function etaAt(tl,m){ // seconds driven at m metres, from the server's [[m,s]] step timeline
+  if(!tl||!tl.length)return 0;
+  let i=0;while(i<tl.length&&tl[i][0]<m)i++;
+  if(i===0)return tl[0][1];if(i===tl.length)return tl[tl.length-1][1];
+  const [m0,s0]=tl[i-1],[m1,s1]=tl[i];return m1>m0?s0+(s1-s0)*(m-m0)/(m1-m0):s1}
+function progressOf(info,pt){ // metres already driven along the route, or null (not on it, or still at the start)
+  if(!info||!info.route||info.route.length<2||!pt)return null;
+  const r=alongOf(info.route,pt,info.total);
+  return r.off<=ROUTE_ON_M&&r.along>PASSED_M?r.along:null}
+// </route-progress>
+let shownBase=null; // the progress the list was last drawn for
 function render(){
   layer.clearLayers();for(const k in markers)delete markers[k];
-  const all=pois.filter(p=>filt.has(p.kind));
+  const base=progressOf(routeInfo,me);shownBase=base;
+  const t0=base==null?0:etaAt(routeInfo.tl,base);
+  const all=pois.filter(p=>filt.has(p.kind)&&(base==null||p.along>=base-PASSED_M));
   const opp=all.filter(p=>p.opp&&MWY_FACILITY.has(p.kind));   // not reachable without turning around
   const rows=showOpp?all:all.filter(p=>!(p.opp&&MWY_FACILITY.has(p.kind)));
   const banner=opp.length?`<div class="opp"><span>${opp.length} Raststätte/Rastplatz/WC auf der Gegenfahrbahn${showOpp?'':' ausgeblendet'}</span><button class="oppTog" type="button">${showOpp?'ausblenden':'anzeigen'}</button></div>`:'';
   $('list').innerHTML=banner+rows.map(p=>{
-    const [v,u]=fmtP(p.along!=null?p.along:p.dist);
+    const [v,u]=fmtP(p.along!=null?Math.max(0,p.along-(base||0)):p.dist);
     const [icn,kn]=KINDS[p.kind];
     const meta=[`${ico(icn)}${kn}`];
     if(p.along!=null)meta.push(esc(fmt(p.off))+' abseits');
@@ -406,8 +433,9 @@ function render(){
     if(p.fee)meta.push('Gebühr '+esc({yes:'Ja',no:'Nein'}[String(p.fee).toLowerCase()]||p.fee));
     if(p.hint)meta.push(esc(p.hint));
     const wc=p.wc===true?`<span class="wc ok">${ico('check')}WC vorhanden</span>`:p.wc==='likely'?'<span class="wc maybe">WC wahrscheinlich</span>':'<span class="wc maybe">WC unklar</span>';
-    return `<div class="poi${p.id===selId?' sel':''}" data-id="${esc(p.id)}" tabindex="0"><div class="d"><b>${v}</b><span>${u}${p.along!=null?' voraus':''}</span>${p.eta!=null?`<small>~${etaTxt(p.eta)}</small>`:''}</div><div class="sp"><i></i></div><div class="t"><div class="n">${esc(p.name)}</div>${p.sub?`<div class="sub">${esc(p.sub)}</div>`:''}<div class="m">${meta.join(' · ')}</div>${wc}</div><a class="go" target="_blank" rel="noopener" aria-label="Navigation zu ${esc(p.name)}" href="${gmNav(p)}">${ico('go')}Los</a></div>`}).join('')
-    ||'<div class="empty"><b>Nichts gefunden</b>Filter oben lockern oder bei der Routensuche den seitlichen Abstand vergrößern.</div>';
+    return `<div class="poi${p.id===selId?' sel':''}" data-id="${esc(p.id)}" tabindex="0"><div class="d"><b>${v}</b><span>${u}${p.along!=null?' voraus':''}</span>${p.eta!=null?`<small>~${etaTxt(Math.max(0,p.eta-t0))}</small>`:''}</div><div class="sp"><i></i></div><div class="t"><div class="n">${esc(p.name)}</div>${p.sub?`<div class="sub">${esc(p.sub)}</div>`:''}<div class="m">${meta.join(' · ')}</div>${wc}</div><a class="go" target="_blank" rel="noopener" aria-label="Navigation zu ${esc(p.name)}" href="${gmNav(p)}">${ico('go')}Los</a></div>`}).join('')
+    ||(base!=null&&pois.length?'<div class="empty"><b>Alle gefundenen Stopps liegen hinter dir</b>Bei „Entlang der Route“ neu suchen: mit leerem Start geht es ab hier weiter.</div>'
+    :'<div class="empty"><b>Nichts gefunden</b>Filter oben lockern oder bei der Routensuche den seitlichen Abstand vergrößern.</div>');
   rows.forEach(p=>{const m=L.marker([p.lat,p.lon],{icon:pinIcon(p,p.id===selId)}).bindPopup(`<b>${esc(p.name)}</b>${p.sub?`<br><small>${esc(p.sub)}</small>`:''}<br><a target="_blank" rel="noopener" href="${gmNav(p)}">In Google Maps navigieren</a>`).addTo(layer);
     m.on('click',()=>select(p.id,true));markers[p.id]=m;});
   updateGm();
@@ -454,6 +482,9 @@ function setMe(pos,first){
   const old=me;me=[pos.coords.latitude,pos.coords.longitude];
   try{localStorage.setItem('pp-me',JSON.stringify(me))}catch(e){} // only for the first map view of the next visit
   if(!meMarker)meMarker=L.circleMarker(me,{radius:9,color:'#fff',weight:3,fillColor:'#00548f',fillOpacity:1}).addTo(map);else meMarker.setLatLng(me);
+  if(routeInfo&&!(map._popup&&map._popup.isOpen())){ // driving on: count from here (not while a popup is read, a redraw closes it)
+    const b=progressOf(routeInfo,me);
+    if((b==null)!==(shownBase==null)||Math.abs((b||0)-(shownBase||0))>500)render()}
   // search on a fresh fix only when there is no position yet or it really moved (no double search on a cached fix)
   if(first&&(!old||Math.abs(old[0]-me[0])>0.002||Math.abs(old[1]-me[1])>0.002)){map.setView(me,13);nearby();}
 }
@@ -673,6 +704,21 @@ let alongSeq=0,pollT=null,noteT=null;
 function note(t,ms){$('note').textContent=t||'';$('note').classList.toggle('on',!!t);clearTimeout(noteT);
   if(t&&ms)noteT=setTimeout(()=>$('note').classList.remove('on'),ms)}
 $('note').onclick=()=>note(''); // a tap clears the bubble; the search itself keeps running in the background
+// Back in the app after a while (iOS keeps the old page): a fresh fix, the map on the blue dot, and the
+// list for here - nearby searches again if it moved, a route list counts from the current position.
+const RESUME_AFTER=30000;
+let hiddenAt=0;
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){hiddenAt=Date.now();return}
+  if(!hiddenAt||Date.now()-hiddenAt<RESUME_AFTER||geoGate())return;
+  hiddenAt=0;
+  navigator.geolocation.getCurrentPosition(p=>{
+    const near=!routeInfo&&$('loc').getAttribute('aria-pressed')==='true'; // a route list is kept, it counts from here
+    setMe(p,near); // nearby: searches when the position really moved
+    map.setView(me,Math.max(map.getZoom(),13));
+    if(routeInfo){render();$('list').scrollTop=0}
+  },()=>{},{enableHighAccuracy:true,maximumAge:15000,timeout:20000}); // a 2-minute-old fix is 4 km on the Autobahn
+});
 async function alongSearch(body,seq,first){
   const r=await postJson('/api/along',body);if(r.error)throw r.error;
   if(seq!==alongSeq)return null; // a newer search has started
@@ -736,11 +782,11 @@ $('go').onclick=async()=>{
 
 // Google Maps embed (needs free Maps Embed API key, optional)
 function updateGm(){
-  const key=localStorage.gmkey;if(!key||!me||!dest)return;
+  const key=localStorage.gmkey;if(!key||!me||!dest||!gmOn)return; // hidden: set when it is switched on
   const first=pois.filter(p=>filt.has(p.kind)&&p.along!=null)[0];
   let u=`https://www.google.com/maps/embed/v1/directions?key=${key}&origin=${me[0]},${me[1]}&destination=${dest.lat},${dest.lon}`;
   if(first)u+=`&waypoints=${first.lat},${first.lon}`;
-  $('gm').src=u;
+  if($('gm').src!==u)$('gm').src=u;
 }
 let gmOn=false;
 $('gmtab').onclick=()=>{

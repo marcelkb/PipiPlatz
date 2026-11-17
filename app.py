@@ -800,7 +800,7 @@ def along():
     pois.sort(key=lambda p: p["along"])
     return jsonify(route=coords[::max(1, len(coords)//1500)], total=round(total),
                    duration=round(route["duration"]), pois=pois, partial=failed, pending=pending,
-                   via_along=via_along)
+                   via_along=via_along, tl=[[round(m), round(s)] for m, s in tl])
 
 if __name__ == "__main__":
     import os
