@@ -126455,221 +126455,6 @@
 {"id":14392510534,"lat":52.4325519,"lon":12.5481221,"tags":{"amenity":"toilets","fee":"no"},"type":"node"}
 {"id":14392698863,"lat":52.4332388,"lon":12.5469983,"tags":{"brand":"Hagebaumarkt","name":"Hagebaumarkt","opening_hours":"Mo-Sa 08:00-20:00","shop":"doityourself"},"type":"node"}
 {"id":14393391655,"lat":51.4084588,"lon":6.7654714,"tags":{"brand":"HORNBACH","name":"Hornbach","opening_hours":"Mo-Sa 07:00-20:00","shop":"doityourself"},"type":"node"}
-{"id":8261,"lat":51.0446091,"lon":13.6784959,"tags":{"name":"Gorbitz Hof","shop":"mall"},"type":"relation"}
-{"id":380240,"lat":52.5126135,"lon":13.390499,"tags":{"name":"Quartier 205 Stadtmitte","opening_hours":"Mo-Sa 08:00-20:00","shop":"mall","toilets":"yes"},"type":"relation"}
-{"id":398274,"lat":52.2502737,"lon":10.5119693,"tags":{"brand":"HORNBACH","name":"Hornbach","opening_hours":"Mo-Sa 07:00-20:00","shop":"doityourself"},"type":"relation"}
-{"id":543545,"lat":51.3606318,"lon":7.4610802,"tags":{"name":"Graf von Galen Carré","shop":"mall"},"type":"relation"}
-{"id":1075302,"lat":50.9421205,"lon":7.0511399,"tags":{"brand":"Kaufland","name":"Kaufland","opening_hours":"Mo-Sa 07:00-22:00; PH,Su off","shop":"supermarket"},"type":"relation"}
-{"id":1086624,"lat":48.107763,"lon":11.7227628,"tags":{"name":"Jagdfeldzentrum","opening_hours":"24/7","shop":"mall"},"type":"relation"}
-{"id":1306259,"lat":54.0827603,"lon":13.4049234,"tags":{"name":"Möwencenter","opening_hours":"Mo-Fr 07:00-19:00; Sa 07:00-13:00; PH closed","shop":"mall"},"type":"relation"}
-{"ev":1,"id":1355144,"lat":51.7597521,"lon":6.258963,"tags":{"amenity":"restaurant","name":"KlosterResidenz"},"type":"relation"}
-{"id":1373985,"lat":54.1278368,"lon":13.52093,"tags":{"amenity":"toilets"},"type":"relation"}
-{"id":1373987,"lat":54.1282084,"lon":13.5243047,"tags":{"amenity":"toilets"},"type":"relation"}
-{"id":1386244,"lat":49.9780371,"lon":9.1510749,"tags":{"name":"City Galerie","opening_hours":"Mo-Sa 09:00-20:00","shop":"mall"},"type":"relation"}
-{"id":1404166,"lat":53.630691,"lon":11.4218901,"tags":{"name":"Werder Hof","shop":"mall"},"type":"relation"}
-{"id":1427082,"lat":50.893351,"lon":14.8187212,"tags":{"brand":"Kaufland","name":"Kaufland","opening_hours":"Mo-Sa 07:00-22:00; Su, PH off","shop":"supermarket"},"type":"relation"}
-{"id":1458591,"lat":51.4626352,"lon":6.9988719,"tags":{"brand":"XXXLutz","name":"XXXLutz","opening_hours":"Mo-Sa 10:00-19:00; Su off","operator":"Möbel Kröger Handelsgesellschaft mbH & Co. KG","shop":"furniture"},"type":"relation"}
-{"id":1566303,"lat":49.31811,"lon":8.4318441,"tags":{"name":"Postgalerie Speyer","note":"Eröffnung am 28.11.2012","shop":"mall"},"type":"relation"}
-{"ev":1,"id":1631485,"lat":51.8657483,"lon":12.6437362,"tags":{"amenity":"restaurant","name":"Brauhaus Wittenberg","opening_hours":"Mo-Su 11:00-00:00"},"type":"relation"}
-{"id":1633812,"lat":47.9815198,"lon":7.8247381,"tags":{"brand":"Edeka","name":"E center Rees","opening_hours":"Mo-Sa 08:00-22:00","operator":"Rees FrischeMärkte KG","shop":"supermarket"},"type":"relation"}
-{"id":1639059,"lat":52.3422712,"lon":14.5524286,"tags":{"name":"Oderturm","opening_hours":"Mo-Fr 10:00-19:00; Sa 10:00-16:00; PH off","shop":"mall"},"type":"relation"}
-{"id":1690386,"lat":48.4017638,"lon":11.7492862,"tags":{"name":"Altstadtgalerien","shop":"mall"},"type":"relation"}
-{"id":1736659,"lat":48.1051214,"lon":11.7873765,"tags":{"name":"Rossini-Zentrum","opening_hours":"24/7","shop":"mall","toilets":"no"},"type":"relation"}
-{"id":1751752,"lat":50.346462,"lon":7.6194127,"tags":{"name":"Einkaufszentrum Asterstein","shop":"mall"},"type":"relation"}
-{"id":1778665,"lat":52.3010507,"lon":8.0346287,"tags":{"amenity":"fuel","brand":"Aral","name":"ARAL","opening_hours":"Mo-Fr 05:00-23:00; Sa 06:00-23:00; Su 07:00-23:00","operator":"Aral"},"type":"relation"}
-{"id":1794431,"lat":51.7773357,"lon":11.7371749,"tags":{"shop":"mall"},"type":"relation"}
-{"id":1950054,"lat":51.3638365,"lon":10.4221838,"tags":{"brand":"Edeka","name":"EDEKA","opening_hours":"Mo-Fr 07:00-20:00; Sa 07:00-18:00","shop":"supermarket"},"type":"relation"}
-{"id":2073746,"lat":48.4588662,"lon":7.9334273,"tags":{"shop":"mall"},"type":"relation"}
-{"id":2132267,"lat":48.5747473,"lon":13.4520953,"tags":{"name":"Donauquartier","shop":"mall"},"type":"relation"}
-{"id":2162928,"lat":51.356321,"lon":11.9943457,"tags":{"name":"Tivoli","shop":"mall"},"type":"relation"}
-{"id":2292544,"lat":51.4998753,"lon":6.5499308,"tags":{"name":"Einkaufzentrum Drei Eichen","shop":"mall"},"type":"relation"}
-{"id":2518257,"lat":51.362218,"lon":9.4683054,"tags":{"shop":"mall"},"type":"relation"}
-{"id":2562623,"lat":50.7879618,"lon":7.324796,"tags":{"name":"Die Möbelpiraten","opening_hours":"Mo-Fr 10:00-19:00; Sa 10:00-19:00","shop":"furniture"},"type":"relation"}
-{"ev":1,"id":2595338,"lat":50.0039424,"lon":12.3064405,"tags":{"amenity":"restaurant","name":"Prinzregent Luitpold"},"type":"relation"}
-{"id":2671992,"lat":52.5223779,"lon":13.465988,"tags":{"shop":"mall"},"type":"relation"}
-{"id":2674699,"lat":53.5728985,"lon":10.0669407,"tags":{"name":"Einkaufszentrum Quarree Wandsbek-Markt","shop":"mall"},"type":"relation"}
-{"id":2773308,"lat":51.3435099,"lon":12.3746534,"tags":{"name":"Höfe am Brühl","opening_hours":"Mo-Sa 10:00-20:00","shop":"mall"},"type":"relation"}
-{"id":2812464,"lat":50.5829267,"lon":8.6672959,"tags":{"name":"Liebig-Center","shop":"mall"},"type":"relation"}
-{"ev":1,"id":2827619,"lat":48.8583728,"lon":8.2034747,"tags":{"amenity":"restaurant","name":"Hotel am Schloss"},"type":"relation"}
-{"id":2854241,"lat":50.9712464,"lon":12.418788,"tags":{"name":"ELG Holz Altenburg e.G.","opening_hours":"Mo-Fr 07:00-18:00; Sa 09:00-12:00; Su,PH off","shop":"doityourself"},"type":"relation"}
-{"id":2865622,"lat":50.8603571,"lon":12.3070076,"tags":{"highway":"services","name":"Tank- und Rastanlage Altenburger Land (Nord)","operator":"Tank & Rast"},"type":"relation"}
-{"id":2865628,"lat":50.8570137,"lon":12.3141098,"tags":{"highway":"services","name":"Tank- und Rastanlage Altenburger Land (Süd)","operator":"Tank & Rast"},"type":"relation"}
-{"id":2874409,"lat":50.2878204,"lon":11.0177842,"tags":{"shop":"furniture"},"type":"relation"}
-{"ev":1,"id":3206544,"lat":50.3018317,"lon":7.991543,"tags":{"amenity":"restaurant","name":"Gasthaus Müller"},"type":"relation"}
-{"ev":1,"id":3310230,"lat":49.5927311,"lon":11.0228296,"tags":{"amenity":"restaurant","name":"Siemens Healthineers Kantine","opening_hours":"Mo-Fr 11:00-13:30,07:15-10:00","operator":"Siemens Healthineers"},"type":"relation"}
-{"id":3400305,"lat":51.6886612,"lon":7.884774,"tags":{"name":"Maxi-Center","shop":"mall"},"type":"relation"}
-{"id":3615902,"lat":51.0751428,"lon":6.3052862,"tags":{"brand":"Rewe","name":"REWE","shop":"supermarket"},"type":"relation"}
-{"id":3806057,"lat":53.4892879,"lon":10.1579389,"tags":{"name":"Einkaufszentrum Fleethaus","shop":"mall"},"type":"relation"}
-{"id":3849458,"lat":48.8404245,"lon":10.0932612,"tags":{"name":"Mercatura","shop":"mall"},"type":"relation"}
-{"id":3862653,"lat":53.0908482,"lon":8.7734948,"tags":{"description":"Zentrum für Automobilkultur und Mobilität","name":"Schuppen Eins","opening_hours":"Mo-Fr 08:00-19:00; Sa-Su 10:00-19:00","shop":"mall"},"type":"relation"}
-{"id":3898761,"lat":48.7912688,"lon":9.1833891,"tags":{"name":"Milaneo","opening_hours":"Mo-Th 10:00-20:00; Fr 10:00-21:30; Sa 09:30-20:00","operator":"ECE Projektmanagement G.m.b.H. & Co. KG","shop":"mall"},"type":"relation"}
-{"id":3918299,"lat":50.5717152,"lon":7.2891108,"tags":{"name":"Meusch Einkaufcenter","shop":"mall"},"type":"relation"}
-{"id":3947321,"lat":51.3253255,"lon":11.244791,"tags":{"amenity":"parking","fee":"no","highway":"rest_area","name":"Hohe Schrecke West"},"type":"relation"}
-{"id":4077355,"lat":51.7800229,"lon":11.7537327,"tags":{"name":"Einkaufspark Zepziger Weg","shop":"mall"},"type":"relation"}
-{"id":4228120,"lat":51.4593572,"lon":7.0045718,"tags":{"amenity":"toilets","description":"Zwischengeschoss"},"type":"relation"}
-{"id":4284310,"lat":51.4306429,"lon":8.0435185,"tags":{"highway":"rest_area","name":"Wannetal","toilets":"yes"},"type":"relation"}
-{"id":4293576,"lat":52.363431,"lon":7.718592,"tags":{"name":"Recker Baumarkt","opening_hours":"Apr-Oct Mo-Fr 08:00-19:00; Nov-Mar Mo-Fr 08:00-18:00; Sa 08:00-13:00; Su,PH off","shop":"doityourself"},"type":"relation"}
-{"id":4540346,"lat":52.5613783,"lon":13.4227619,"tags":{"name":"Neumann-Forum","opening_hours":"Mo-Sa 07:00-21:00","shop":"mall"},"type":"relation"}
-{"id":4549345,"lat":49.7560938,"lon":6.6379732,"tags":{"name":"Trier Galerie","shop":"mall"},"type":"relation"}
-{"id":4554487,"lat":48.3281262,"lon":10.0372029,"tags":{"name":"Möbel Inhofer","opening_hours":"Mo-Sa 09:30-19:30","shop":"furniture"},"type":"relation"}
-{"id":4639363,"lat":49.7565386,"lon":6.6502719,"tags":{"name":"Alleen Center","opening_hours":"Mo-Sa 07:00-22:00","operator":"VÖLKEL Real Estate GmbH","shop":"mall","toilets":"yes"},"type":"relation"}
-{"ev":1,"id":4645592,"lat":51.0480297,"lon":9.2802757,"tags":{"amenity":"restaurant","name":"Parkhotel Borken","operator":"Stadtpark Hotel GmbH"},"type":"relation"}
-{"id":4672225,"lat":52.7118067,"lon":13.5460284,"tags":{"highway":"rest_area","name":"Probstheide","toilets":"yes"},"type":"relation"}
-{"id":4672228,"lat":52.710341,"lon":13.5489919,"tags":{"highway":"rest_area","name":"Ladeburger Heide","toilets":"yes"},"type":"relation"}
-{"id":4740910,"lat":52.6420756,"lon":13.2440109,"tags":{"highway":"services","name":"Stolper Heide"},"type":"relation"}
-{"id":4743314,"lat":53.0487653,"lon":8.8486964,"tags":{"name":"Werder Karree","opening_hours":"Mo-Fr 10:00-19:00; Sa 10:00-18:00","shop":"mall"},"type":"relation"}
-{"id":5138826,"lat":50.9111752,"lon":6.19088,"tags":{"shop":"mall"},"type":"relation"}
-{"id":5187212,"lat":53.5129987,"lon":9.9150421,"tags":{"highway":"services","name":"Autohof Altenwerder","operator":"B. Uliczka","shop":"yes","toilets":"yes"},"type":"relation"}
-{"id":5966831,"lat":50.2954514,"lon":8.6857534,"tags":{"amenity":"fuel","brand":"Shell","name":"Shell"},"type":"relation"}
-{"id":6028673,"lat":51.8686345,"lon":8.923482,"tags":{"amenity":"restaurant","indoor_seating":"yes","name":"Felsenwirt","note":"Die Rollstuhltoilette ist nicht abschließbar.","toilets":"yes","toilets:fee":"no"},"type":"relation"}
-{"id":6286368,"lat":51.4912562,"lon":9.7297602,"tags":{"highway":"rest_area","name":"Rastplatz Niemetal"},"type":"relation"}
-{"ev":1,"id":6294053,"lat":51.3384724,"lon":12.3799661,"tags":{"amenity":"restaurant","brand":"Hans im Glück","indoor_seating":"yes","name":"Hans im Glück","opening_hours":"Mo-Th,Su,PH 11:00-00:00; Fr,Sa 11:00-01:00","operator":"Hans im Glück Franchise GmbH"},"type":"relation"}
-{"id":6419104,"lat":52.0642296,"lon":8.6846744,"tags":{"amenity":"toilets"},"type":"relation"}
-{"id":6601876,"lat":48.3043588,"lon":11.6336884,"tags":{"brand":"IKEA","name":"IKEA","opening_hours":"Mo-Sa 10:00-20:00; PH off","operator":"IKEA Deutschland GmbH & Co. KG","shop":"furniture"},"type":"relation"}
-{"id":6663637,"lat":54.3218832,"lon":10.0530807,"tags":{"name":"Mettenhofer Einkaufszentrum","opening_hours":"\"unterschiedlich\"","shop":"mall"},"type":"relation"}
-{"ev":1,"id":6832399,"lat":48.4690735,"lon":7.943874,"tags":{"amenity":"cafe","name":"Gmeiner","opening_hours":"Mo-Fr 08:30-18:30; Tu 07:30-18:30; Sa 07:00-18:00; Sep 01-May 31: Su 13:00-18:00","shop":"pastry"},"type":"relation"}
-{"id":7238507,"lat":54.1028778,"lon":12.1716374,"tags":{"note":"Gebäude steht leer","shop":"furniture"},"type":"relation"}
-{"id":7296404,"lat":48.7756214,"lon":9.1808697,"tags":{"name":"Dorotheen-Quartier","opening_hours":"Mo-Fr 10:00-20:00; Sa 09:30-20:00","shop":"mall"},"type":"relation"}
-{"id":7439731,"lat":49.8742838,"lon":6.8306736,"tags":{"highway":"rest_area","name":"Hetzerath","toilets":"yes"},"type":"relation"}
-{"id":7439732,"lat":49.8734358,"lon":6.8300756,"tags":{"highway":"rest_area","name":"Rivenich","toilets":"yes"},"type":"relation"}
-{"id":7476416,"lat":51.0550427,"lon":13.7216111,"tags":{"brand":"POCO","name":"POCO","opening_hours":"Mo-Fr 10:00-19:00; Sa 10:00-19:00","operator":"POCO","shop":"furniture"},"type":"relation"}
-{"id":7568255,"lat":52.0769961,"lon":9.3306678,"tags":{"shop":"furniture"},"type":"relation"}
-{"id":7701165,"lat":52.4301282,"lon":13.4551989,"tags":{"brand":"Westfield","name":"Gropius Passagen","opening_hours":"Mo-Sa 10:00-20:00","operator":"Unibail-Rodamco-Westfield","shop":"mall"},"type":"relation"}
-{"id":7794637,"lat":51.331013,"lon":12.405015,"tags":{"brand":"Rewe","name":"REWE City","opening_hours":"Mo-Sa 06:00-22:00","operator":"REWE Peggy Jahn oHG","shop":"supermarket"},"type":"relation"}
-{"id":7891356,"lat":50.9866481,"lon":14.0551975,"tags":{"amenity":"parking","capacity":"700","fee":"yes","name":"P+R Bastei","opening_hours":"Mo-Su 00:00-24:00","toilets":"yes"},"type":"relation"}
-{"id":7906826,"lat":50.5059301,"lon":12.934076,"tags":{"name":"Möbelhaus Illing","opening_hours":"Mo-Fr 09:00-19:00; Sa 09:00-14:00; Su,PH off","operator":"Möbelhaus Illing GmbH","shop":"furniture"},"type":"relation"}
-{"id":7986794,"lat":48.058603,"lon":10.8479564,"tags":{"highway":"services","name":"Autobahnraststätte Lechwiesen Süd","operator":"Tank"},"type":"relation"}
-{"id":8032309,"lat":53.4561823,"lon":9.9876459,"tags":{"name":"Phoenix Center","opening_hours":"Mo-Sa 08:00-20:00","operator":"Deutsche EuroShop AG;ECE","shop":"mall","toilets":"yes"},"type":"relation"}
-{"id":8186621,"lat":54.1389025,"lon":12.0555125,"tags":{"name":"Warnow Geschäftszentrum","shop":"mall"},"type":"relation"}
-{"id":8381364,"lat":49.8284687,"lon":8.7312426,"tags":{"brand":"REWE","name":"REWE","opening_hours":"Mo-Sa 07:00-22:00","shop":"supermarket"},"type":"relation"}
-{"id":8414476,"lat":50.9461354,"lon":6.8335962,"tags":{"brand":"Rewe","name":"REWE","opening_hours":"Mo-Sa 07:00-22:00; PH off; Dec 23 06:00-22:00; Dec 24 06:00-14:00","shop":"supermarket"},"type":"relation"}
-{"id":8430622,"lat":51.2099939,"lon":12.3280918,"tags":{"brand":"REWE","name":"REWE","opening_hours":"Mo-Sa 07:00-22:00; Su,PH off","operator":"REWE Markt Uwe Andreß oHG","shop":"supermarket"},"type":"relation"}
-{"id":8504555,"lat":52.5292601,"lon":13.4563404,"tags":{"name":"Forum Landsberger Allee","shop":"mall"},"type":"relation"}
-{"id":8533464,"lat":48.0769423,"lon":11.9700406,"tags":{"name":"e-EinZ: Ebersberger Einkaufszentrum","opening_hours":"Mo-Sa 07:00-20:00; PH off","operator":"e-EinZ Werbe UG (haftungsbeschränkt)","shop":"mall","toilets":"yes"},"type":"relation"}
-{"id":8673575,"lat":51.7964152,"lon":12.9430375,"tags":{"amenity":"fuel","brand":"Sprint","name":"sprint"},"type":"relation"}
-{"id":8738959,"lat":53.4894898,"lon":10.2732244,"tags":{"name":"XXXLutz","opening_hours":"Mo-Sa 10:00-19:00","operator":"XXXLutz","shop":"furniture"},"type":"relation"}
-{"id":9118557,"lat":49.4829524,"lon":8.4651149,"tags":{"amenity":"toilets","name":"SO 201.2"},"type":"relation"}
-{"id":9192283,"lat":50.9962434,"lon":7.1165505,"tags":{"name":"Bauzentrum Tönnes","opening_hours":"Mo-Fr 07:30-17:00; Sa 07:30-13:00","shop":"doityourself"},"type":"relation"}
-{"id":9203870,"lat":53.1664343,"lon":8.6285897,"tags":{"name":"Kontor zum alten Speicher","shop":"mall"},"type":"relation"}
-{"id":9283016,"lat":53.0962357,"lon":8.8097785,"tags":{"opening_hours":"Mo-Sa 07:00-22:00","shop":"mall"},"type":"relation"}
-{"id":9355760,"lat":48.0588022,"lon":10.8467622,"tags":{"highway":"services","name":"Autobahnraststätte Lechwiesen Nord","operator":"Autobahn Tank & Rast GmbH"},"type":"relation"}
-{"id":9670536,"lat":49.9242102,"lon":7.8248821,"tags":{"amenity":"fuel","brand":"Total","name":"Autohof Waldlaubersheim","opening_hours":"24/7","operator":"ERP Waldlaubersheim GmbH & Co. KG"},"type":"relation"}
-{"id":9775208,"lat":48.6753667,"lon":13.2429264,"tags":{"highway":"rest_area","name":"Geißberg Nord"},"type":"relation"}
-{"id":9849608,"lat":50.8583816,"lon":12.9337781,"tags":{"amenity":"fuel","name":"Bahntankstelle","operator":"DB Netz"},"type":"relation"}
-{"id":9882913,"lat":48.7904772,"lon":11.3777172,"tags":{"brand":"Edeka","name":"E center Gaimersheim","opening_hours":"Mo-Sa 06:00-20:00; Su,PH closed","shop":"supermarket"},"type":"relation"}
-{"id":9976408,"lat":48.1709013,"lon":8.617451,"tags":{"amenity":"fuel","name":"Nordgarage","opening_hours":"Mo-Fr 07:00-21:00, Sa-Su 08:00-21:00"},"type":"relation"}
-{"id":9998686,"lat":51.3822636,"lon":9.2474763,"tags":{"brand":"Serways","highway":"services","name":"Bühleck Nord","operator":"Autobahn Tank & Rast Gruppe GmbH & Co. KG","toilets":"yes"},"type":"relation"}
-{"id":10293301,"lat":48.7701331,"lon":12.2361039,"tags":{"name":"Labertaler Fachmarkt","shop":"doityourself"},"type":"relation"}
-{"ev":1,"id":10838040,"lat":47.6609124,"lon":9.1727118,"tags":{"amenity":"restaurant","name":"Siddhartha"},"type":"relation"}
-{"id":10952504,"lat":52.1253986,"lon":8.6327843,"tags":{"name":"Pörtner","shop":"doityourself"},"type":"relation"}
-{"ev":1,"id":11486700,"lat":51.260519,"lon":12.4281906,"tags":{"amenity":"restaurant","name":"Seeperle","opening_hours":"Mo-Su 12:00-21:00; Fr,Sa 12:00-22:00"},"type":"relation"}
-{"id":11589683,"lat":48.8577243,"lon":12.9079567,"tags":{"brand":"REWE","name":"REWE","opening_hours":"Mo-Sa 07:00-20:00","shop":"supermarket"},"type":"relation"}
-{"id":12226929,"lat":50.5888633,"lon":6.6204382,"tags":{"amenity":"fuel","brand":"Shell","name":"Shell","opening_hours":"Mo-Fr 04:30-22:30; Sa 07:00-22:30; Su 08:00-22:30"},"type":"relation"}
-{"id":12255129,"lat":51.4137646,"lon":12.3403277,"tags":{"highway":"rest_area","name":"Birkenwald","toilets":"yes"},"type":"relation"}
-{"id":12329492,"lat":48.1208254,"lon":8.3310802,"tags":{"amenity":"restaurant","name":"Seehaus","opening_hours":"We-Fr 10:00-24:00; Sa 10:00-01:00; Su 10:00-22:00 open","toilets":"yes"},"type":"relation"}
-{"ev":1,"id":12354609,"lat":49.0073116,"lon":8.4018393,"tags":{"amenity":"cafe","brand":"Starbucks","name":"Starbucks","opening_hours":"Mo-Sa 09:00-18:00; Su,PH off","takeaway":"yes"},"type":"relation"}
-{"ev":1,"id":12357146,"lat":49.0064449,"lon":8.4028168,"tags":{"amenity":"cafe","name":"Florenz Eiscafe Karlsruhe","note":"ganzjährig geöffnet"},"type":"relation"}
-{"id":12411751,"lat":48.0008845,"lon":7.8372483,"tags":{"name":"Hartmann Einrichtungen","opening_hours":"Mo-Fr 10:00-13:00,14:00-18:30, Sa 10:00-15:00","shop":"furniture"},"type":"relation"}
-{"id":12477314,"lat":50.8226381,"lon":12.95949,"tags":{"name":"Gablenz-Center","shop":"mall"},"type":"relation"}
-{"id":12544315,"lat":51.8932975,"lon":9.008227,"tags":{"highway":"rest_area","name":"Rastplatz Kohlenberg"},"type":"relation"}
-{"id":12613015,"lat":50.0893132,"lon":8.5750203,"tags":{"name":"AS5 Baufachzentrum und Baumarkt","opening_hours":"Mo-Fr 07:00-18:00, Sa 07:00-14:00","operator":"Anton Schneider 5. GmbH","shop":"doityourself"},"type":"relation"}
-{"id":12626351,"lat":50.7600816,"lon":13.0640564,"tags":{"name":"wohnen&sparen PETEX GmbH","opening_hours":"Mo-Fr 09:30-18:30, Sa 09:30-15:00","shop":"doityourself"},"type":"relation"}
-{"id":12629189,"lat":51.2548184,"lon":8.9388251,"tags":{"name":"Möbelkreis Waldeck","shop":"furniture"},"type":"relation"}
-{"ev":1,"id":13016636,"lat":52.0902883,"lon":8.7547959,"tags":{"amenity":"cafe","brand":"Cafe Extrablatt","name":"Cafe Extrablatt","opening_hours":"Mo-Sa 08:30-24:00; Su 09:00-24:00","operator":"Cafe Extrablatt Bad Salzuflen GmbH","takeaway":"yes"},"type":"relation"}
-{"id":13115833,"lat":47.7483109,"lon":11.565442,"tags":{"amenity":"fast_food","brand":"McDonald's","name":"McDonald's","opening_hours":"Mo-Fr 00:00-01:00,07:00-24:00; Sa-Su 00:00-02:00,07:00-24:00","operator":"Heinritzi Betriebs Gmbh","takeaway":"yes"},"type":"relation"}
-{"ev":1,"id":13237983,"lat":48.1274758,"lon":11.6037053,"tags":{"brand":"BackWerk","name":"Backwerk","opening_hours":"Mo-Fr 06:00-19:00; Sa 07:00-17:00; Su 07:00-16:00","shop":"bakery"},"type":"relation"}
-{"id":13293730,"lat":52.1698122,"lon":7.7613626,"tags":{"highway":"services","name":"Buddenkuhle","toilets":"yes"},"type":"relation"}
-{"id":13542291,"lat":48.210329,"lon":9.0155825,"tags":{"amenity":"fuel","brand":"Rominger & Blaier","name":"Rominger & Blaier Tankstelle","opening_hours":"Mo-Fr 05:00-22:00, Sa 07:00-22:00, Su 07:00-21:00","operator":"Rominger & Blaier Tankstellen GmbH","shop":"yes"},"type":"relation"}
-{"ev":1,"id":13665454,"lat":47.6132855,"lon":12.2006314,"tags":{"amenity":"restaurant","name":"Inntal West"},"type":"relation"}
-{"id":13747752,"lat":51.0458562,"lon":13.7351564,"tags":{"name":"Centrum Galerie","opening_hours":"Mo-Sa 09:30-20:00","shop":"mall","toilets":"yes"},"type":"relation"}
-{"id":13747754,"lat":51.046437,"lon":13.7356394,"tags":{"shop":"mall"},"type":"relation"}
-{"id":14018434,"lat":52.1972786,"lon":8.3882052,"tags":{"amenity":"fuel","brand":"Shell","name":"Shell","opening_hours":"24/7"},"type":"relation"}
-{"id":14022449,"lat":52.1960576,"lon":8.3842942,"tags":{"amenity":"fuel","brand":"Aral","name":"Aral","opening_hours":"24/7"},"type":"relation"}
-{"id":14315409,"lat":52.913488,"lon":8.8157853,"tags":{"name":"Steenken GmbH","shop":"doityourself"},"type":"relation"}
-{"id":14357182,"lat":53.5519843,"lon":10.0463952,"tags":{"amenity":"fast_food","brand":"McDonald's","name":"McDonald's","opening_hours":"24/7","operator":"McDonald's Deutschland LLC","takeaway":"yes"},"type":"relation"}
-{"id":14501454,"lat":51.1823479,"lon":7.1868767,"tags":{"name":"Allee-Center","opening_hours":"Mo-Sa 10:00-19:00","operator":"ECE Marketplaces GmbH & Co. KG","shop":"mall"},"type":"relation"}
-{"id":14505993,"lat":51.1108952,"lon":7.9040095,"tags":{"amenity":"toilets","name":"Sanitärgebäude","toilets":"customers"},"type":"relation"}
-{"id":14599748,"lat":50.802134,"lon":6.8135217,"tags":{"brand":"Kaufland","name":"Kaufland","opening_hours":"Mo-Fr 07:00-22:00; Sa 07:00-14:00; PH off","shop":"supermarket"},"type":"relation"}
-{"id":14689640,"lat":50.8758725,"lon":12.0771812,"tags":{"name":"Gera Arcaden","shop":"mall"},"type":"relation"}
-{"id":14707857,"lat":51.1663081,"lon":6.4419466,"tags":{"name":"To Huus","shop":"mall"},"type":"relation"}
-{"ev":1,"id":14919659,"lat":51.1334891,"lon":9.5434964,"tags":{"amenity":"fast_food","indoor_seating":"no","name":"Costa's Imbiss"},"type":"relation"}
-{"id":15047655,"lat":53.1372779,"lon":8.2284262,"tags":{"name":"MACO City! Einkaufscenter","shop":"mall"},"type":"relation"}
-{"id":15066670,"lat":50.9821841,"lon":8.7335001,"tags":{"amenity":"fuel","brand":"bft","name":"Burgwald-Tankzentrum"},"type":"relation"}
-{"id":15097132,"lat":51.8750011,"lon":12.6510987,"tags":{"brand":"EDEKA","name":"EDEKA","operator":"Habedank","shop":"supermarket"},"type":"relation"}
-{"id":15259083,"lat":51.8677991,"lon":12.6440188,"tags":{"name":"Arsenal","opening_hours":"Mo-Sa 09:00-20:00","shop":"mall"},"type":"relation"}
-{"id":15260280,"lat":51.3005169,"lon":12.3971554,"tags":{"name":"Moritz-Hof","operator":"Vicus Group AG","shop":"mall","toilets":"yes"},"type":"relation"}
-{"id":15596305,"lat":48.4009074,"lon":10.8766985,"tags":{"brand":"Kaufland","name":"Kaufland","opening_hours":"Mo-Sa 07:00-20:00","shop":"supermarket"},"type":"relation"}
-{"id":15853727,"lat":47.8138392,"lon":7.550574,"tags":{"highway":"rest_area"},"type":"relation"}
-{"id":15952923,"lat":53.7771112,"lon":12.17686,"tags":{"name":"Einkaufszentrum Güstrow Süd","shop":"mall"},"type":"relation"}
-{"id":15970586,"lat":52.635835,"lon":11.3057802,"tags":{"highway":"rest_area"},"type":"relation"}
-{"id":15992511,"lat":51.8948843,"lon":8.9767086,"tags":{"amenity":"parking","capacity":"6","description":"Gebühr ist zu entrichten in der Tourist-Information Horn-Bad Meinberg, Parkstraße 10","fee":"yes","name":"Wohnmobilstellplatz am Heinrich-Drake-Platz","operator":"GesUndTourismus Horn-Bad Meinberg GmbH","toilets":"yes"},"type":"relation"}
-{"id":16104344,"lat":48.3668997,"lon":10.8857756,"tags":{"name":"HELIO","shop":"mall","toilets":"yes"},"type":"relation"}
-{"id":16118783,"lat":47.768721,"lon":12.9460916,"tags":{"amenity":"fuel","brand":"Shell","name":"Shell"},"type":"relation"}
-{"id":16152549,"lat":54.0291943,"lon":10.7562131,"tags":{"amenity":"restaurant","name":"Capolino","opening_hours":"Mo-Su 12:00-22:00","operator":"Pasquale Cimmino","toilets":"yes"},"type":"relation"}
-{"ev":1,"id":16520848,"lat":49.8678513,"lon":8.6272233,"tags":{"amenity":"restaurant","name":"beGarden-Restaurant","operator":"Sodexo","takeaway":"yes"},"type":"relation"}
-{"id":16827923,"lat":52.5306437,"lon":13.7926095,"tags":{"brand":"EDEKA","name":"EDEKA Center Losensky","opening_hours":"Mo-Sa 07:00-21:00","operator":"Losensky","shop":"supermarket"},"type":"relation"}
-{"id":16873787,"lat":48.520548,"lon":9.7405831,"tags":{"amenity":"charging_station","capacity":"259","fee":"yes"},"type":"relation"}
-{"id":16892414,"lat":51.0848946,"lon":13.6961223,"tags":{"amenity":"parking","fee":"no","name":"Elbepark","opening_hours":"Mo-Th 10:00-20:00; Fr 10:00-21:00; Sa 10:00-20:00","operator":"Elbepark","shop":"mall"},"type":"relation"}
-{"id":17021813,"lat":49.0499872,"lon":13.1115476,"tags":{"highway":"rest_area","toilets":"no"},"type":"relation"}
-{"id":17054148,"lat":49.192801,"lon":9.1472662,"tags":{"amenity":"fuel"},"type":"relation"}
-{"id":17073471,"lat":52.0821175,"lon":7.4758935,"tags":{"shop":"mall"},"type":"relation"}
-{"id":17245754,"lat":53.8671986,"lon":10.6727493,"tags":{"name":"LindenArcaden","shop":"mall","toilets":"yes"},"type":"relation"}
-{"id":17298248,"lat":53.4569714,"lon":9.6703031,"tags":{"brand":"REWE","name":"REWE Gierke","opening_hours":"Mo-Sa 06:00-22:00; PH off","operator":"REWE Gierke oHG","shop":"supermarket"},"type":"relation"}
-{"id":17335127,"lat":51.5844653,"lon":7.8596175,"tags":{"amenity":"fuel","brand":"Classic","name":"Classic","opening_hours":"Mo-Sa 06:00-22:00; PH,Su 08:00-22:00"},"type":"relation"}
-{"id":17353905,"lat":52.4375589,"lon":13.4463336,"tags":{"name":"GEHAG Einkaufzentrum","shop":"mall"},"type":"relation"}
-{"ev":1,"id":17463271,"lat":50.3582385,"lon":7.5966869,"tags":{"amenity":"cafe","brand":"Hoefer","name":"Hoefer Forum Mittelrhein","opening_hours":"Mo-Fr 08:00-20:00; Sa 09:00-20:00; Su off","operator":"Bäckerei Hoefer GmbH","shop":"bakery"},"type":"relation"}
-{"id":17477445,"lat":49.9023928,"lon":8.6081561,"tags":{"brand":"Kaufland","name":"Kaufland","opening_hours":"Mo-Fr 07:00-24:00; Sa 07:00-23:30","shop":"supermarket"},"type":"relation"}
-{"id":17607232,"lat":51.7309902,"lon":9.9727194,"tags":{"amenity":"fuel","brand":"Aral","name":"ARAL","operator":"ARAL"},"type":"relation"}
-{"id":17768624,"lat":49.3583055,"lon":11.2020928,"tags":{"brand":"Serways","highway":"services","name":"Raststätte Nürnberg-Feucht West","operator":"Autobahn Tank & Rast Gruppe GmbH & Co. KG","toilets":"yes"},"type":"relation"}
-{"id":17770119,"lat":52.6064344,"lon":13.3230527,"tags":{"brand":"OBI","name":"OBI","opening_hours":"Mo-Sa 08:00-20:00","shop":"doityourself"},"type":"relation"}
-{"id":17835751,"lat":51.0240237,"lon":14.5632028,"tags":{"amenity":"restaurant","indoor_seating":"yes","name":"Lindners Grenzschänke","note":"Hunde erlaubt","opening_hours":"Tu-Fr 11:30-14:00,17:00-22:00; Sa 11:30-22:00; Su,PH 11:30-20:00; Mo-We off","operator":"Projekt Lindner GmbH","toilets":"yes"},"type":"relation"}
-{"id":17917635,"lat":48.7172044,"lon":9.3420007,"tags":{"name":"Möbel Rieger","shop":"furniture"},"type":"relation"}
-{"id":17956294,"lat":48.7967151,"lon":9.0058339,"tags":{"brand":"Kaufland","name":"Kaufland","opening_hours":"Mo-Sa 07:00-22:00; PH off","shop":"supermarket"},"type":"relation"}
-{"id":18040684,"lat":51.3568218,"lon":12.4378865,"tags":{"amenity":"fuel","brand":"bft","name":"bft","note":"in 10/2014 von jet auf bft gewechselt","opening_hours":"24/7","operator":"bft"},"type":"relation"}
-{"id":18115313,"lat":51.7820031,"lon":11.144961,"tags":{"name":"Mettehof","opening_hours":"Mo-Sa 09:00-20:00","operator":"City- und Centermanagement Weimar GmbH","shop":"mall"},"type":"relation"}
-{"id":18198204,"lat":48.3901094,"lon":11.0638479,"tags":{"amenity":"charging_station","brand":"Aral pulse","capacity":"8","description":"4 Ladesäulen Aiptronic Hypercharger 300 mit je 2 Type2 und 1 Chademo","opening_hours":"24/7","operator":"Aral"},"type":"relation"}
-{"id":18233725,"lat":51.3126342,"lon":6.6321535,"tags":{"amenity":"fuel","brand":"Shell","name":"Shell"},"type":"relation"}
-{"id":18310876,"lat":48.6937312,"lon":9.3035363,"tags":{"amenity":"charging_station","capacity":"10"},"type":"relation"}
-{"id":18498324,"lat":49.9947142,"lon":6.9259557,"tags":{"highway":"rest_area","name":"Rastplatz Lüxem"},"type":"relation"}
-{"id":18506393,"lat":48.641514,"lon":8.0370569,"tags":{"highway":"services","name":"Autohof Achern","opening_hours":"24/7","operator":"Euro RastPark Achern","toilets":"yes"},"type":"relation"}
-{"id":18632670,"lat":52.0841385,"lon":7.4729906,"tags":{"name":"Udo Dömer Technik","shop":"doityourself"},"type":"relation"}
-{"id":18674647,"lat":52.3144615,"lon":13.609104,"tags":{"name":"A10 Center","opening_hours":"Mo-Th 10:00-20:00; Fr-Sa 10:00-21:00","operator":"ECE Projektmanagement GmbH & Co. KG","shop":"mall","toilets":"yes"},"type":"relation"}
-{"id":18751888,"lat":50.57992,"lon":10.7000283,"tags":{"shop":"furniture"},"type":"relation"}
-{"id":18764425,"lat":47.7465716,"lon":11.4645715,"tags":{"amenity":"fuel","brand":"Shell","name":"Shell","opening_hours":"Mo-Su 06:00-22:00","operator":"Shell"},"type":"relation"}
-{"id":18786444,"lat":48.5003672,"lon":9.0549968,"tags":{"shop":"mall"},"type":"relation"}
-{"ev":1,"id":19068300,"lat":52.2258439,"lon":7.3767457,"tags":{"name":"Bäckerei Werning","operator":"Sarah Alke;Jan Kamp","shop":"bakery"},"type":"relation"}
-{"ev":1,"id":19243922,"lat":51.3559013,"lon":11.9992634,"tags":{"amenity":"restaurant","name":"Taj Mahal","opening_hours":"Mo-Su 11:00-23:00"},"type":"relation"}
-{"id":19263145,"lat":48.6747836,"lon":9.3753861,"tags":{"name":"Möbelhaus Behr","opening_hours":"Mo-Fr 10:00-19:00; Sa 10:00-16:00","shop":"furniture"},"type":"relation"}
-{"ev":1,"id":19302217,"lat":53.6342343,"lon":11.4080299,"tags":{"indoor_seating":"yes","name":"Stadtbäckerei Junge","opening_hours":"Mo-Fr 05:30-19:00; Sa,Su 06:00-18:00","shop":"bakery"},"type":"relation"}
-{"id":19445153,"lat":52.4935737,"lon":13.5072316,"tags":{"name":"Dolgensee-Center","shop":"mall"},"type":"relation"}
-{"id":19512157,"lat":47.987115,"lon":7.83844,"tags":{"amenity":"fuel","brand":"TotalEnergies","name":"Total","opening_hours":"Mo-Fr 06:00-22:00; Sa 07:00-22:00; Su 08:00-22:00; PH 08:00-22:00","shop":"convenience"},"type":"relation"}
-{"id":19529251,"lat":51.3061721,"lon":7.2338207,"tags":{"description":"Closed until further notice, due to construction","highway":"rest_area","name":"Rastplatz Holtkamp","note":"rest area closed until further notice due to road construction\n\nhttps://fragdenstaat.de/a/345835","toilets":"no"},"type":"relation"}
-{"id":19682362,"lat":48.9922361,"lon":8.4028887,"tags":{"amenity":"charging_station","capacity":"8","opening_hours":"24/7","operator":"EnBW Energie Baden-Württemberg AG"},"type":"relation"}
-{"id":19717458,"lat":50.7938777,"lon":8.7606691,"tags":{"amenity":"charging_station","brand":"Aral pulse","capacity":"9","operator":"Aral"},"type":"relation"}
-{"id":20163137,"lat":53.599283,"lon":11.3926939,"tags":{"name":"Sieben Seen Center","opening_hours":"Mo-Sa 08:00-20:00","operator":"MEC METRO-ECE Centermanagement","shop":"mall","toilets":"yes"},"type":"relation"}
-{"id":20203770,"lat":49.5941333,"lon":8.483268,"tags":{"amenity":"fuel","brand":"star","name":"star","shop":"convenience"},"type":"relation"}
-{"id":20216929,"lat":50.8953134,"lon":11.9798384,"tags":{"highway":"services","toilets":"yes"},"type":"relation"}
-{"id":20313493,"lat":51.1481293,"lon":11.8287204,"tags":{"shop":"doityourself"},"type":"relation"}
-{"id":20313495,"lat":51.147969,"lon":11.8281105,"tags":{"brand":"OBI","name":"OBI","opening_hours":"Mo-Fr 07:00-22:00; Sa 07:00-20:00","operator":"Obi","shop":"doityourself"},"type":"relation"}
-{"id":20524363,"lat":49.7754664,"lon":9.5763698,"tags":{"name":"Wertheim Village","opening_hours":"Mo-Sa 10:00-20:00","operator":"TBVSC","shop":"mall","toilets":"yes"},"type":"relation"}
-{"id":20585198,"lat":50.3362611,"lon":7.5680616,"tags":{"amenity":"charging_station","capacity":"12"},"type":"relation"}
-{"id":20619794,"lat":53.8876632,"lon":10.6448753,"tags":{"amenity":"fuel","name":"Access","opening_hours":"Mo-Sa 05:30-22:00; Su 06:00-22:00; PH 07:30-22:00","shop":"convenience"},"type":"relation"}
-{"id":20704387,"lat":48.9571824,"lon":9.2441629,"tags":{"amenity":"charging_station","brand":"Aral pulse","capacity":"8","opening_hours":"24/7","operator":"Aral"},"type":"relation"}
-{"id":20954331,"lat":52.584652,"lon":13.2861269,"tags":{"name":"Hallen am Borsigturm","opening_hours":"Mo-Sa 10:00-20:00; \"Die Öffnungszeiten können bei einzelnen Shops, Gastrobetrieben und Services abweichen.\"","shop":"mall","toilets":"yes"},"type":"relation"}
-{"id":20999145,"lat":50.8328006,"lon":6.9222999,"tags":{"brand":"JYSK","name":"JYSK","opening_hours":"Mo-Fr 10:00-18:30; Sa 09:30-17:00","shop":"furniture"},"type":"relation"}
-{"id":20999146,"lat":50.8327108,"lon":6.9214677,"tags":{"brand":"Rewe","name":"REWE","opening_hours":"Mo-Sa 08:00-21:00","operator":"REWE Istas Verbrauchermarkt GmbH","shop":"supermarket"},"type":"relation"}
-{"id":21058077,"lat":50.5689568,"lon":8.4971485,"tags":{"brand":"IKEA","name":"IKEA","opening_hours":"Mo-Sa 10:00-20:00; Su,PH off","operator":"IKEA Deutschland GmbH & Co. KG","shop":"furniture"},"type":"relation"}
-{"id":21096900,"lat":52.3598908,"lon":10.1556624,"tags":{"highway":"rest_area","name":"Röhrse Süd","toilets":"yes","toilets:fee":"no"},"type":"relation"}
-{"ev":1,"id":21139241,"lat":51.483463,"lon":7.2121816,"tags":{"amenity":"cafe","indoor_seating":"yes","name":"Café Piccolo","operator":"Musikschule Bochum"},"type":"relation"}
-{"id":21228287,"lat":51.1960383,"lon":12.0004777,"tags":{"brand":"Möbel Boss","name":"Möbel Boss","opening_hours":"Mo-Fr 09:00-19:00; Sa 09:00-18:00","shop":"furniture"},"type":"relation"}
-{"id":21373362,"lat":50.0690739,"lon":6.8808083,"tags":{"highway":"services","name":"Eifel West","toilets":"yes"},"type":"relation"}
-{"id":21441022,"lat":48.2127975,"lon":11.5636789,"tags":{"name":"Mira","shop":"mall"},"type":"relation"}
-{"id":21450550,"lat":49.5714624,"lon":8.9777578,"tags":{"brand":"REWE","name":"REWE","opening_hours":"Mo-Sa 07:00-21:30","operator":"Rewe-Markt GmbH","shop":"supermarket"},"type":"relation"}
-{"id":21450551,"lat":49.5715852,"lon":8.9774377,"tags":{"brand":"REWE","name":"REWE","opening_hours":"Mo-Sa 07:00-21:30","operator":"Rewe-Markt GmbH","shop":"supermarket"},"type":"relation"}
-{"id":21653573,"lat":53.1611686,"lon":10.0615046,"tags":{"amenity":"charging_station","brand":"Circle K","capacity":"24","fee":"yes","opening_hours":"24/7"},"type":"relation"}
-{"ev":1,"id":21748375,"lat":52.3751547,"lon":9.7395299,"tags":{"amenity":"fast_food","indoor_seating":"yes","name":"Hey Ferry"},"type":"relation"}
-{"id":21911571,"lat":48.5444784,"lon":9.276627,"tags":{"brand":"comfort Polstermöbel Manufaktur GmbH & Co. KG","name":"Comfort Polstermöbel","opening_hours":"Mo open \"nach Vereinbarung\"; Tu-Fr 10:00-17:30; Sa 09:00-14:00; PH closed","shop":"furniture"},"type":"relation"}
-{"id":21934899,"lat":54.3148536,"lon":9.6770664,"tags":{"amenity":"fuel","brand":"JET","name":"JET","operator":"ConocoPhilips Germany GmbH"},"type":"relation"}
 {"id":4256434,"lat":53.6051682,"lon":10.1175876,"tags":{"name":"Einkaufstreffpunkt Farmsen","opening_hours":"Mo-Fr 10:00-20:00; Sa 09:30-20:00","shop":"mall"},"type":"way"}
 {"id":4289636,"lat":51.5704811,"lon":7.3848179,"tags":{"brand":"Rewe","name":"REWE","opening_hours":"Mo-Sa 07:00-22:00","operator":"Friedrich Freidank GmbH & Co. Einzelhandels oHG","shop":"supermarket"},"type":"way"}
 {"id":4344825,"lat":48.4520856,"lon":11.7760226,"tags":{"brand":"Edeka","name":"Edeka","opening_hours":"Mo-Fr 08:00-19:00; Sa 07:30-18:00","shop":"supermarket"},"type":"way"}
@@ -164412,3 +164197,282 @@
 {"id":1580190982,"lat":51.2406023,"lon":7.5314535,"tags":{"amenity":"toilets"},"type":"way"}
 {"ev":1,"id":1580298604,"lat":50.1480068,"lon":9.108885,"tags":{"amenity":"fast_food","name":"Der BratMaatze","opening_hours":"Mo-Fr 11:00-16:00","operator":"Steffi Sperlich","takeaway":"only"},"type":"way"}
 {"id":1580502843,"lat":49.0670889,"lon":12.1595693,"tags":{"amenity":"toilets","fee":"no"},"type":"way"}
+{"id":8261,"lat":51.0446091,"lon":13.6784959,"tags":{"name":"Gorbitz Hof","shop":"mall"},"type":"relation"}
+{"id":28390,"lat":48.1947114,"lon":11.5976986,"tags":{"name":"SUMA Center","shop":"mall"},"type":"relation"}
+{"id":380240,"lat":52.5126135,"lon":13.390499,"tags":{"name":"Quartier 205 Stadtmitte","opening_hours":"Mo-Sa 08:00-20:00","shop":"mall","toilets":"yes"},"type":"relation"}
+{"id":398274,"lat":52.2502737,"lon":10.5119693,"tags":{"brand":"HORNBACH","name":"Hornbach","opening_hours":"Mo-Sa 07:00-20:00","shop":"doityourself"},"type":"relation"}
+{"id":543545,"lat":51.3606318,"lon":7.4610802,"tags":{"name":"Graf von Galen Carré","shop":"mall"},"type":"relation"}
+{"id":949195,"lat":53.7168234,"lon":9.9372792,"tags":{"brand":"Tank & Rast","highway":"services","name":"Holmmoor-West","operator":"Autobahn Tank & Rast Gruppe GmbH & Co. KG"},"type":"relation"}
+{"id":949449,"lat":54.0129286,"lon":9.9328953,"tags":{"brand":"Tank & Rast","highway":"services","name":"Brokenlande-Ost","operator":"Autobahn Tank & Rast Gruppe GmbH & Co. KG"},"type":"relation"}
+{"id":1075302,"lat":50.9421205,"lon":7.0511399,"tags":{"brand":"Kaufland","name":"Kaufland","opening_hours":"Mo-Sa 07:00-22:00; PH,Su off","shop":"supermarket"},"type":"relation"}
+{"id":1086624,"lat":48.107763,"lon":11.7227628,"tags":{"name":"Jagdfeldzentrum","opening_hours":"24/7","shop":"mall"},"type":"relation"}
+{"id":1185392,"lat":53.0544978,"lon":8.6303194,"tags":{"name":"Jute-Center","shop":"mall"},"type":"relation"}
+{"id":1306259,"lat":54.0827603,"lon":13.4049234,"tags":{"name":"Möwencenter","opening_hours":"Mo-Fr 07:00-19:00; Sa 07:00-13:00; PH closed","shop":"mall"},"type":"relation"}
+{"ev":1,"id":1355144,"lat":51.7597521,"lon":6.258963,"tags":{"amenity":"restaurant","name":"KlosterResidenz"},"type":"relation"}
+{"id":1365496,"lat":48.8014392,"lon":9.8005117,"tags":{"name":"Gmünd-Center","shop":"mall"},"type":"relation"}
+{"id":1373985,"lat":54.1278368,"lon":13.52093,"tags":{"amenity":"toilets"},"type":"relation"}
+{"id":1373987,"lat":54.1282084,"lon":13.5243047,"tags":{"amenity":"toilets"},"type":"relation"}
+{"id":1386244,"lat":49.9780371,"lon":9.1510749,"tags":{"name":"City Galerie","opening_hours":"Mo-Sa 09:00-20:00","shop":"mall"},"type":"relation"}
+{"id":1404166,"lat":53.630691,"lon":11.4218901,"tags":{"name":"Werder Hof","shop":"mall"},"type":"relation"}
+{"id":1427082,"lat":50.893351,"lon":14.8187212,"tags":{"brand":"Kaufland","name":"Kaufland","opening_hours":"Mo-Sa 07:00-22:00; Su, PH off","shop":"supermarket"},"type":"relation"}
+{"id":1458591,"lat":51.4626352,"lon":6.9988719,"tags":{"brand":"XXXLutz","name":"XXXLutz","opening_hours":"Mo-Sa 10:00-19:00; Su off","operator":"Möbel Kröger Handelsgesellschaft mbH & Co. KG","shop":"furniture"},"type":"relation"}
+{"id":1537674,"lat":52.3076408,"lon":9.6066341,"tags":{"amenity":"fuel","brand":"Aral","name":"Aral-Tankstelle Gehrden"},"type":"relation"}
+{"id":1566303,"lat":49.31811,"lon":8.4318441,"tags":{"name":"Postgalerie Speyer","note":"Eröffnung am 28.11.2012","shop":"mall"},"type":"relation"}
+{"id":1568285,"lat":51.1621733,"lon":6.878697,"tags":{"name":"Düsseldorf-Benrath","railway":"station"},"type":"relation"}
+{"ev":1,"id":1631485,"lat":51.8657483,"lon":12.6437362,"tags":{"amenity":"restaurant","name":"Brauhaus Wittenberg","opening_hours":"Mo-Su 11:00-00:00"},"type":"relation"}
+{"id":1633812,"lat":47.9815198,"lon":7.8247381,"tags":{"brand":"Edeka","name":"E center Rees","opening_hours":"Mo-Sa 08:00-22:00","operator":"Rees FrischeMärkte KG","shop":"supermarket"},"type":"relation"}
+{"id":1639059,"lat":52.3422712,"lon":14.5524286,"tags":{"name":"Oderturm","opening_hours":"Mo-Fr 10:00-19:00; Sa 10:00-16:00; PH off","shop":"mall"},"type":"relation"}
+{"id":1690386,"lat":48.4017638,"lon":11.7492862,"tags":{"name":"Altstadtgalerien","shop":"mall"},"type":"relation"}
+{"id":1736659,"lat":48.1051214,"lon":11.7873765,"tags":{"name":"Rossini-Zentrum","opening_hours":"24/7","shop":"mall","toilets":"no"},"type":"relation"}
+{"id":1751752,"lat":50.346462,"lon":7.6194127,"tags":{"name":"Einkaufszentrum Asterstein","shop":"mall"},"type":"relation"}
+{"id":1778665,"lat":52.3010507,"lon":8.0346287,"tags":{"amenity":"fuel","brand":"Aral","name":"ARAL","opening_hours":"Mo-Fr 05:00-23:00; Sa 06:00-23:00; Su 07:00-23:00","operator":"Aral"},"type":"relation"}
+{"id":1794431,"lat":51.7773357,"lon":11.7371749,"tags":{"shop":"mall"},"type":"relation"}
+{"id":1915262,"lat":48.7718257,"lon":8.2202089,"tags":{"amenity":"toilets","name":"WC o.k. Baden-Baden"},"type":"relation"}
+{"id":1950054,"lat":51.3638365,"lon":10.4221838,"tags":{"brand":"Edeka","name":"EDEKA","opening_hours":"Mo-Fr 07:00-20:00; Sa 07:00-18:00","shop":"supermarket"},"type":"relation"}
+{"id":1953548,"lat":50.0821379,"lon":8.2166884,"tags":{"amenity":"fuel","brand":"Freie Tankstelle","name":"Freie Tankstelle Klarenthaler Straße"},"type":"relation"}
+{"id":2050594,"lat":52.3930241,"lon":10.7121869,"tags":{"amenity":"fuel","name":"Peeck Freie Tankstelle Ehmen"},"type":"relation"}
+{"id":2060075,"lat":50.7091652,"lon":7.1098012,"tags":{"amenity":"fuel","brand":"HEM","name":"HEM"},"type":"relation"}
+{"id":2073746,"lat":48.4588662,"lon":7.9334273,"tags":{"shop":"mall"},"type":"relation"}
+{"id":2132267,"lat":48.5747473,"lon":13.4520953,"tags":{"name":"Donauquartier","shop":"mall"},"type":"relation"}
+{"id":2141291,"lat":50.0545272,"lon":8.3111379,"tags":{"amenity":"fuel","brand":"Aral","name":"Aral","opening_hours":"24/7","operator":"ARAL"},"type":"relation"}
+{"id":2144753,"lat":49.3810423,"lon":8.6896158,"tags":{"amenity":"fuel","brand":"Esso","name":"Esso","shop":"kiosk"},"type":"relation"}
+{"id":2162928,"lat":51.356321,"lon":11.9943457,"tags":{"name":"Tivoli","shop":"mall"},"type":"relation"}
+{"id":2164361,"lat":50.0571662,"lon":8.4498634,"tags":{"amenity":"fuel","name":"Weilbach Nord"},"type":"relation"}
+{"id":2208788,"lat":51.3631373,"lon":7.4608882,"tags":{"name":"Hagen Hbf","operator":"DB InfraGO AG","railway":"station"},"type":"relation"}
+{"id":2292544,"lat":51.4998753,"lon":6.5499308,"tags":{"name":"Einkaufzentrum Drei Eichen","shop":"mall"},"type":"relation"}
+{"id":2518257,"lat":51.362218,"lon":9.4683054,"tags":{"shop":"mall"},"type":"relation"}
+{"id":2562623,"lat":50.7879618,"lon":7.324796,"tags":{"name":"Die Möbelpiraten","opening_hours":"Mo-Fr 10:00-19:00; Sa 10:00-19:00","shop":"furniture"},"type":"relation"}
+{"ev":1,"id":2595338,"lat":50.0039424,"lon":12.3064405,"tags":{"amenity":"restaurant","name":"Prinzregent Luitpold"},"type":"relation"}
+{"id":2599443,"lat":50.0261104,"lon":8.2146318,"tags":{"name":"Holzfachzentrum Hamm","shop":"doityourself"},"type":"relation"}
+{"id":2634822,"lat":50.0174841,"lon":8.2514408,"tags":{"amenity":"fuel","brand":"Avia","name":"AVIA"},"type":"relation"}
+{"id":2671992,"lat":52.5223779,"lon":13.465988,"tags":{"shop":"mall"},"type":"relation"}
+{"id":2674699,"lat":53.5728985,"lon":10.0669407,"tags":{"name":"Einkaufszentrum Quarree Wandsbek-Markt","shop":"mall"},"type":"relation"}
+{"ev":1,"id":2740485,"lat":50.7307215,"lon":11.6731741,"tags":{"amenity":"restaurant","name":"Rittergut Positz"},"type":"relation"}
+{"id":2773308,"lat":51.3435099,"lon":12.3746534,"tags":{"name":"Höfe am Brühl","opening_hours":"Mo-Sa 10:00-20:00","shop":"mall"},"type":"relation"}
+{"id":2812464,"lat":50.5829267,"lon":8.6672959,"tags":{"name":"Liebig-Center","shop":"mall"},"type":"relation"}
+{"ev":1,"id":2827619,"lat":48.8583728,"lon":8.2034747,"tags":{"amenity":"restaurant","name":"Hotel am Schloss"},"type":"relation"}
+{"id":2854241,"lat":50.9712464,"lon":12.418788,"tags":{"name":"ELG Holz Altenburg e.G.","opening_hours":"Mo-Fr 07:00-18:00; Sa 09:00-12:00; Su,PH off","shop":"doityourself"},"type":"relation"}
+{"id":2865622,"lat":50.8603571,"lon":12.3070076,"tags":{"highway":"services","name":"Tank- und Rastanlage Altenburger Land (Nord)","operator":"Tank & Rast"},"type":"relation"}
+{"id":2865628,"lat":50.8570137,"lon":12.3141098,"tags":{"highway":"services","name":"Tank- und Rastanlage Altenburger Land (Süd)","operator":"Tank & Rast"},"type":"relation"}
+{"id":2874409,"lat":50.2878204,"lon":11.0177842,"tags":{"shop":"furniture"},"type":"relation"}
+{"id":3008407,"lat":49.5481931,"lon":8.652778,"tags":{"name":"Multzentrum","shop":"mall"},"type":"relation"}
+{"id":3015173,"lat":48.8080848,"lon":9.0478257,"tags":{"highway":"rest_area","name":"Gerlinger Höhe"},"type":"relation"}
+{"id":3111432,"lat":52.1557119,"lon":7.3181383,"tags":{"name":"RCG Steinfurt","shop":"doityourself"},"type":"relation"}
+{"ev":1,"id":3206544,"lat":50.3018317,"lon":7.991543,"tags":{"amenity":"restaurant","name":"Gasthaus Müller"},"type":"relation"}
+{"ev":1,"id":3310230,"lat":49.5927311,"lon":11.0228296,"tags":{"amenity":"restaurant","name":"Siemens Healthineers Kantine","opening_hours":"Mo-Fr 11:00-13:30,07:15-10:00","operator":"Siemens Healthineers"},"type":"relation"}
+{"id":3400305,"lat":51.6886612,"lon":7.884774,"tags":{"name":"Maxi-Center","shop":"mall"},"type":"relation"}
+{"id":3424309,"lat":54.0674226,"lon":11.7802803,"tags":{"amenity":"fuel"},"type":"relation"}
+{"ev":1,"id":3521579,"lat":49.0108705,"lon":8.4029216,"tags":{"amenity":"restaurant","name":"Multi Kulti","opening_hours":"Mo-Su 10:00-01:00"},"type":"relation"}
+{"id":3581506,"lat":50.9365774,"lon":6.3502718,"tags":{"name":"TOOM Baumarkt","opening_hours":"Mo-Th 08:00-20:00; Fr 08:00-22:00; Sa 08:00-20:00","shop":"doityourself"},"type":"relation"}
+{"id":3615902,"lat":51.0751428,"lon":6.3052862,"tags":{"brand":"Rewe","name":"REWE","shop":"supermarket"},"type":"relation"}
+{"id":3806057,"lat":53.4892879,"lon":10.1579389,"tags":{"name":"Einkaufszentrum Fleethaus","shop":"mall"},"type":"relation"}
+{"id":3849458,"lat":48.8404245,"lon":10.0932612,"tags":{"name":"Mercatura","shop":"mall"},"type":"relation"}
+{"id":3862653,"lat":53.0908482,"lon":8.7734948,"tags":{"description":"Zentrum für Automobilkultur und Mobilität","name":"Schuppen Eins","opening_hours":"Mo-Fr 08:00-19:00; Sa-Su 10:00-19:00","shop":"mall"},"type":"relation"}
+{"id":3898761,"lat":48.7912688,"lon":9.1833891,"tags":{"name":"Milaneo","opening_hours":"Mo-Th 10:00-20:00; Fr 10:00-21:30; Sa 09:30-20:00","operator":"ECE Projektmanagement G.m.b.H. & Co. KG","shop":"mall"},"type":"relation"}
+{"id":3901145,"lat":50.0494827,"lon":8.6979437,"tags":{"name":"Isenburg-Zentrum","opening_hours":"Mo-Sa 10:00-20:00","operator":"ECE Projektmanagement GmbH & Co. KG","shop":"mall"},"type":"relation"}
+{"id":3907762,"lat":51.3733861,"lon":7.4180295,"tags":{"highway":"rest_area","name":"Rastplatz Funckenhausen"},"type":"relation"}
+{"id":3907767,"lat":51.3716755,"lon":7.4138781,"tags":{"highway":"rest_area","name":"Rastplatz Eichenkamp","toilets":"yes"},"type":"relation"}
+{"id":3907879,"lat":51.3289171,"lon":7.3152321,"tags":{"highway":"rest_area","name":"Rastplatz Klosterholz"},"type":"relation"}
+{"id":3908233,"lat":51.3266914,"lon":7.3097163,"tags":{"highway":"rest_area","name":"Rastplatz Bruchmühle"},"type":"relation"}
+{"id":3911316,"lat":51.3497094,"lon":7.2751144,"tags":{"highway":"rest_area","name":"Rastplatz Hagelsiepen"},"type":"relation"}
+{"id":3911961,"lat":51.3061601,"lon":7.2337213,"tags":{"highway":"rest_area","name":"Rastplatz Holtkamp"},"type":"relation"}
+{"id":3918299,"lat":50.5717152,"lon":7.2891108,"tags":{"name":"Meusch Einkaufcenter","shop":"mall"},"type":"relation"}
+{"id":3947321,"lat":51.3253255,"lon":11.244791,"tags":{"amenity":"parking","fee":"no","highway":"rest_area","name":"Hohe Schrecke West"},"type":"relation"}
+{"id":4077355,"lat":51.7800229,"lon":11.7537327,"tags":{"name":"Einkaufspark Zepziger Weg","shop":"mall"},"type":"relation"}
+{"id":4100315,"lat":51.3603945,"lon":8.2866011,"tags":{"amenity":"fuel","brand":"Raiffeisen","name":"Raiffeisen","opening_hours":"Mo-Fr 06:00-22:00; Sa-Su 07:00-22:00","operator":"Raiffeisen Sauerland eG"},"type":"relation"}
+{"id":4142537,"lat":48.7047144,"lon":9.1442951,"tags":{"name":"Filder-Einkaufs-Zentrum","shop":"mall"},"type":"relation"}
+{"id":4228120,"lat":51.4593572,"lon":7.0045718,"tags":{"amenity":"toilets","description":"Zwischengeschoss"},"type":"relation"}
+{"id":4284310,"lat":51.4306429,"lon":8.0435185,"tags":{"highway":"rest_area","name":"Wannetal","toilets":"yes"},"type":"relation"}
+{"id":4293576,"lat":52.363431,"lon":7.718592,"tags":{"name":"Recker Baumarkt","opening_hours":"Apr-Oct Mo-Fr 08:00-19:00; Nov-Mar Mo-Fr 08:00-18:00; Sa 08:00-13:00; Su,PH off","shop":"doityourself"},"type":"relation"}
+{"id":4437625,"lat":48.8022644,"lon":9.7889535,"tags":{"name":"Einkaufspark Taubental","shop":"mall"},"type":"relation"}
+{"id":4470681,"lat":49.1527631,"lon":8.2066604,"tags":{"amenity":"fuel","brand":"Avia","name":"Avia","opening_hours":"Mo-Fr 06:00-22:00;Sa 07:00-22:00;Su 07:00-22:00","operator":"Avia"},"type":"relation"}
+{"id":4540346,"lat":52.5613783,"lon":13.4227619,"tags":{"name":"Neumann-Forum","opening_hours":"Mo-Sa 07:00-21:00","shop":"mall"},"type":"relation"}
+{"id":4549345,"lat":49.7560938,"lon":6.6379732,"tags":{"name":"Trier Galerie","shop":"mall"},"type":"relation"}
+{"id":4554487,"lat":48.3281262,"lon":10.0372029,"tags":{"name":"Möbel Inhofer","opening_hours":"Mo-Sa 09:30-19:30","shop":"furniture"},"type":"relation"}
+{"id":4582900,"lat":52.2647896,"lon":10.5271083,"tags":{"name":"Schlosscarree","shop":"mall"},"type":"relation"}
+{"id":4639363,"lat":49.7565386,"lon":6.6502719,"tags":{"name":"Alleen Center","opening_hours":"Mo-Sa 07:00-22:00","operator":"VÖLKEL Real Estate GmbH","shop":"mall","toilets":"yes"},"type":"relation"}
+{"ev":1,"id":4645592,"lat":51.0480297,"lon":9.2802757,"tags":{"amenity":"restaurant","name":"Parkhotel Borken","operator":"Stadtpark Hotel GmbH"},"type":"relation"}
+{"id":4672225,"lat":52.7118067,"lon":13.5460284,"tags":{"highway":"rest_area","name":"Probstheide","toilets":"yes"},"type":"relation"}
+{"id":4672228,"lat":52.710341,"lon":13.5489919,"tags":{"highway":"rest_area","name":"Ladeburger Heide","toilets":"yes"},"type":"relation"}
+{"id":4740910,"lat":52.6420756,"lon":13.2440109,"tags":{"highway":"services","name":"Stolper Heide"},"type":"relation"}
+{"id":4743314,"lat":53.0487653,"lon":8.8486964,"tags":{"name":"Werder Karree","opening_hours":"Mo-Fr 10:00-19:00; Sa 10:00-18:00","shop":"mall"},"type":"relation"}
+{"id":5138826,"lat":50.9111752,"lon":6.19088,"tags":{"shop":"mall"},"type":"relation"}
+{"id":5169591,"lat":49.0770301,"lon":12.8985081,"tags":{"name":"Max Schierer GmbH","opening_hours":"Mo-Fr 08:00-18:00; Sa 08:00-16:00","shop":"doityourself"},"type":"relation"}
+{"id":5187212,"lat":53.5129987,"lon":9.9150421,"tags":{"highway":"services","name":"Autohof Altenwerder","operator":"B. Uliczka","shop":"yes","toilets":"yes"},"type":"relation"}
+{"id":5259979,"lat":48.7942386,"lon":9.9254846,"tags":{"name":"Fachmarktzentrum Heubach","shop":"mall"},"type":"relation"}
+{"id":5293363,"lat":48.7295089,"lon":9.1118711,"tags":{"name":"Schillerplatz-Centrum","shop":"mall"},"type":"relation"}
+{"id":5294120,"lat":48.8308859,"lon":9.7941935,"tags":{"name":"Fachmarktzentrum Mutlangen","shop":"mall"},"type":"relation"}
+{"id":5303131,"lat":48.7310193,"lon":9.1500028,"tags":{"name":"ParkCenter","opening_hours":"Mo-Sa 06:00-22:00","shop":"mall"},"type":"relation"}
+{"id":5381167,"lat":53.4708153,"lon":9.6922144,"tags":{"name":"Marktkauf Center","opening_hours":"Mo-We 08:00-20:00; Th-Sa 08:00-21:00; PH off","shop":"mall"},"type":"relation"}
+{"id":5383499,"lat":48.6977849,"lon":9.1677629,"tags":{"name":"REWE CENTER","shop":"mall"},"type":"relation"}
+{"id":5571327,"lat":48.8013057,"lon":9.7931883,"tags":{"name":"Remsgalerie","shop":"mall"},"type":"relation"}
+{"id":5634713,"lat":53.1586937,"lon":12.7618879,"tags":{"brand":"Edeka","name":"Edeka","shop":"supermarket"},"type":"relation"}
+{"id":5966831,"lat":50.2954514,"lon":8.6857534,"tags":{"amenity":"fuel","brand":"Shell","name":"Shell"},"type":"relation"}
+{"id":6028673,"lat":51.8686345,"lon":8.923482,"tags":{"amenity":"restaurant","indoor_seating":"yes","name":"Felsenwirt","note":"Die Rollstuhltoilette ist nicht abschließbar.","toilets":"yes","toilets:fee":"no"},"type":"relation"}
+{"id":6085436,"lat":48.3585624,"lon":10.1602058,"tags":{"amenity":"fuel","brand":"Aral","name":"Aral","opening_hours":"Mo-Fr 06:30-21:00; Sa 07:00-21:00; Su 08:00-21:00"},"type":"relation"}
+{"id":6286368,"lat":51.4912562,"lon":9.7297602,"tags":{"highway":"rest_area","name":"Rastplatz Niemetal"},"type":"relation"}
+{"ev":1,"id":6294053,"lat":51.3384724,"lon":12.3799661,"tags":{"amenity":"restaurant","brand":"Hans im Glück","indoor_seating":"yes","name":"Hans im Glück","opening_hours":"Mo-Th,Su,PH 11:00-00:00; Fr,Sa 11:00-01:00","operator":"Hans im Glück Franchise GmbH"},"type":"relation"}
+{"id":6419104,"lat":52.0642296,"lon":8.6846744,"tags":{"amenity":"toilets"},"type":"relation"}
+{"id":6601876,"lat":48.3043588,"lon":11.6336884,"tags":{"brand":"IKEA","name":"IKEA","opening_hours":"Mo-Sa 10:00-20:00; PH off","operator":"IKEA Deutschland GmbH & Co. KG","shop":"furniture"},"type":"relation"}
+{"id":6663637,"lat":54.3218832,"lon":10.0530807,"tags":{"name":"Mettenhofer Einkaufszentrum","opening_hours":"\"unterschiedlich\"","shop":"mall"},"type":"relation"}
+{"ev":1,"id":6832399,"lat":48.4690735,"lon":7.943874,"tags":{"amenity":"cafe","name":"Gmeiner","opening_hours":"Mo-Fr 08:30-18:30; Tu 07:30-18:30; Sa 07:00-18:00; Sep 01-May 31: Su 13:00-18:00","shop":"pastry"},"type":"relation"}
+{"id":7238507,"lat":54.1028778,"lon":12.1716374,"tags":{"note":"Gebäude steht leer","shop":"furniture"},"type":"relation"}
+{"id":7296404,"lat":48.7756214,"lon":9.1808697,"tags":{"name":"Dorotheen-Quartier","opening_hours":"Mo-Fr 10:00-20:00; Sa 09:30-20:00","shop":"mall"},"type":"relation"}
+{"id":7439731,"lat":49.8742838,"lon":6.8306736,"tags":{"highway":"rest_area","name":"Hetzerath","toilets":"yes"},"type":"relation"}
+{"id":7439732,"lat":49.8734358,"lon":6.8300756,"tags":{"highway":"rest_area","name":"Rivenich","toilets":"yes"},"type":"relation"}
+{"id":7476416,"lat":51.0550427,"lon":13.7216111,"tags":{"brand":"POCO","name":"POCO","opening_hours":"Mo-Fr 10:00-19:00; Sa 10:00-19:00","operator":"POCO","shop":"furniture"},"type":"relation"}
+{"id":7568255,"lat":52.0769961,"lon":9.3306678,"tags":{"shop":"furniture"},"type":"relation"}
+{"id":7701165,"lat":52.4301282,"lon":13.4551989,"tags":{"brand":"Westfield","name":"Gropius Passagen","opening_hours":"Mo-Sa 10:00-20:00","operator":"Unibail-Rodamco-Westfield","shop":"mall"},"type":"relation"}
+{"id":7741785,"lat":49.035572,"lon":8.4445638,"tags":{"name":"Waldstadtzentrum","opening_hours":"24/7","shop":"mall"},"type":"relation"}
+{"id":7794637,"lat":51.331013,"lon":12.405015,"tags":{"brand":"Rewe","name":"REWE City","opening_hours":"Mo-Sa 06:00-22:00","operator":"REWE Peggy Jahn oHG","shop":"supermarket"},"type":"relation"}
+{"id":7891356,"lat":50.9866481,"lon":14.0551975,"tags":{"amenity":"parking","capacity":"700","fee":"yes","name":"P+R Bastei","opening_hours":"Mo-Su 00:00-24:00","toilets":"yes"},"type":"relation"}
+{"id":7906826,"lat":50.5059301,"lon":12.934076,"tags":{"name":"Möbelhaus Illing","opening_hours":"Mo-Fr 09:00-19:00; Sa 09:00-14:00; Su,PH off","operator":"Möbelhaus Illing GmbH","shop":"furniture"},"type":"relation"}
+{"id":7986794,"lat":48.058603,"lon":10.8479564,"tags":{"highway":"services","name":"Autobahnraststätte Lechwiesen Süd","operator":"Tank"},"type":"relation"}
+{"id":8032309,"lat":53.4561823,"lon":9.9876459,"tags":{"name":"Phoenix Center","opening_hours":"Mo-Sa 08:00-20:00","operator":"Deutsche EuroShop AG;ECE","shop":"mall","toilets":"yes"},"type":"relation"}
+{"id":8186621,"lat":54.1389025,"lon":12.0555125,"tags":{"name":"Warnow Geschäftszentrum","shop":"mall"},"type":"relation"}
+{"id":8246936,"lat":51.3293922,"lon":12.3362198,"tags":{"name":"Elster-Passage","opening_hours":"Mo-Sa 09:00-20:00","shop":"mall"},"type":"relation"}
+{"id":8381364,"lat":49.8284687,"lon":8.7312426,"tags":{"brand":"REWE","name":"REWE","opening_hours":"Mo-Sa 07:00-22:00","shop":"supermarket"},"type":"relation"}
+{"id":8414476,"lat":50.9461354,"lon":6.8335962,"tags":{"brand":"Rewe","name":"REWE","opening_hours":"Mo-Sa 07:00-22:00; PH off; Dec 23 06:00-22:00; Dec 24 06:00-14:00","shop":"supermarket"},"type":"relation"}
+{"id":8430622,"lat":51.2099939,"lon":12.3280918,"tags":{"brand":"REWE","name":"REWE","opening_hours":"Mo-Sa 07:00-22:00; Su,PH off","operator":"REWE Markt Uwe Andreß oHG","shop":"supermarket"},"type":"relation"}
+{"id":8504555,"lat":52.5292601,"lon":13.4563404,"tags":{"name":"Forum Landsberger Allee","shop":"mall"},"type":"relation"}
+{"id":8533464,"lat":48.0769423,"lon":11.9700406,"tags":{"name":"e-EinZ: Ebersberger Einkaufszentrum","opening_hours":"Mo-Sa 07:00-20:00; PH off","operator":"e-EinZ Werbe UG (haftungsbeschränkt)","shop":"mall","toilets":"yes"},"type":"relation"}
+{"id":8594332,"lat":51.2812823,"lon":7.2438436,"tags":{"name":"Möbelhaus Welteke","opening_hours":"Mo-Fr 09:30-19:00; Sa 09:30-16:00","shop":"furniture"},"type":"relation"}
+{"id":8673575,"lat":51.7964152,"lon":12.9430375,"tags":{"amenity":"fuel","brand":"Sprint","name":"sprint"},"type":"relation"}
+{"id":8738959,"lat":53.4894898,"lon":10.2732244,"tags":{"name":"XXXLutz","opening_hours":"Mo-Sa 10:00-19:00","operator":"XXXLutz","shop":"furniture"},"type":"relation"}
+{"id":9118557,"lat":49.4829524,"lon":8.4651149,"tags":{"amenity":"toilets","name":"SO 201.2"},"type":"relation"}
+{"id":9192283,"lat":50.9962434,"lon":7.1165505,"tags":{"name":"Bauzentrum Tönnes","opening_hours":"Mo-Fr 07:30-17:00; Sa 07:30-13:00","shop":"doityourself"},"type":"relation"}
+{"id":9203870,"lat":53.1664343,"lon":8.6285897,"tags":{"name":"Kontor zum alten Speicher","shop":"mall"},"type":"relation"}
+{"id":9283016,"lat":53.0962357,"lon":8.8097785,"tags":{"opening_hours":"Mo-Sa 07:00-22:00","shop":"mall"},"type":"relation"}
+{"id":9355760,"lat":48.0588022,"lon":10.8467622,"tags":{"highway":"services","name":"Autobahnraststätte Lechwiesen Nord","operator":"Autobahn Tank & Rast GmbH"},"type":"relation"}
+{"id":9670536,"lat":49.9242102,"lon":7.8248821,"tags":{"amenity":"fuel","brand":"Total","name":"Autohof Waldlaubersheim","opening_hours":"24/7","operator":"ERP Waldlaubersheim GmbH & Co. KG"},"type":"relation"}
+{"id":9775208,"lat":48.6753667,"lon":13.2429264,"tags":{"highway":"rest_area","name":"Geißberg Nord"},"type":"relation"}
+{"id":9849608,"lat":50.8583816,"lon":12.9337781,"tags":{"amenity":"fuel","name":"Bahntankstelle","operator":"DB Netz"},"type":"relation"}
+{"id":9882913,"lat":48.7904772,"lon":11.3777172,"tags":{"brand":"Edeka","name":"E center Gaimersheim","opening_hours":"Mo-Sa 06:00-20:00; Su,PH closed","shop":"supermarket"},"type":"relation"}
+{"id":9976408,"lat":48.1709013,"lon":8.617451,"tags":{"amenity":"fuel","name":"Nordgarage","opening_hours":"Mo-Fr 07:00-21:00, Sa-Su 08:00-21:00"},"type":"relation"}
+{"id":9998686,"lat":51.3822636,"lon":9.2474763,"tags":{"brand":"Serways","highway":"services","name":"Bühleck Nord","operator":"Autobahn Tank & Rast Gruppe GmbH & Co. KG","toilets":"yes"},"type":"relation"}
+{"id":10293301,"lat":48.7701331,"lon":12.2361039,"tags":{"name":"Labertaler Fachmarkt","shop":"doityourself"},"type":"relation"}
+{"ev":1,"id":10838040,"lat":47.6609124,"lon":9.1727118,"tags":{"amenity":"restaurant","name":"Siddhartha"},"type":"relation"}
+{"id":10952504,"lat":52.1253986,"lon":8.6327843,"tags":{"name":"Pörtner","shop":"doityourself"},"type":"relation"}
+{"ev":1,"id":11486700,"lat":51.260519,"lon":12.4281906,"tags":{"amenity":"restaurant","name":"Seeperle","opening_hours":"Mo-Su 12:00-21:00; Fr,Sa 12:00-22:00"},"type":"relation"}
+{"id":11589683,"lat":48.8577243,"lon":12.9079567,"tags":{"brand":"REWE","name":"REWE","opening_hours":"Mo-Sa 07:00-20:00","shop":"supermarket"},"type":"relation"}
+{"ev":1,"id":11680614,"lat":49.9120912,"lon":7.5072199,"tags":{"indoor_seating":"no","name":"Bäckerei Roller","opening_hours":"Mo-We 07:30-12:30,14:00-18:00; Th 07:30-12:30; Fr 07:30-12:30,14:00-18:00; Sa 07:00-12:00","shop":"bakery","takeaway":"only"},"type":"relation"}
+{"id":11780697,"lat":51.0511892,"lon":13.8189065,"tags":{"name":"Loschwitz-Arkaden","shop":"mall"},"type":"relation"}
+{"id":11977740,"lat":52.1301342,"lon":11.6300796,"tags":{"name":"City Carré","opening_hours":"Mo-Sa 10:00-20:00","shop":"mall"},"type":"relation"}
+{"id":12226929,"lat":50.5888633,"lon":6.6204382,"tags":{"amenity":"fuel","brand":"Shell","name":"Shell","opening_hours":"Mo-Fr 04:30-22:30; Sa 07:00-22:30; Su 08:00-22:30"},"type":"relation"}
+{"id":12255129,"lat":51.4137646,"lon":12.3403277,"tags":{"highway":"rest_area","name":"Birkenwald","toilets":"yes"},"type":"relation"}
+{"id":12329492,"lat":48.1208254,"lon":8.3310802,"tags":{"amenity":"restaurant","name":"Seehaus","opening_hours":"We-Fr 10:00-24:00; Sa 10:00-01:00; Su 10:00-22:00 open","toilets":"yes"},"type":"relation"}
+{"ev":1,"id":12354609,"lat":49.0073116,"lon":8.4018393,"tags":{"amenity":"cafe","brand":"Starbucks","name":"Starbucks","opening_hours":"Mo-Sa 09:00-18:00; Su,PH off","takeaway":"yes"},"type":"relation"}
+{"ev":1,"id":12357146,"lat":49.0064449,"lon":8.4028168,"tags":{"amenity":"cafe","name":"Florenz Eiscafe Karlsruhe","note":"ganzjährig geöffnet"},"type":"relation"}
+{"id":12411751,"lat":48.0008845,"lon":7.8372483,"tags":{"name":"Hartmann Einrichtungen","opening_hours":"Mo-Fr 10:00-13:00,14:00-18:30, Sa 10:00-15:00","shop":"furniture"},"type":"relation"}
+{"id":12477314,"lat":50.8226381,"lon":12.95949,"tags":{"name":"Gablenz-Center","shop":"mall"},"type":"relation"}
+{"ev":1,"id":12487424,"lat":51.4292004,"lon":6.8860829,"tags":{"amenity":"cafe","name":"Venezia"},"type":"relation"}
+{"id":12544315,"lat":51.8932975,"lon":9.008227,"tags":{"highway":"rest_area","name":"Rastplatz Kohlenberg"},"type":"relation"}
+{"id":12613015,"lat":50.0893132,"lon":8.5750203,"tags":{"name":"AS5 Baufachzentrum und Baumarkt","opening_hours":"Mo-Fr 07:00-18:00, Sa 07:00-14:00","operator":"Anton Schneider 5. GmbH","shop":"doityourself"},"type":"relation"}
+{"id":12626351,"lat":50.7600816,"lon":13.0640564,"tags":{"name":"wohnen&sparen PETEX GmbH","opening_hours":"Mo-Fr 09:30-18:30, Sa 09:30-15:00","shop":"doityourself"},"type":"relation"}
+{"id":12629189,"lat":51.2548184,"lon":8.9388251,"tags":{"name":"Möbelkreis Waldeck","shop":"furniture"},"type":"relation"}
+{"id":12747493,"lat":50.5613012,"lon":7.9824116,"tags":{"name":"Wohnlich Westerburg Möbel","operator":"Wohnlich Westerburg Möbel GmbH","shop":"furniture"},"type":"relation"}
+{"ev":1,"id":13016636,"lat":52.0902883,"lon":8.7547959,"tags":{"amenity":"cafe","brand":"Cafe Extrablatt","name":"Cafe Extrablatt","opening_hours":"Mo-Sa 08:30-24:00; Su 09:00-24:00","operator":"Cafe Extrablatt Bad Salzuflen GmbH","takeaway":"yes"},"type":"relation"}
+{"ev":1,"id":13022975,"lat":48.5601877,"lon":9.0593634,"tags":{"amenity":"restaurant","name":"Gasthof Sonne","opening_hours":"Apr-Oct PH,Fr-Tu 11:30-21:00+; Apr-Oct We 11:30-17:00; Nov-Mar PH,Fr-Tu 11:30-21:00+; Nov-Mar We 11:30-14:30","operator":"Hartmut Heller"},"type":"relation"}
+{"id":13115833,"lat":47.7483109,"lon":11.565442,"tags":{"amenity":"fast_food","brand":"McDonald's","name":"McDonald's","opening_hours":"Mo-Fr 00:00-01:00,07:00-24:00; Sa-Su 00:00-02:00,07:00-24:00","operator":"Heinritzi Betriebs Gmbh","takeaway":"yes"},"type":"relation"}
+{"ev":1,"id":13237983,"lat":48.1274758,"lon":11.6037053,"tags":{"brand":"BackWerk","name":"Backwerk","opening_hours":"Mo-Fr 06:00-19:00; Sa 07:00-17:00; Su 07:00-16:00","shop":"bakery"},"type":"relation"}
+{"id":13293730,"lat":52.1698122,"lon":7.7613626,"tags":{"highway":"services","name":"Buddenkuhle","toilets":"yes"},"type":"relation"}
+{"id":13542291,"lat":48.210329,"lon":9.0155825,"tags":{"amenity":"fuel","brand":"Rominger & Blaier","name":"Rominger & Blaier Tankstelle","opening_hours":"Mo-Fr 05:00-22:00, Sa 07:00-22:00, Su 07:00-21:00","operator":"Rominger & Blaier Tankstellen GmbH","shop":"yes"},"type":"relation"}
+{"ev":1,"id":13665454,"lat":47.6132855,"lon":12.2006314,"tags":{"amenity":"restaurant","name":"Inntal West"},"type":"relation"}
+{"id":13747752,"lat":51.0458562,"lon":13.7351564,"tags":{"name":"Centrum Galerie","opening_hours":"Mo-Sa 09:30-20:00","shop":"mall","toilets":"yes"},"type":"relation"}
+{"id":13747754,"lat":51.046437,"lon":13.7356394,"tags":{"shop":"mall"},"type":"relation"}
+{"id":14018434,"lat":52.1972786,"lon":8.3882052,"tags":{"amenity":"fuel","brand":"Shell","name":"Shell","opening_hours":"24/7"},"type":"relation"}
+{"id":14022449,"lat":52.1960576,"lon":8.3842942,"tags":{"amenity":"fuel","brand":"Aral","name":"Aral","opening_hours":"24/7"},"type":"relation"}
+{"id":14315409,"lat":52.913488,"lon":8.8157853,"tags":{"name":"Steenken GmbH","shop":"doityourself"},"type":"relation"}
+{"id":14357182,"lat":53.5519843,"lon":10.0463952,"tags":{"amenity":"fast_food","brand":"McDonald's","name":"McDonald's","opening_hours":"24/7","operator":"McDonald's Deutschland LLC","takeaway":"yes"},"type":"relation"}
+{"id":14501454,"lat":51.1823479,"lon":7.1868767,"tags":{"name":"Allee-Center","opening_hours":"Mo-Sa 10:00-19:00","operator":"ECE Marketplaces GmbH & Co. KG","shop":"mall"},"type":"relation"}
+{"id":14505993,"lat":51.1108952,"lon":7.9040095,"tags":{"amenity":"toilets","name":"Sanitärgebäude","toilets":"customers"},"type":"relation"}
+{"id":14599748,"lat":50.802134,"lon":6.8135217,"tags":{"brand":"Kaufland","name":"Kaufland","opening_hours":"Mo-Fr 07:00-22:00; Sa 07:00-14:00; PH off","shop":"supermarket"},"type":"relation"}
+{"id":14689640,"lat":50.8758725,"lon":12.0771812,"tags":{"name":"Gera Arcaden","shop":"mall"},"type":"relation"}
+{"id":14707857,"lat":51.1663081,"lon":6.4419466,"tags":{"name":"To Huus","shop":"mall"},"type":"relation"}
+{"ev":1,"id":14744942,"lat":50.2461393,"lon":8.187524,"tags":{"amenity":"restaurant","name":"Hühnerkirche"},"type":"relation"}
+{"ev":1,"id":14919659,"lat":51.1334891,"lon":9.5434964,"tags":{"amenity":"fast_food","indoor_seating":"no","name":"Costa's Imbiss"},"type":"relation"}
+{"id":15047655,"lat":53.1372779,"lon":8.2284262,"tags":{"name":"MACO City! Einkaufscenter","shop":"mall"},"type":"relation"}
+{"id":15066670,"lat":50.9821841,"lon":8.7335001,"tags":{"amenity":"fuel","brand":"bft","name":"Burgwald-Tankzentrum"},"type":"relation"}
+{"id":15097132,"lat":51.8750011,"lon":12.6510987,"tags":{"brand":"EDEKA","name":"EDEKA","operator":"Habedank","shop":"supermarket"},"type":"relation"}
+{"id":15259083,"lat":51.8677991,"lon":12.6440188,"tags":{"name":"Arsenal","opening_hours":"Mo-Sa 09:00-20:00","shop":"mall"},"type":"relation"}
+{"id":15260280,"lat":51.3005169,"lon":12.3971554,"tags":{"name":"Moritz-Hof","operator":"Vicus Group AG","shop":"mall","toilets":"yes"},"type":"relation"}
+{"id":15596305,"lat":48.4009074,"lon":10.8766985,"tags":{"brand":"Kaufland","name":"Kaufland","opening_hours":"Mo-Sa 07:00-20:00","shop":"supermarket"},"type":"relation"}
+{"id":15853727,"lat":47.8138392,"lon":7.550574,"tags":{"highway":"rest_area"},"type":"relation"}
+{"id":15952923,"lat":53.7771112,"lon":12.17686,"tags":{"name":"Einkaufszentrum Güstrow Süd","shop":"mall"},"type":"relation"}
+{"id":15970586,"lat":52.635835,"lon":11.3057802,"tags":{"highway":"rest_area"},"type":"relation"}
+{"id":15992511,"lat":51.8948843,"lon":8.9767086,"tags":{"amenity":"parking","capacity":"6","description":"Gebühr ist zu entrichten in der Tourist-Information Horn-Bad Meinberg, Parkstraße 10","fee":"yes","name":"Wohnmobilstellplatz am Heinrich-Drake-Platz","operator":"GesUndTourismus Horn-Bad Meinberg GmbH","toilets":"yes"},"type":"relation"}
+{"id":16104344,"lat":48.3668997,"lon":10.8857756,"tags":{"name":"HELIO","shop":"mall","toilets":"yes"},"type":"relation"}
+{"id":16118783,"lat":47.768721,"lon":12.9460916,"tags":{"amenity":"fuel","brand":"Shell","name":"Shell"},"type":"relation"}
+{"id":16152549,"lat":54.0291943,"lon":10.7562131,"tags":{"amenity":"restaurant","name":"Capolino","opening_hours":"Mo-Su 12:00-22:00","operator":"Pasquale Cimmino","toilets":"yes"},"type":"relation"}
+{"ev":1,"id":16520848,"lat":49.8678513,"lon":8.6272233,"tags":{"amenity":"restaurant","name":"beGarden-Restaurant","operator":"Sodexo","takeaway":"yes"},"type":"relation"}
+{"id":16827923,"lat":52.5306437,"lon":13.7926095,"tags":{"brand":"EDEKA","name":"EDEKA Center Losensky","opening_hours":"Mo-Sa 07:00-21:00","operator":"Losensky","shop":"supermarket"},"type":"relation"}
+{"id":16873787,"lat":48.520548,"lon":9.7405831,"tags":{"amenity":"charging_station","capacity":"259","fee":"yes"},"type":"relation"}
+{"id":16892414,"lat":51.0848946,"lon":13.6961223,"tags":{"amenity":"parking","fee":"no","name":"Elbepark","opening_hours":"Mo-Th 10:00-20:00; Fr 10:00-21:00; Sa 10:00-20:00","operator":"Elbepark","shop":"mall"},"type":"relation"}
+{"id":17021813,"lat":49.0499872,"lon":13.1115476,"tags":{"highway":"rest_area","toilets":"no"},"type":"relation"}
+{"id":17054148,"lat":49.192801,"lon":9.1472662,"tags":{"amenity":"fuel"},"type":"relation"}
+{"id":17073471,"lat":52.0821175,"lon":7.4758935,"tags":{"shop":"mall"},"type":"relation"}
+{"id":17245754,"lat":53.8671986,"lon":10.6727493,"tags":{"name":"LindenArcaden","shop":"mall","toilets":"yes"},"type":"relation"}
+{"id":17298248,"lat":53.4569714,"lon":9.6703031,"tags":{"brand":"REWE","name":"REWE Gierke","opening_hours":"Mo-Sa 06:00-22:00; PH off","operator":"REWE Gierke oHG","shop":"supermarket"},"type":"relation"}
+{"id":17335127,"lat":51.5844653,"lon":7.8596175,"tags":{"amenity":"fuel","brand":"Classic","name":"Classic","opening_hours":"Mo-Sa 06:00-22:00; PH,Su 08:00-22:00"},"type":"relation"}
+{"id":17353905,"lat":52.4375589,"lon":13.4463336,"tags":{"name":"GEHAG Einkaufzentrum","shop":"mall"},"type":"relation"}
+{"id":17418407,"lat":48.7396014,"lon":11.4372128,"tags":{"amenity":"fast_food","brand":"McDonald's","name":"McDonald's","operator":"Prinz von Hessen Systemgastronomie e.K.","takeaway":"yes"},"type":"relation"}
+{"ev":1,"id":17463271,"lat":50.3582385,"lon":7.5966869,"tags":{"amenity":"cafe","brand":"Hoefer","name":"Hoefer Forum Mittelrhein","opening_hours":"Mo-Fr 08:00-20:00; Sa 09:00-20:00; Su off","operator":"Bäckerei Hoefer GmbH","shop":"bakery"},"type":"relation"}
+{"id":17477445,"lat":49.9023928,"lon":8.6081561,"tags":{"brand":"Kaufland","name":"Kaufland","opening_hours":"Mo-Fr 07:00-24:00; Sa 07:00-23:30","shop":"supermarket"},"type":"relation"}
+{"id":17607232,"lat":51.7309902,"lon":9.9727194,"tags":{"amenity":"fuel","brand":"Aral","name":"ARAL","operator":"ARAL"},"type":"relation"}
+{"id":17768624,"lat":49.3583055,"lon":11.2020928,"tags":{"brand":"Serways","highway":"services","name":"Raststätte Nürnberg-Feucht West","operator":"Autobahn Tank & Rast Gruppe GmbH & Co. KG","toilets":"yes"},"type":"relation"}
+{"id":17770119,"lat":52.6064344,"lon":13.3230527,"tags":{"brand":"OBI","name":"OBI","opening_hours":"Mo-Sa 08:00-20:00","shop":"doityourself"},"type":"relation"}
+{"id":17835751,"lat":51.0240237,"lon":14.5632028,"tags":{"amenity":"restaurant","indoor_seating":"yes","name":"Lindners Grenzschänke","note":"Hunde erlaubt","opening_hours":"Tu-Fr 11:30-14:00,17:00-22:00; Sa 11:30-22:00; Su,PH 11:30-20:00; Mo-We off","operator":"Projekt Lindner GmbH","toilets":"yes"},"type":"relation"}
+{"id":17917635,"lat":48.7172044,"lon":9.3420007,"tags":{"name":"Möbel Rieger","shop":"furniture"},"type":"relation"}
+{"id":17956294,"lat":48.7967151,"lon":9.0058339,"tags":{"brand":"Kaufland","name":"Kaufland","opening_hours":"Mo-Sa 07:00-22:00; PH off","shop":"supermarket"},"type":"relation"}
+{"id":18040684,"lat":51.3568218,"lon":12.4378865,"tags":{"amenity":"fuel","brand":"bft","name":"bft","note":"in 10/2014 von jet auf bft gewechselt","opening_hours":"24/7","operator":"bft"},"type":"relation"}
+{"id":18115313,"lat":51.7820031,"lon":11.144961,"tags":{"name":"Mettehof","opening_hours":"Mo-Sa 09:00-20:00","operator":"City- und Centermanagement Weimar GmbH","shop":"mall"},"type":"relation"}
+{"id":18198204,"lat":48.3901094,"lon":11.0638479,"tags":{"amenity":"charging_station","brand":"Aral pulse","capacity":"8","description":"4 Ladesäulen Aiptronic Hypercharger 300 mit je 2 Type2 und 1 Chademo","opening_hours":"24/7","operator":"Aral"},"type":"relation"}
+{"id":18233725,"lat":51.3126342,"lon":6.6321535,"tags":{"amenity":"fuel","brand":"Shell","name":"Shell"},"type":"relation"}
+{"id":18310876,"lat":48.6937312,"lon":9.3035363,"tags":{"amenity":"charging_station","capacity":"10"},"type":"relation"}
+{"id":18498324,"lat":49.9947142,"lon":6.9259557,"tags":{"highway":"rest_area","name":"Rastplatz Lüxem"},"type":"relation"}
+{"id":18506393,"lat":48.641514,"lon":8.0370569,"tags":{"highway":"services","name":"Autohof Achern","opening_hours":"24/7","operator":"Euro RastPark Achern","toilets":"yes"},"type":"relation"}
+{"id":18632670,"lat":52.0841385,"lon":7.4729906,"tags":{"name":"Udo Dömer Technik","shop":"doityourself"},"type":"relation"}
+{"id":18674647,"lat":52.3144615,"lon":13.609104,"tags":{"name":"A10 Center","opening_hours":"Mo-Th 10:00-20:00; Fr-Sa 10:00-21:00","operator":"ECE Projektmanagement GmbH & Co. KG","shop":"mall","toilets":"yes"},"type":"relation"}
+{"id":18751888,"lat":50.57992,"lon":10.7000283,"tags":{"shop":"furniture"},"type":"relation"}
+{"id":18764425,"lat":47.7465716,"lon":11.4645715,"tags":{"amenity":"fuel","brand":"Shell","name":"Shell","opening_hours":"Mo-Su 06:00-22:00","operator":"Shell"},"type":"relation"}
+{"id":18786444,"lat":48.5003672,"lon":9.0549968,"tags":{"shop":"mall"},"type":"relation"}
+{"ev":1,"id":19068300,"lat":52.2258439,"lon":7.3767457,"tags":{"name":"Bäckerei Werning","operator":"Sarah Alke;Jan Kamp","shop":"bakery"},"type":"relation"}
+{"ev":1,"id":19243922,"lat":51.3559013,"lon":11.9992634,"tags":{"amenity":"restaurant","name":"Taj Mahal","opening_hours":"Mo-Su 11:00-23:00"},"type":"relation"}
+{"id":19263145,"lat":48.6747836,"lon":9.3753861,"tags":{"name":"Möbelhaus Behr","opening_hours":"Mo-Fr 10:00-19:00; Sa 10:00-16:00","shop":"furniture"},"type":"relation"}
+{"ev":1,"id":19302217,"lat":53.6342343,"lon":11.4080299,"tags":{"indoor_seating":"yes","name":"Stadtbäckerei Junge","opening_hours":"Mo-Fr 05:30-19:00; Sa,Su 06:00-18:00","shop":"bakery"},"type":"relation"}
+{"id":19445153,"lat":52.4935737,"lon":13.5072316,"tags":{"name":"Dolgensee-Center","shop":"mall"},"type":"relation"}
+{"id":19512157,"lat":47.987115,"lon":7.83844,"tags":{"amenity":"fuel","brand":"TotalEnergies","name":"Total","opening_hours":"Mo-Fr 06:00-22:00; Sa 07:00-22:00; Su 08:00-22:00; PH 08:00-22:00","shop":"convenience"},"type":"relation"}
+{"id":19529251,"lat":51.3061721,"lon":7.2338207,"tags":{"description":"Closed until further notice, due to construction","highway":"rest_area","name":"Rastplatz Holtkamp","note":"rest area closed until further notice due to road construction\n\nhttps://fragdenstaat.de/a/345835","toilets":"no"},"type":"relation"}
+{"id":19682362,"lat":48.9922361,"lon":8.4028887,"tags":{"amenity":"charging_station","capacity":"8","opening_hours":"24/7","operator":"EnBW Energie Baden-Württemberg AG"},"type":"relation"}
+{"id":19717458,"lat":50.7938777,"lon":8.7606691,"tags":{"amenity":"charging_station","brand":"Aral pulse","capacity":"9","operator":"Aral"},"type":"relation"}
+{"id":19750828,"lat":48.2656508,"lon":11.6705552,"tags":{"amenity":"toilets","fee":"no"},"type":"relation"}
+{"id":19750829,"lat":48.2656467,"lon":11.6706814,"tags":{"amenity":"toilets","fee":"no"},"type":"relation"}
+{"id":20163137,"lat":53.599283,"lon":11.3926939,"tags":{"name":"Sieben Seen Center","opening_hours":"Mo-Sa 08:00-20:00","operator":"MEC METRO-ECE Centermanagement","shop":"mall","toilets":"yes"},"type":"relation"}
+{"id":20203770,"lat":49.5941333,"lon":8.483268,"tags":{"amenity":"fuel","brand":"star","name":"star","shop":"convenience"},"type":"relation"}
+{"id":20216929,"lat":50.8953134,"lon":11.9798384,"tags":{"highway":"services","toilets":"yes"},"type":"relation"}
+{"id":20313493,"lat":51.1481293,"lon":11.8287204,"tags":{"shop":"doityourself"},"type":"relation"}
+{"id":20313495,"lat":51.147969,"lon":11.8281105,"tags":{"brand":"OBI","name":"OBI","opening_hours":"Mo-Fr 07:00-22:00; Sa 07:00-20:00","operator":"Obi","shop":"doityourself"},"type":"relation"}
+{"id":20405828,"lat":51.0294715,"lon":11.5169169,"tags":{"amenity":"charging_station","brand":"EnBW","capacity":"8","operator":"EnBW Energie Baden-Württemberg AG"},"type":"relation"}
+{"id":20524363,"lat":49.7754664,"lon":9.5763698,"tags":{"name":"Wertheim Village","opening_hours":"Mo-Sa 10:00-20:00","operator":"TBVSC","shop":"mall","toilets":"yes"},"type":"relation"}
+{"id":20585198,"lat":50.3362611,"lon":7.5680616,"tags":{"amenity":"charging_station","capacity":"12"},"type":"relation"}
+{"id":20619794,"lat":53.8876632,"lon":10.6448753,"tags":{"amenity":"fuel","name":"Access","opening_hours":"Mo-Sa 05:30-22:00; Su 06:00-22:00; PH 07:30-22:00","shop":"convenience"},"type":"relation"}
+{"id":20666721,"lat":52.4554265,"lon":13.3863096,"tags":{"name":"Tempelhofer Hafen","shop":"mall"},"type":"relation"}
+{"id":20704387,"lat":48.9571824,"lon":9.2441629,"tags":{"amenity":"charging_station","brand":"Aral pulse","capacity":"8","opening_hours":"24/7","operator":"Aral"},"type":"relation"}
+{"id":20954331,"lat":52.584652,"lon":13.2861269,"tags":{"name":"Hallen am Borsigturm","opening_hours":"Mo-Sa 10:00-20:00; \"Die Öffnungszeiten können bei einzelnen Shops, Gastrobetrieben und Services abweichen.\"","shop":"mall","toilets":"yes"},"type":"relation"}
+{"id":20999145,"lat":50.8328006,"lon":6.9222999,"tags":{"brand":"JYSK","name":"JYSK","opening_hours":"Mo-Fr 10:00-18:30; Sa 09:30-17:00","shop":"furniture"},"type":"relation"}
+{"id":20999146,"lat":50.8327108,"lon":6.9214677,"tags":{"brand":"Rewe","name":"REWE","opening_hours":"Mo-Sa 08:00-21:00","operator":"REWE Istas Verbrauchermarkt GmbH","shop":"supermarket"},"type":"relation"}
+{"id":21058077,"lat":50.5689568,"lon":8.4971485,"tags":{"brand":"IKEA","name":"IKEA","opening_hours":"Mo-Sa 10:00-20:00; Su,PH off","operator":"IKEA Deutschland GmbH & Co. KG","shop":"furniture"},"type":"relation"}
+{"id":21096900,"lat":52.3598908,"lon":10.1556624,"tags":{"highway":"rest_area","name":"Röhrse Süd","toilets":"yes","toilets:fee":"no"},"type":"relation"}
+{"id":21119987,"lat":48.4026951,"lon":9.9743036,"tags":{"amenity":"charging_station","brand":"EnBW HyperNetz","capacity":"8","fee":"yes","operator":"EnBW Energie Baden-Württemberg AG"},"type":"relation"}
+{"ev":1,"id":21139241,"lat":51.483463,"lon":7.2121816,"tags":{"amenity":"cafe","indoor_seating":"yes","name":"Café Piccolo","operator":"Musikschule Bochum"},"type":"relation"}
+{"id":21228287,"lat":51.1960383,"lon":12.0004777,"tags":{"brand":"Möbel Boss","name":"Möbel Boss","opening_hours":"Mo-Fr 09:00-19:00; Sa 09:00-18:00","shop":"furniture"},"type":"relation"}
+{"id":21373362,"lat":50.0690739,"lon":6.8808083,"tags":{"highway":"services","name":"Eifel West","toilets":"yes"},"type":"relation"}
+{"id":21393295,"lat":47.6076176,"lon":9.5872896,"tags":{"amenity":"charging_station","brand":"Aral pulse","capacity":"8","description":"Aral pulse Linderhof 8, 88079 Kressbronn am Bodensee","fee":"yes","name":"Aral Kreisverkehr B467 Kressbronn","operator":"Aral"},"type":"relation"}
+{"id":21440817,"lat":48.2195009,"lon":10.1273577,"tags":{"amenity":"charging_station","brand":"Circle K","capacity":"10","description":"Circle K I Illertissen Leitschaeker 2","fee":"yes","name":"Circle K Illertissen Leitschaeker","opening_hours":"24/7","operator":"TotalEnergies"},"type":"relation"}
+{"id":21441022,"lat":48.2127975,"lon":11.5636789,"tags":{"name":"Mira","shop":"mall"},"type":"relation"}
+{"id":21450550,"lat":49.5714624,"lon":8.9777578,"tags":{"brand":"REWE","name":"REWE","opening_hours":"Mo-Sa 07:00-21:30","operator":"Rewe-Markt GmbH","shop":"supermarket"},"type":"relation"}
+{"id":21450551,"lat":49.5715852,"lon":8.9774377,"tags":{"brand":"REWE","name":"REWE","opening_hours":"Mo-Sa 07:00-21:30","operator":"Rewe-Markt GmbH","shop":"supermarket"},"type":"relation"}
+{"id":21653573,"lat":53.1611686,"lon":10.0615046,"tags":{"amenity":"charging_station","brand":"Circle K","capacity":"24","fee":"yes","opening_hours":"24/7"},"type":"relation"}
+{"ev":1,"id":21748375,"lat":52.3751547,"lon":9.7395299,"tags":{"amenity":"fast_food","indoor_seating":"yes","name":"Hey Ferry"},"type":"relation"}
+{"id":21911571,"lat":48.5444784,"lon":9.276627,"tags":{"brand":"comfort Polstermöbel Manufaktur GmbH & Co. KG","name":"Comfort Polstermöbel","opening_hours":"Mo open \"nach Vereinbarung\"; Tu-Fr 10:00-17:30; Sa 09:00-14:00; PH closed","shop":"furniture"},"type":"relation"}
+{"id":21934899,"lat":54.3148536,"lon":9.6770664,"tags":{"amenity":"fuel","brand":"JET","name":"JET","operator":"ConocoPhilips Germany GmbH"},"type":"relation"}
