@@ -13,3 +13,4 @@ transcript/
 data/*.osm.pbf
 data/*.part
 data/*.poly
+data/*.cache

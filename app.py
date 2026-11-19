@@ -778,6 +778,47 @@ def nearestSeg(segs, pt, lo=0, hi=None):
             best = (d, st + t * L, dx * (py - ay) - dy * (px - ax) > 0, mway)
     return best
 
+SIDES_FILE = os.path.join(os.path.dirname(LOCAL_FILE), "sides.jsonl")
+_sides = None  # {stop id: ([lat, lon], [[A lat, A lon, B lat, B lon, A->B m, detour], ...])}, False without file
+SIDE_ON_ROUTE_M = 15  # m: A and B must lie on the route itself; the other carriageway is 20+ m away
+SIDE_LENGTH_SLACK = 150  # m: the route from A to B must be as long as the carriageway was (no exit and back)
+# m: a stored detour this close to OPPOSITE_DETOUR is a stop reached over an exit, where the exact
+# start and end points decide; there the route's own points (OSRM live) answer. ~6% of the stored ones.
+SIDE_UNSURE_M = 1500
+
+def loadSides():
+    out = {}
+    try:
+        with open(SIDES_FILE, encoding="utf-8") as f:
+            for line in f:
+                r = json.loads(line)
+                out[r["id"]] = (r["at"], r["dirs"])
+    except (OSError, ValueError, KeyError):
+        app.logger.warning("🛣️ no stored Autobahn sides, every side check goes to OSRM")
+        return False
+    return out
+
+def storedDetour(segs, starts, p):
+    """The accessDetour that build_sides.py measured for stop p, when this route drives the stretch it
+    was measured on (from A 1.5 km before the stop to B 1.5 km after it); None means ask OSRM."""
+    global _sides
+    if os.environ.get("PIPI_NO_LOCAL") or not segs:
+        return None
+    if _sides is None:
+        _sides = loadSides()
+    hit = _sides and _sides.get(p["id"])
+    if not hit or hit[0] != [round(p["lat"], 5), round(p["lon"], 5)]:
+        return None  # not stored, or the stop moved since the build
+    lo = bisect.bisect_left(starts, p["along"] - 4000)
+    hi = bisect.bisect_right(starts, p["along"] + 4000)
+    for alat, alon, blat, blon, direct, detour in hit[1]:
+        da, ma, _, _ = nearestSeg(segs, (alat, alon), lo, hi)
+        db, mb, _, _ = nearestSeg(segs, (blat, blon), lo, hi)
+        if (da <= SIDE_ON_ROUTE_M and db <= SIDE_ON_ROUTE_M and ma < p["along"] < mb
+                and abs(mb - ma - direct) <= SIDE_LENGTH_SLACK):
+            return detour if abs(detour - OPPOSITE_DETOUR) >= SIDE_UNSURE_M else None
+    return None
+
 def accessDetour(coords, pt, back=1500):
     """Extra metres OSRM needs to drive through `pt` compared with driving straight on.
     A stop on your own carriageway costs a few hundred, one across the median several kilometres."""
@@ -934,10 +975,22 @@ def along():
     # while the WC nodes are mostly town toilets and would push them out of the list.
     cand = sorted([p for p in pois if p["kind"] in MWY_FACILITY and p["off"] <= 1200 and p.get("_mway")],
                   key=lambda p: (p["kind"] == "wc", p["off"]))[:OPPOSITE_CHECK]
-    if cand:
+    def setSide(p, d):
+        if d > OPPOSITE_DETOUR:
+            p["opp"] = True
+        else:
+            p.pop("opp", None)  # on the way after all: a detour over the exit, not the wrong lane
+    live = []
+    for p in cand:  # build_sides.py asked OSRM already where the route drives the stretch it measured
+        d = storedDetour(segs, starts, p)
+        if d is None:
+            live.append(p)
+        else:
+            setSide(p, d)
+    if live:
         from concurrent.futures import ThreadPoolExecutor, wait
         ex = ThreadPoolExecutor(WORKERS)
-        fut = {ex.submit(accessDetour, coords, (p["lat"], p["lon"])): p for p in cand}
+        fut = {ex.submit(accessDetour, coords, (p["lat"], p["lon"])): p for p in live}
         try:
             wait(fut, timeout=10)
             for f, p in fut.items():
@@ -947,12 +1000,8 @@ def along():
                     d = f.result()
                 except Exception:  # one failed check leaves that stop as the side test judged it
                     continue
-                if d is None:
-                    continue
-                if d > OPPOSITE_DETOUR:
-                    p["opp"] = True
-                else:
-                    p.pop("opp", None)  # on the way after all: a detour over the exit, not the wrong lane
+                if d is not None:
+                    setSide(p, d)
         finally:
             ex.shutdown(wait=False)
     tl = timeline(route) if segs else [(0.0, 0.0), (total, route["duration"])]

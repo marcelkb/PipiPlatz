@@ -45,15 +45,33 @@ class LocalDbCase(unittest.TestCase):
         mwy = os.path.join(self.dir.name, "motorways.jsonl")
         with open(mwy, "w", encoding="utf-8") as f:  # the Autobahn of LINE: lon 8.0 from 51 N to 50 N
             f.write(json.dumps({"id": 1, "pts": [[51.0, 8.0], [50.5, 8.0], [50.0, 8.0]]}) + "\n")
+        self.sides = os.path.join(self.dir.name, "sides.jsonl")  # none unless a test writes it
         env = {k: v for k, v in os.environ.items() if k != "PIPI_NO_LOCAL"}
         for p in (mock.patch.object(app, "LOCAL_FILE", path), mock.patch.object(app, "_local", None),
                   mock.patch.object(app, "MWY_FILE", mwy), mock.patch.object(app, "_mwy", None),
+                  mock.patch.object(app, "SIDES_FILE", self.sides), mock.patch.object(app, "_sides", None),
                   mock.patch.dict(os.environ, env, clear=True), mock.patch.object(app, "overpass_live", refuse)):
             p.start()
             self.addCleanup(p.stop)
         self.addCleanup(self.dir.cleanup)
 
 class LocalDb(LocalDbCase):
+    def writeSides(self, detour, lon=8.0, at=(50.5, 8.001)):
+        with open(self.sides, "w", encoding="utf-8") as f:
+            f.write(json.dumps({"id": "node1", "at": list(at), "dirs": [[50.513475, lon, 50.486525, lon, 3000, detour]]}) + "\n")
+
+    def along(self):
+        """POST /api/along over LINE; returns (json, number of OSRM side checks through node1)."""
+        calls = []
+        def get(url, **kw):
+            pts = url.split("?")[0].rsplit("/", 1)[1].split(";")
+            calls.append(len(pts) == 3 and pts[1] == "8.001,50.5")
+            return osrm(url, **kw)
+        with mock.patch.object(app.OSRM_HTTP, "get", get):
+            r = app.app.test_client().post("/api/along", json={"from": [51.0, 8.0], "to": [50.0, 8.0]})
+        self.assertEqual(r.status_code, 200)
+        return r.get_json(), sum(calls)
+
     # ===== Acceptance criteria =====
     def test_route_search_answers_from_the_file_without_overpass(self):
         with mock.patch.object(app.OSRM_HTTP, "get", osrm):
@@ -62,6 +80,14 @@ class LocalDb(LocalDbCase):
         self.assertEqual(r.status_code, 200, j)
         self.assertEqual({p["id"] for p in j["pois"]}, {"node1", "node2", "node4"})  # node3 is too far off
         self.assertEqual((j["partial"], j["pending"]), (0, 0))
+
+    def test_stored_autobahn_side_answers_without_osrm(self):
+        # build_sides.py measured node1 from the carriageway of LINE (A 1.5 km north, B 1.5 km south):
+        # 9 km detour = other side. OSRM itself would say "on the way" (the stub), so "opp" proves the file
+        self.writeSides(9000)
+        j, detourCalls = self.along()
+        self.assertTrue(next(p for p in j["pois"] if p["id"] == "node1").get("opp"))
+        self.assertEqual(detourCalls, 0)
 
     def test_nearby_search_answers_from_the_file_without_overpass(self):
         r = app.app.test_client().get("/api/nearby?lat=50.5&lon=8.0")
@@ -74,6 +100,24 @@ class LocalDb(LocalDbCase):
         self.assertFalse(app.onMotorway(50.5, 8.3))  # 21 km east
 
     # ===== Core behavior =====
+    def test_stored_side_of_another_stretch_asks_osrm(self):
+        # measured on a carriageway 21 m east of the route (the other one): this route never drove it
+        self.writeSides(9000, lon=8.0003)
+        j, detourCalls = self.along()
+        self.assertFalse(next(p for p in j["pois"] if p["id"] == "node1").get("opp"))
+        self.assertEqual(detourCalls, 1)
+
+    def test_stored_side_close_to_the_4_km_limit_asks_osrm(self):
+        # a stop reached over an exit from both sides: where the 1.5 km points fall decides, so the route's own
+        self.writeSides(4500)
+        _, detourCalls = self.along()
+        self.assertEqual(detourCalls, 1)
+
+    def test_stored_side_of_a_moved_stop_asks_osrm(self):
+        self.writeSides(9000, at=[50.5003, 8.001])
+        _, detourCalls = self.along()
+        self.assertEqual(detourCalls, 1)
+
     def test_autobahn_check_ends_at_30_m(self):
         lon25, lon35 = 8.0 + 25 / 70870, 8.0 + 35 / 70870  # 70870 m per degree of longitude at 50.5 N
         self.assertTrue(app.localOnMotorway(50.25, lon25, app.MWY_CHECK_M))

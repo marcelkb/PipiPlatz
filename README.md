@@ -110,8 +110,18 @@ python build_pois.py               # ~10 min; refuses to write if a kind lost >1
 python compare_local.py            # local vs live Overpass at 10 places, should say 10/10
 python compare_local.py --random 100   # 100 places spread over Germany (~10 min)
 python compare_local.py --motorway 200 # the Autobahn check at 200 points
-git add data/pois.jsonl data/pois.meta.json data/motorways.jsonl
+python -u build_sides.py          # Autobahn sides, see below; first run ~4 h, later only new stops
+git add data/pois.jsonl data/pois.meta.json data/motorways.jsonl data/sides.jsonl
 ```
+
+**Autobahn sides** (`data/sides.jsonl`): a route search hides a rest area that only the other
+carriageway reaches (driving through it costs >4 km more than driving on). That used to be one OSRM call
+per stop and search, ~50 per route. `build_sides.py` asks OSRM once per stop and carriageway direction
+(1 request per second, the public server's limit), measured from 1.5 km before to 1.5 km after the stop
+along the real OSM carriageway. The app takes a stored answer only when the route drives that same
+stretch and the detour is not within 1.5 km of the 4 km limit; otherwise it asks OSRM as before. On six
+long routes 353 of 384 checks came from the file, all with OSRM's live verdict. The script can be
+stopped and started again; it keeps what it has.
 
 The `.pbf` and `.poly` are git-ignored. Needs `pip install osmium` (only for the build, not on the server).
 `build_pois.py` reads the selectors from `GROUPS` in `app.py`; a new group needs its first tag in
