@@ -153,6 +153,51 @@ def localBox(s, w, n, e):
                     els.append(r)
     return els, evid
 
+MWY_FILE = os.path.join(os.path.dirname(LOCAL_FILE), "motorways.jsonl")
+_mwy = None  # {cell: array of segments (lat1, lon1, lat2, lon2, ...)} once loaded, False without file
+
+def loadMotorways():
+    """data/motorways.jsonl -> every Autobahn / ramp segment, filed under each cell it touches.
+    Flat float arrays: ~10 bytes per coordinate instead of a Python float object each."""
+    from array import array
+    grid = {}
+    try:
+        with open(MWY_FILE, encoding="utf-8") as f:
+            for line in f:
+                pts = json.loads(line)["pts"]
+                for (a, b), (c, d) in zip(pts, pts[1:]):
+                    for i in range(math.floor(min(a, c) / LOCAL_CELL), math.floor(max(a, c) / LOCAL_CELL) + 1):
+                        for j in range(math.floor(min(b, d) / LOCAL_CELL), math.floor(max(b, d) / LOCAL_CELL) + 1):
+                            grid.setdefault((i, j), array("d")).extend((a, b, c, d))
+    except (OSError, ValueError, KeyError):
+        app.logger.warning("🛣️ no local motorway data, the Autobahn check goes to Overpass")
+        return False
+    return grid
+
+def localOnMotorway(lat, lon, within):
+    """Is a motorway or ramp within `within` m? None when the local data does not cover the place."""
+    global _mwy
+    d = localData()
+    if not d or (math.floor(lat / LOCAL_CELL), math.floor(lon / LOCAL_CELL)) not in d[0]:
+        return None
+    if _mwy is None:
+        _mwy = loadMotorways()
+    if not _mwy:
+        return None
+    kx, ky = 111320 * math.cos(math.radians(lat)), 111320
+    s, w, n, e = boxOf([(lat, lon)], within)
+    for i in range(math.floor(s / LOCAL_CELL), math.floor(n / LOCAL_CELL) + 1):
+        for j in range(math.floor(w / LOCAL_CELL), math.floor(e / LOCAL_CELL) + 1):
+            seg = _mwy.get((i, j), ())
+            for k in range(0, len(seg), 4):
+                ax, ay = (seg[k + 1] - lon) * kx, (seg[k] - lat) * ky  # the point is the origin
+                dx, dy = (seg[k + 3] - lon) * kx - ax, (seg[k + 2] - lat) * ky - ay
+                L2 = dx * dx + dy * dy
+                t = max(0.0, min(1.0, -(ax * dx + ay * dy) / L2)) if L2 else 0.0
+                if math.hypot(ax + t * dx, ay + t * dy) <= within:
+                    return True
+    return False
+
 def localAround(lat, lon, radius):
     """localBox for a circle, like Overpass `around:`; None when it is not covered."""
     hit = localBox(*boxOf([(lat, lon)], radius))
@@ -473,7 +518,11 @@ MWY_CHECK_M = 30 # m: a position this close to a motorway way counts as "on the 
 MWY_CHECK_WAIT = 6  # s: no answer by then = not on the Autobahn, the search must not hang on it
 
 def onMotorway(lat, lon):
-    """True when (lat, lon) is on a motorway or its ramp. Any failure or a slow Overpass says False."""
+    """True when (lat, lon) is on a motorway or its ramp. Inside Germany from the local lines (~1 ms),
+    elsewhere live: any failure or a slow Overpass says False."""
+    local = localOnMotorway(lat, lon, MWY_CHECK_M)
+    if local is not None:
+        return local
     from concurrent.futures import ThreadPoolExecutor
     q = (f'[out:json][timeout:10];way(around:{MWY_CHECK_M},{lat:.4f},{lon:.4f})'
          f'[highway~"^(motorway|motorway_link)$"];out ids 1;')

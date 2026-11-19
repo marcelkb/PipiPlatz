@@ -27,6 +27,9 @@ PBF = os.path.join(HERE, "data", "germany-latest.osm.pbf")
 POLY = os.path.join(HERE, "data", "germany.poly")
 OUT = os.path.join(HERE, "data", "pois.jsonl")
 META = os.path.join(HERE, "data", "pois.meta.json")
+MWY_OUT = os.path.join(HERE, "data", "motorways.jsonl")  # Autobahn lines for app.onMotorway
+MWY_KINDS = ("motorway", "motorway_link")  # the same roads the live onMotorway query asks for
+MWY_SIMPLIFY_M = 2  # m: a line point may move this far; the check looks 30 m around you
 SOURCES = {PBF: "https://download.geofabrik.de/europe/germany-latest.osm.pbf",
            POLY: "https://download.geofabrik.de/europe/germany.poly"}
 DROP_MAX = 0.10
@@ -55,7 +58,8 @@ def matches(conds, tags):
 
 # The first condition of every selector is a plain key=value (or a value list for the evidence regex).
 # Filtering on those in C keeps the 30 million roads and untagged nodes out of Python.
-PREFILTER = [("highway", "rest_area"), ("highway", "services"), ("railway", "station")] + \
+PREFILTER = [("highway", "rest_area"), ("highway", "services"), ("railway", "station"),
+             ("highway", "motorway"), ("highway", "motorway_link")] + \
     [("amenity", v) for v in ("toilets", "fuel", "parking", "restaurant", "fast_food", "cafe", "charging_station")] + \
     [("shop", v) for v in ("supermarket", "furniture", "doityourself", "mall", "bakery")]
 
@@ -75,46 +79,79 @@ def download():
                     f.write(block)
         os.replace(path + ".part", path)
 
-def center(obj):
-    """Middle of the bounding box of a node, way or area, like Overpass `out center`."""
-    if isinstance(obj, osmium.osm.Node):
-        return obj.location.lat, obj.location.lon
-    if isinstance(obj, osmium.osm.Way):
-        pts = [(n.lat, n.lon) for n in obj.nodes if n.location.valid()]
-    else:
-        pts = [(n.lat, n.lon) for ring in obj.outer_rings() for n in ring if n.location.valid()]
+def bboxCenter(pts):
+    """Middle of the bounding box of [(lat, lon)], like Overpass `out center`."""
     if not pts:
         return None
     lats, lons = [p[0] for p in pts], [p[1] for p in pts]
     return (min(lats) + max(lats)) / 2, (min(lons) + max(lons)) / 2
 
-def scan():
-    """One pass over the extract -> (stops, sources, evidence candidates) as compact rows."""
-    stops, sources, cands = {}, [], {}
-    fp = (osmium.FileProcessor(PBF).with_locations("flex_mem").with_areas()
-          .with_filter(osmium.filter.TagFilter(*PREFILTER)))
-    t0, seen = time.time(), 0
+def wayPoints(way):
+    return [(n.lat, n.lon) for n in way.nodes if n.location.valid()]
+
+def relationsFirst():
+    """Relations the selectors match -> {id: (tags, member node ids, member way ids)}. A quick pass
+    over the relations only: their members come earlier in the file than they do."""
+    rels = {}
+    fp = osmium.FileProcessor(PBF, osmium.osm.RELATION).with_filter(osmium.filter.TagFilter(*PREFILTER))
+    for r in fp:
+        tags = {t.k: t.v for t in r.tags}
+        if any(matches(c, tags) for c in POI_SEL + SRC_SEL + EV_SEL):
+            rels[r.id] = (tags, [m.ref for m in r.members if m.type == "n"],
+                          [m.ref for m in r.members if m.type == "w"])
+    return rels
+
+def relationCenters(rels):
+    """Overpass `out center` of a relation: the middle of the bounding box of all its member nodes and
+    member ways, whatever the relation type (multipolygon, site, building ...). One more pass that
+    hands only those members to Python."""
+    nodeIds = {n for _t, ns, _w in rels.values() for n in ns}
+    wayIds = {w for _t, _n, ws in rels.values() for w in ws}
+    nodes, ways = {}, {}
+    fp = (osmium.FileProcessor(PBF, osmium.osm.NODE | osmium.osm.WAY).with_locations("flex_mem")
+          .with_filter(osmium.filter.IdFilter(nodeIds).enable_for(osmium.osm.NODE))
+          .with_filter(osmium.filter.IdFilter(wayIds).enable_for(osmium.osm.WAY)))
     for obj in fp:
-        seen += 1
-        if seen % 500000 == 0:
-            print(f"  … {seen} tagged objects, {len(stops)} stops, {time.time() - t0:.0f} s", flush=True)
-        if isinstance(obj, osmium.osm.Relation):
-            continue  # its geometry arrives as an area
-        if isinstance(obj, osmium.osm.Area):
-            if obj.from_way():
-                continue  # the way itself is handled
-            otype, oid = "relation", obj.orig_id()
+        if isinstance(obj, osmium.osm.Node):
+            if obj.location.valid():
+                nodes[obj.id] = [(obj.location.lat, obj.location.lon)]
         else:
-            otype, oid = ("node" if isinstance(obj, osmium.osm.Node) else "way"), obj.id
-        tags = {t.k: t.v for t in obj.tags}
-        poi = any(matches(c, tags) for c in POI_SEL)
-        src = any(matches(c, tags) for c in SRC_SEL)
-        ev = any(matches(c, tags) for c in EV_SEL)
-        if not (poi or src or ev):
-            continue
-        c = center(obj)
-        if c is None:
-            continue
+            ways[obj.id] = wayPoints(obj)
+    return {rid: bboxCenter([p for n in ns for p in nodes.get(n, [])] + [p for w in ws for p in ways.get(w, [])])
+            for rid, (_t, ns, ws) in rels.items()}
+
+def simplify(pts, tol):
+    """Douglas-Peucker on [(lat, lon)]: drops points that lie within tol metres of the line."""
+    if len(pts) < 3:
+        return pts
+    kx, ky = 111320 * math.cos(math.radians(pts[0][0])), 111320
+    xy = [(p[1] * kx, p[0] * ky) for p in pts]
+    keep, stack = {0, len(pts) - 1}, [(0, len(pts) - 1)]
+    while stack:
+        a, b = stack.pop()
+        (ax, ay), (bx, by) = xy[a], xy[b]
+        dx, dy = bx - ax, by - ay
+        L = math.hypot(dx, dy) or 1e-9
+        far, fi = 0.0, None
+        for i in range(a + 1, b):
+            d = abs(dy * (xy[i][0] - ax) - dx * (xy[i][1] - ay)) / L
+            if d > far:
+                far, fi = d, i
+        if fi is not None and far > tol:
+            keep.add(fi)
+            stack += [(a, fi), (fi, b)]
+    return [pts[i] for i in sorted(keep)]
+
+def scan():
+    """One pass over the extract -> (stops, sources, evidence candidates, motorway lines)."""
+    stops, sources, cands, mways = {}, [], {}, {}
+
+    def add(otype, oid, tags, c):
+        poi = any(matches(s, tags) for s in POI_SEL)
+        src = any(matches(s, tags) for s in SRC_SEL)
+        ev = any(matches(s, tags) for s in EV_SEL)
+        if not (poi or src or ev) or c is None:
+            return
         row = {"type": otype, "id": oid, "lat": round(c[0], 7), "lon": round(c[1], 7),
                "tags": {k: v for k, v in tags.items() if k in KEEP}}
         if poi:
@@ -123,9 +160,32 @@ def scan():
             sources.append(c)
         if ev and not poi:
             cands[(otype, oid)] = dict(row, ev=1)
+
+    t0 = time.time()
+    rels = relationsFirst()
+    for rid, c in relationCenters(rels).items():
+        add("relation", rid, rels[rid][0], c)
+    print(f"🧩 {len(rels)} relations, {time.time() - t0:.0f} s", flush=True)
+    fp = (osmium.FileProcessor(PBF, osmium.osm.NODE | osmium.osm.WAY).with_locations("flex_mem")
+          .with_filter(osmium.filter.TagFilter(*PREFILTER)))
+    seen = 0
+    for obj in fp:
+        seen += 1
+        if seen % 500000 == 0:
+            print(f"  … {seen} tagged objects, {len(stops)} stops, {time.time() - t0:.0f} s", flush=True)
+        tags = {t.k: t.v for t in obj.tags}
+        if isinstance(obj, osmium.osm.Node):
+            add("node", obj.id, tags, (obj.location.lat, obj.location.lon))
+        elif tags.get("highway") in MWY_KINDS:
+            pts = wayPoints(obj)
+            if len(pts) >= 2:
+                mways[obj.id] = [[round(a, 6), round(b, 6)] for a, b in simplify(pts, MWY_SIMPLIFY_M)]
+        else:
+            add("way", obj.id, tags, bboxCenter(wayPoints(obj)))
     print(f"🔎 scan done: {seen} tagged objects, {len(stops)} stops, {len(sources)} evidence sources, "
-          f"{len(cands)} cafes/bakeries/restaurants, {time.time() - t0:.0f} s", flush=True)
-    return stops, sources, cands
+          f"{len(cands)} cafes/bakeries/restaurants, {len(mways)} motorway ways, {time.time() - t0:.0f} s",
+          flush=True)
+    return stops, sources, cands, mways
 
 def nearSources(cands, sources):
     """Only the evidence within EVID_M of a source survives (a grid, not 10^5 x 10^5 distances)."""
@@ -193,8 +253,10 @@ def kindCounts(rows):
         counts[k] = counts.get(k, 0) + 1
     return counts
 
-def writeOut(rows, cells):
+def writeOut(rows, cells, mways=None):
     counts = kindCounts(rows)
+    if mways is not None:
+        counts["motorway"] = len(mways)  # ways, so the drop check also guards the lines
     if os.path.exists(META) and "--force" not in sys.argv:
         with open(META, encoding="utf-8") as f:
             old = json.load(f).get("counts", {})
@@ -206,6 +268,11 @@ def writeOut(rows, cells):
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n")
+    if mways is not None:
+        with open(MWY_OUT, "w", encoding="utf-8", newline="\n") as f:
+            for k in sorted(mways):
+                f.write(json.dumps({"id": k, "pts": mways[k]}, separators=(",", ":")) + "\n")
+        print(f"🛣️ wrote {len(mways)} motorway ways, {os.path.getsize(MWY_OUT) / 1e6:.1f} MB", flush=True)
     with open(META, "w", encoding="utf-8", newline="\n") as f:
         json.dump({"built": time.strftime("%Y-%m-%d"),
                    "source": time.strftime("%Y-%m-%d", time.localtime(os.path.getmtime(PBF))),
@@ -219,14 +286,21 @@ def build():
     if osmium is None:
         sys.exit("pyosmium is missing: pip install osmium")
     download()
-    stops, sources, cands = scan()
+    stops, sources, cands, mways = scan()
     evid = nearSources(cands, sources)
     rows = {**evid, **stops}
-    return [rows[k] for k in sorted(rows)]
+    return [rows[k] for k in sorted(rows, key=overpassOrder)], mways
+
+TYPE_ORDER = {"node": 0, "way": 1, "relation": 2}
+
+def overpassOrder(key):
+    """Overpass answers nodes, then ways, then relations. dedupe() keeps the first of two stops at the
+    same spot (a rest area drawn as a way and again as its site relation), so the file must agree."""
+    return TYPE_ORDER[key[0]], key[1]
 
 def main():
-    rows = build()
-    writeOut(rows, coverCells(readPoly(POLY)))
+    rows, mways = build()
+    writeOut(rows, coverCells(readPoly(POLY)), mways)
 
 if __name__ == "__main__":
     main()

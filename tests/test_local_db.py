@@ -42,8 +42,12 @@ class LocalDbCase(unittest.TestCase):
         with open(os.path.join(self.dir.name, "pois.meta.json"), "w", encoding="utf-8") as f:
             # covered: 49.9-51.2 N, 7.5-8.6 E (cells of 0.1 degree)
             json.dump({"cells": [[i, j] for i in range(499, 512) for j in range(75, 86)]}, f)
+        mwy = os.path.join(self.dir.name, "motorways.jsonl")
+        with open(mwy, "w", encoding="utf-8") as f:  # the Autobahn of LINE: lon 8.0 from 51 N to 50 N
+            f.write(json.dumps({"id": 1, "pts": [[51.0, 8.0], [50.5, 8.0], [50.0, 8.0]]}) + "\n")
         env = {k: v for k, v in os.environ.items() if k != "PIPI_NO_LOCAL"}
         for p in (mock.patch.object(app, "LOCAL_FILE", path), mock.patch.object(app, "_local", None),
+                  mock.patch.object(app, "MWY_FILE", mwy), mock.patch.object(app, "_mwy", None),
                   mock.patch.dict(os.environ, env, clear=True), mock.patch.object(app, "overpass_live", refuse)):
             p.start()
             self.addCleanup(p.stop)
@@ -65,7 +69,30 @@ class LocalDb(LocalDbCase):
         self.assertEqual(r.status_code, 200, j)
         self.assertIn("node1", {p["id"] for p in j["pois"]})
 
+    def test_autobahn_check_answers_from_the_file_without_overpass(self):
+        self.assertTrue(app.onMotorway(50.5, 8.0001))  # 7 m from the line
+        self.assertFalse(app.onMotorway(50.5, 8.3))  # 21 km east
+
     # ===== Core behavior =====
+    def test_autobahn_check_ends_at_30_m(self):
+        lon25, lon35 = 8.0 + 25 / 70870, 8.0 + 35 / 70870  # 70870 m per degree of longitude at 50.5 N
+        self.assertTrue(app.localOnMotorway(50.25, lon25, app.MWY_CHECK_M))
+        self.assertFalse(app.localOnMotorway(50.25, lon35, app.MWY_CHECK_M))
+
+    def test_autobahn_check_outside_the_covered_cells_goes_live(self):
+        self.assertIsNone(app.localOnMotorway(52.0, 8.0, app.MWY_CHECK_M))
+
+    def test_file_order_is_overpass_order_so_dedupe_keeps_the_same_twin(self):
+        # Gerlinger Höhe: the rest area way (toilets=yes) and its site relation share one centre
+        keys = [("relation", 3015173), ("way", 124466342), ("node", 9)]
+        self.assertEqual(sorted(keys, key=build_pois.overpassOrder), [keys[2], keys[1], keys[0]])
+
+    def test_simplified_line_stays_within_2_m(self):
+        # a gentle bend: 100 points, 1 m apart sideways at most -> two ends survive, a 10 m kink stays
+        pts = [(50.0 + i / 10000, 8.0 + (0.5 / 70000) * (i % 2)) for i in range(100)]
+        self.assertEqual(len(build_pois.simplify(pts, 2)), 2)
+        kink = pts[:50] + [(50.005, 8.0 + 10 / 70000)] + pts[51:]
+        self.assertIn((50.005, 8.0 + 10 / 70000), build_pois.simplify(kink, 2))
     def test_cafe_just_outside_the_box_still_counts_for_the_supermarket(self):
         els, evid = app.localBox(50.50, 7.99, 50.5202, 8.01)
         self.assertIn(4, [e["id"] for e in els])

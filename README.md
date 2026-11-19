@@ -80,11 +80,14 @@ store, which fixes `CERTIFICATE_VERIFY_FAILED` errors behind antivirus that insp
 ## Caching and speed
 
 - **Germany is answered from a local copy of the OSM data**, `data/pois.jsonl` (~80k stops plus the
-  cafes / bakeries that decide "WC wahrscheinlich", 27.5 MB, built 2026-11-19). The server loads it once
-  into a grid index (~4 s, ~80 MB RAM); a search box that lies wholly inside Germany never asks
+  cafes / bakeries that decide "WC wahrscheinlich", 27.6 MB, built 2026-11-19). The server loads it once
+  into a grid index (~3 s, ~60 MB RAM); a search box that lies wholly inside Germany never asks
   Overpass. Essen → Frankfurt: 4 s instead of 25-180 s, "In der Nähe" Frankfurt 0.6 s. Boxes that
   reach across the border (Aachen, Basel, abroad) still go to Overpass as below. The phone never
   downloads the file; it gets the same JSON answers as before.
+- **The "am I on the Autobahn?" check** of "In der Nähe" (10 km radius instead of 3 km) uses
+  `data/motorways.jsonl`, every `motorway` / `motorway_link` line simplified to 2 m (11.5 MB, ~10 MB
+  RAM, ~6 ms per check instead of up to 6 s live).
 - Every Overpass query is cached for 7 days in `cache.db` (SQLite), so a repeat search is fast.
 - "In der Nähe" queries run around a ~2 km grid point instead of your exact position, so searches
   from nearby spots reuse the same cache entries. The radius is padded by the offset.
@@ -105,7 +108,9 @@ store, which fixes `CERTIFICATE_VERIFY_FAILED` errors behind antivirus that insp
 del data\germany-latest.osm.pbf    # build_pois.py downloads the current one from Geofabrik (~4.9 GB)
 python build_pois.py               # ~10 min; refuses to write if a kind lost >10% (--force overrides)
 python compare_local.py            # local vs live Overpass at 10 places, should say 10/10
-git add data/pois.jsonl data/pois.meta.json
+python compare_local.py --random 100   # 100 places spread over Germany (~10 min)
+python compare_local.py --motorway 200 # the Autobahn check at 200 points
+git add data/pois.jsonl data/pois.meta.json data/motorways.jsonl
 ```
 
 The `.pbf` and `.poly` are git-ignored. Needs `pip install osmium` (only for the build, not on the server).
