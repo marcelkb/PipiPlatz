@@ -28,5 +28,26 @@ class FuelQuery(unittest.TestCase):
         b = app.to_poi(fuel(2, {"toilets": "yes"}))
         self.assertEqual(len(app.dedupe([a, b])), 1)
 
+    def test_same_name_twin_23_m_away_is_one_stop(self):
+        # OSM sometimes has one petrol station as two nodes with the same name, here 24 m apart
+        a = app.to_poi({"type": "node", "id": 11, "lat": 50.11, "lon": 8.68,
+                        "tags": {"amenity": "fuel", "brand": "Raiffeisen", "name": "Raiffeisen"}})
+        b = app.to_poi({"type": "node", "id": 12, "lat": 50.11007, "lon": 8.68032,
+                        "tags": {"amenity": "fuel", "brand": "Raiffeisen", "name": "Raiffeisen"}})
+        self.assertEqual([p["id"] for p in app.dedupe([a, b])], ["node11"])
+
+    def test_different_names_or_40_m_apart_stay_two_stops(self):
+        a = app.to_poi(fuel(1))
+        b = app.to_poi({**fuel(1), "id": 7, "lat": a["lat"] + 0.0002})  # 22 m north, other name below
+        b["name"] = "Tankstelle 7"
+        c = app.to_poi({**fuel(1), "id": 8, "lat": a["lat"] + 0.00036})  # 40 m north, same name
+        self.assertEqual(len(app.dedupe([a, b, c])), 3)
+
+    def test_rest_area_twins_stay_two_stops(self):
+        # the mirrored Rastplatz on the other carriageway has the same name: the side test needs both
+        r = [app.to_poi({"type": "way", "id": i, "center": {"lat": 50.0 + i * 0.0002, "lon": 8.0},
+                         "tags": {"highway": "rest_area", "name": "Rastplatz Testwald"}}) for i in (1, 2)]
+        self.assertEqual(len(app.dedupe(r)), 2)
+
 if __name__ == "__main__":
     unittest.main()

@@ -66,10 +66,10 @@ class NearbyOnMotorway(unittest.TestCase):
 
     def test_elsewhere_the_cut_is_by_distance_only(self):
         self.motorway = False
-        burger = [{"type": "node", "id": 100 + i, "lat": 51.5 + i * 2e-4, "lon": 7.0,
+        burger = [{"type": "node", "id": 100 + i, "lat": 51.5 + i * 4e-4, "lon": 7.0,
                    "tags": {"amenity": "fast_food", "name": "Burger King", "brand:wikidata": "Q177054"}}
                   for i in range(90)]
-        far = [{"type": "node", "id": 1, "lat": 51.52, "lon": 7.0, "tags": {"highway": "rest_area"}}]
+        far = [{"type": "node", "id": 1, "lat": 51.54, "lon": 7.0, "tags": {"highway": "rest_area"}}]
         def live(q):
             return burger + far if "rest_area" in q or "fast_food" in q else []
         mock.patch.object(app, "overpass_live", live).start()

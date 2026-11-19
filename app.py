@@ -498,12 +498,19 @@ def to_poi(e):
             "name": name, "sub": own if own and own != name else "", "wc": wc, "hours": t.get("opening_hours", ""),
             "fee": t.get("toilets:fee") or t.get("fee") or ""}
 
+TWIN_M = 30  # m: the same kind and name this close is one place mapped twice (two "Raiffeisen" fuel nodes)
+TWIN_KEEP = ("raststaette", "rastplatz")  # never merged by name: the mirrored one is the other carriageway
+
 def dedupe(pois):
-    seen, out = set(), []
+    seen, named, out = set(), {}, []
     for p in pois:
         k = (p["kind"], round(p["lat"], 4), round(p["lon"], 4))
-        if k not in seen:
-            seen.add(k); out.append(p)
+        if k in seen:
+            continue
+        twins = named.setdefault((p["kind"], p["name"]), [])
+        if p["kind"] not in TWIN_KEEP and any(hav((q["lat"], q["lon"]), (p["lat"], p["lon"])) <= TWIN_M for q in twins):
+            continue
+        seen.add(k); twins.append(p); out.append(p)
     return out
 
 @app.errorhandler(HTTPException)
