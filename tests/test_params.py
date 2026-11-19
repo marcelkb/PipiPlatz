@@ -1,6 +1,7 @@
 import math, os, sys, unittest
 from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.environ["PIPI_NO_LOCAL"] = "1"  # these tests stub Overpass; the local data file would answer first
 import app
 
 # a motorway going south for ~670 km at lon 8.0, far longer than any lookahead the form offers

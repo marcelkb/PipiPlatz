@@ -78,12 +78,88 @@ MWY_FACILITY = {"raststaette", "rastplatz", "wc"}  # only these are unusable fro
 ROUTE_CHUNK = 16  # route points (1.5 km apart) per Overpass query, ~22 km of road
 BBOX_SLACK = 500  # m added to the side distance: the road bends between two sample points
 
-def bboxOf(points, pad_m):
-    """Overpass bounding box '(south,west,north,east)' around [(lat, lon)], grown by pad_m metres."""
+def boxOf(points, pad_m):
+    """(south, west, north, east) around [(lat, lon)], grown by pad_m metres."""
     lats, lons = [p[0] for p in points], [p[1] for p in points]
     dlat = pad_m / 111320
     dlon = pad_m / (111320 * math.cos(math.radians(sum(lats) / len(lats))))
-    return "(%.5f,%.5f,%.5f,%.5f)" % (min(lats) - dlat, min(lons) - dlon, max(lats) + dlat, max(lons) + dlon)
+    return min(lats) - dlat, min(lons) - dlon, max(lats) + dlat, max(lons) + dlon
+
+def bboxOf(points, pad_m):
+    """Overpass bounding box '(south,west,north,east)' around [(lat, lon)], grown by pad_m metres."""
+    return "(%.5f,%.5f,%.5f,%.5f)" % boxOf(points, pad_m)
+
+# Local copy of the OSM data for Germany (build_pois.py from Geofabrik's extract, updated by hand): a
+# search whose box lies wholly inside Germany is answered from it, everything else still goes live.
+LOCAL_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "pois.jsonl")
+LOCAL_CELL = 0.1  # degrees per grid cell of the in-memory index and of the coverage map
+LOCAL_PAD = max(EVID_RADIUS.values())  # m: a stop at the box edge can have its cafe just outside
+_local = None  # (covered cells, grid) once loaded, False when there is no file
+
+def isEvidence(t):
+    """Tags evidenceOf() can use: the WC neighbours of shops and charging parks."""
+    return t.get("amenity") in ("cafe", "restaurant", "fast_food", "toilets") or t.get("shop") == "bakery"
+
+def loadLocal():
+    """data/pois.jsonl -> (covered cells, {cell: [(lat, lon, line)]}). Lines are parsed again only on
+    a hit, which keeps the rows at a few dozen MB instead of a dict per row."""
+    try:
+        with open(LOCAL_FILE.replace(".jsonl", ".meta.json"), encoding="utf-8") as f:
+            cover = frozenset(map(tuple, json.load(f)["cells"]))
+        grid = {}
+        with open(LOCAL_FILE, encoding="utf-8") as f:
+            for line in f:
+                r = json.loads(line)
+                cell = (math.floor(r["lat"] / LOCAL_CELL), math.floor(r["lon"] / LOCAL_CELL))
+                grid.setdefault(cell, []).append((r["lat"], r["lon"], line))
+    except (OSError, ValueError, KeyError):
+        app.logger.warning("📦 no local POI data, every search goes to Overpass")
+        return False
+    return cover, grid
+
+def localData():
+    global _local
+    if os.environ.get("PIPI_NO_LOCAL"):  # the Overpass tests switch it off
+        return None
+    if _local is None:
+        _local = loadLocal()
+    return _local or None
+
+def localBox(s, w, n, e):
+    """(stops, WC evidence) inside the box in Overpass element form, or None when there is no local
+    data or the box reaches into a cell that is not wholly inside Germany. Evidence comes from the
+    box grown by LOCAL_PAD."""
+    d = localData()
+    if not d:
+        return None
+    cover, grid = d
+    if any((i, j) not in cover for i in range(math.floor(s / LOCAL_CELL), math.floor(n / LOCAL_CELL) + 1)
+           for j in range(math.floor(w / LOCAL_CELL), math.floor(e / LOCAL_CELL) + 1)):
+        return None
+    plat = LOCAL_PAD / 111320
+    plon = LOCAL_PAD / (111320 * math.cos(math.radians((s + n) / 2)))
+    es, ew, en, ee = s - plat, w - plon, n + plat, e + plon
+    els, evid = [], []
+    for i in range(math.floor(es / LOCAL_CELL), math.floor(en / LOCAL_CELL) + 1):
+        for j in range(math.floor(ew / LOCAL_CELL), math.floor(ee / LOCAL_CELL) + 1):
+            for lat, lon, line in grid.get((i, j), ()):
+                if not (es <= lat <= en and ew <= lon <= ee):
+                    continue
+                r = json.loads(line)
+                inside = s <= lat <= n and w <= lon <= e
+                if r.get("ev") or isEvidence(r["tags"]):  # a McDonald's is a stop and a store's eatery
+                    evid.append(r)
+                if inside and not r.get("ev"):
+                    els.append(r)
+    return els, evid
+
+def localAround(lat, lon, radius):
+    """localBox for a circle, like Overpass `around:`; None when it is not covered."""
+    hit = localBox(*boxOf([(lat, lon)], radius))
+    if hit is None:
+        return None
+    els, evid = hit
+    return [x for x in els if hav((lat, lon), (x["lat"], x["lon"])) <= radius], evid
 
 def allQueries(a, limit, merge=False):
     """[(is_evidence, query)] for one search area `a` (an Overpass area filter like '(around:...)').
@@ -179,9 +255,12 @@ def enrich(pois, evid):
         if not r or p["wc"] is True: continue
         park = p["kind"] == "ladepark"
         big = p["kind"] in ("moebel", "bau") or park
+        # a bakery only counts for supermarkets and parks: shopEvidence never asks for one next to a
+        # furniture / DIY store, the local data has them all, and both must decide alike
         near = [x for x in ev if hav((p["lat"], p["lon"]), (x[0], x[1])) <= r and (big or not x[4])
-                and (park or x[4] != "wc")]
-        strong = [x for x in near if x[3]]
+                and (park or x[4] != "wc") and not (p["kind"] in ("moebel", "bau") and x[2].startswith("Bäcker"))]
+        # the nearest one names the hint: list order depends on which query (or file) it came from
+        strong = sorted((x for x in near if x[3]), key=lambda x: hav((p["lat"], p["lon"]), (x[0], x[1])))
         if strong:
             p["wc"], p["hint"] = "likely", f"{strong[0][2]} {'nebenan' if park else 'beim Markt'}"
         elif p["kind"] == "moebel":
@@ -418,9 +497,13 @@ def nearby():
     glat, glon = round(lat / SNAP) * SNAP, round(lon / SNAP) * SNAP
     pad = math.ceil(hav((lat, lon), (glat, glon)) / 100) * 100
     while radius <= 24000:  # widen until we have some results
-        els, evid, failed, _pending = run_groups(f"around:{radius + pad},{glat:.2f},{glon:.2f}", limit)
+        local = localAround(glat, glon, radius + pad)
+        if local is not None:  # the local file already holds the evidence shopEvidence would fetch
+            (els, evid), failed = local, 0
+        else:
+            els, evid, failed, _pending = run_groups(f"around:{radius + pad},{glat:.2f},{glon:.2f}", limit)
         pois = dedupe([p for p in map(to_poi, els) if p])
-        enrich(pois, evid + shopEvidence(pois))
+        enrich(pois, evid + (shopEvidence(pois) if local is None else []))
         pois = chargers(pois)
         if len(pois) >= 8: break
         radius *= 2
@@ -735,15 +818,25 @@ def along():
     # Overpass: one bounding box per stretch of the route. An `around:` polyline is checked point by
     # point and timed out on every server in dense areas (the first 70 km of a long route came
     # back empty); a box is cheap, and the true distance is measured below.
-    jobs = []
+    jobs, els, evid = [], [], []
     for s in range(0, len(spts), ROUTE_CHUNK - 1):
         chunk = spts[s:s + ROUTE_CHUNK]
         if len(chunk) < 2: chunk = chunk * 2
-        jobs += allQueries(bboxOf(chunk, radius + BBOX_SLACK), 1500, merge=True)
-    try:
-        els, evid, failed, pending = fetchAll(jobs, WORKERS, deadline=ALONG_CUT)
-    except RuntimeError:
-        return jsonify(error="Overpass-Server nicht erreichbar, bitte später erneut"), 502
+        hit = localBox(*boxOf(chunk, radius + BBOX_SLACK))
+        if hit is None:  # outside the local data (abroad, or no file): ask Overpass
+            jobs += allQueries(bboxOf(chunk, radius + BBOX_SLACK), 1500, merge=True)
+        else:
+            els += hit[0]; evid += hit[1]
+    failed = pending = 0
+    nLocal = len(els)  # the live elements are appended after these
+    if jobs:
+        try:
+            live, live_ev, failed, pending = fetchAll(jobs, WORKERS, deadline=ALONG_CUT)
+            els += live; evid += live_ev
+        except RuntimeError:
+            if not els:
+                return jsonify(error="Overpass-Server nicht erreichbar, bitte später erneut"), 502
+            failed = len(jobs)  # the covered part of the route still answers
     pois = dedupe([p for p in map(to_poi, els) if p])
     segs, _ = segList(route)
     starts = [s[2] for s in segs]
@@ -764,7 +857,9 @@ def along():
     # the boxes are wider than the side distance: only what is really within it stays
     pois = [p for p in pois if p["off"] <= radius]
     # while the rest is still running, do not wait for this second query as well
-    enrich(pois, evid if pending else evid + shopEvidence(pois))
+    # (and stops from the local data have their evidence already: ask only for the live part)
+    localIds = {f'{e["type"]}{e["id"]}' for e in els[:nLocal]}
+    enrich(pois, evid if pending or not jobs else evid + shopEvidence([p for p in pois if p["id"] not in localIds]))
     pois = chargers(pois)
     # The side test cannot see a stop that lies across an interchange: there the road line curves
     # and the cross product says the wrong thing. OSRM knows: driving through such a stop means

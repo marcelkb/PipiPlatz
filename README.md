@@ -79,6 +79,12 @@ store, which fixes `CERTIFICATE_VERIFY_FAILED` errors behind antivirus that insp
 
 ## Caching and speed
 
+- **Germany is answered from a local copy of the OSM data**, `data/pois.jsonl` (~80k stops plus the
+  cafes / bakeries that decide "WC wahrscheinlich", 27.5 MB, built 2026-11-19). The server loads it once
+  into a grid index (~4 s, ~80 MB RAM); a search box that lies wholly inside Germany never asks
+  Overpass. Essen → Frankfurt: 4 s instead of 25-180 s, "In der Nähe" Frankfurt 0.6 s. Boxes that
+  reach across the border (Aachen, Basel, abroad) still go to Overpass as below. The phone never
+  downloads the file; it gets the same JSON answers as before.
 - Every Overpass query is cached for 7 days in `cache.db` (SQLite), so a repeat search is fast.
 - "In der Nähe" queries run around a ~2 km grid point instead of your exact position, so searches
   from nearby spots reuse the same cache entries. The radius is padded by the offset.
@@ -92,6 +98,19 @@ store, which fixes `CERTIFICATE_VERIFY_FAILED` errors behind antivirus that insp
   running on the server and its answers go into the cache. The app shows the first stops at once, says
   so in a notice, and picks the rest up in a few polls, so the list fills in while you drive. A query
   that just failed is not sent again for two minutes, so the polling does not turn into a retry loop.
+
+### Updating the local data (by hand, every few weeks)
+
+```
+del data\germany-latest.osm.pbf    # build_pois.py downloads the current one from Geofabrik (~4.9 GB)
+python build_pois.py               # ~10 min; refuses to write if a kind lost >10% (--force overrides)
+python compare_local.py            # local vs live Overpass at 10 places, should say 10/10
+git add data/pois.jsonl data/pois.meta.json
+```
+
+The `.pbf` and `.poly` are git-ignored. Needs `pip install osmium` (only for the build, not on the server).
+`build_pois.py` reads the selectors from `GROUPS` in `app.py`; a new group needs its first tag in
+`PREFILTER` as well (a test checks that).
 
 ## On the phone
 
@@ -124,5 +143,6 @@ fair-use limits, so this is meant for personal use. The app sends the User-Agent
   consent page; then paste the long link.
 - OSM coverage decides everything: a missing or wrong tag gives a wrong WC state.
 - Chain names for furniture and DIY stores are matched by name and may miss some branches.
-- Route searches send two Overpass queries per ~25 route points (one merged POI query, one for
-  supermarket evidence). A 150 km route took 25 s cold on 2026-11-08; repeats come from the cache.
+- Outside Germany, route searches send two Overpass queries per ~25 route points (one merged POI
+  query, one for supermarket evidence). A 150 km route took 25 s cold on 2026-11-08; repeats come from
+  the cache. Inside Germany the local data is only as fresh as its last build.

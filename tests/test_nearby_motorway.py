@@ -1,6 +1,7 @@
 import os, re, sys, gc, tempfile, unittest
 from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.environ["PIPI_NO_LOCAL"] = "1"  # these tests stub Overpass; the local data file would answer first
 import app
 
 AROUND = re.compile(r"around:(\d+),(\d+\.\d+),(\d+\.\d+)")

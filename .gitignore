@@ -8,3 +8,8 @@ run.err
 HANDOFF.md
 PRODUCT.md
 transcript/
+
+# OSM source for build_pois.py: only data/pois.jsonl + data/pois.meta.json are committed
+data/*.osm.pbf
+data/*.part
+data/*.poly
