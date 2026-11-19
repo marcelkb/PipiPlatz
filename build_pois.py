@@ -15,9 +15,12 @@ their bounding box, like Overpass `out center`.
 Refuses to write when a kind lost more than DROP_MAX of its rows against the last build (a truncated
 download must not replace a good file). --force skips that check."""
 import json, math, os, re, sys, time
-import osmium
 import requests
 import app
+try:  # only the build reads the extract; the tests and the server import this file without it
+    import osmium
+except ImportError:
+    osmium = None
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PBF = os.path.join(HERE, "data", "germany-latest.osm.pbf")
@@ -213,6 +216,8 @@ def writeOut(rows, cells):
           + "\n".join(f"{k}: {v}" for k, v in sorted(counts.items())))
 
 def build():
+    if osmium is None:
+        sys.exit("pyosmium is missing: pip install osmium")
     download()
     stops, sources, cands = scan()
     evid = nearSources(cands, sources)
