@@ -83,6 +83,20 @@ class AlongDetour(unittest.TestCase):
         self.assertEqual(got["node8"]["kind"], "burger")
         self.assertTrue(got["node8"]["opp"])
 
+    def test_petrol_station_on_the_other_carriageway_is_marked_like_a_rest_area(self):
+        el = {"type": "node", "id": 6, "lat": 50.504, "lon": 8.007, "tags": {"amenity": "fuel", "brand": "Aral"}}
+        got = along([el], detour=13870)
+        self.assertEqual(got["node6"]["kind"], "tank")
+        self.assertTrue(got["node6"]["opp"])
+
+    def test_town_petrol_stations_do_not_use_up_the_checks(self):
+        # a town at an exit has many: they sit closer to the line than the Raststaette but come after it
+        els = [{"type": "node", "id": i, "lat": 50.5 + i * 0.001, "lon": 8.002,
+                "tags": {"amenity": "fuel", "brand": "Aral"}} for i in range(app.OPPOSITE_CHECK)]
+        els.append(poi(99, 50.504, 8.007, "Toresberg"))
+        got = along(els, detour={8.002: 300, 8.007: 13870})
+        self.assertTrue(got["way99"]["opp"])
+
     def test_the_list_hides_the_same_kinds_the_server_checks(self):
         # index.html hides an "opp" stop behind the "anzeigen" bar only for these kinds
         html = open(os.path.join(os.path.dirname(app.__file__), "static", "index.html"), encoding="utf-8").read()

@@ -77,7 +77,7 @@ ALONG_CUT = 35  # s a route search waits before answering with what is ready; th
 OPPOSITE_M = 150  # m: a motorway stop this close but on the left is on the other carriageway
 OPPOSITE_DETOUR = 4000  # m extra when OSRM has to drive past a stop and turn around: other carriageway
 OPPOSITE_CHECK = 64  # stops per search that are verified with OSRM (beyond that the side test decides)
-MWY_FACILITY = {"raststaette", "rastplatz", "wc", "burger"}  # only these are unusable from the other carriageway
+MWY_FACILITY = {"raststaette", "rastplatz", "wc", "burger", "tank"}  # only these are unusable from the other carriageway
 
 ROUTE_CHUNK = 16  # route points (1.5 km apart) per Overpass query, ~22 km of road
 BBOX_SLACK = 500  # m added to the side distance: the road bends between two sample points
@@ -972,9 +972,11 @@ def along():
     # The side test cannot see a stop that lies across an interchange: there the road line curves
     # and the cross product says the wrong thing. OSRM knows: driving through such a stop means
     # leaving at the next exit and coming back. Rest areas come first: they are the mirrored pairs,
-    # while the WC nodes are mostly town toilets and would push them out of the list.
+    # while petrol stations and burgers are often in the town at the exit, and the WC nodes mostly
+    # town toilets: they would push the rest areas out of the list.
+    rank = {"raststaette": 0, "rastplatz": 0, "burger": 1, "tank": 1}
     cand = sorted([p for p in pois if p["kind"] in MWY_FACILITY and p["off"] <= 1200 and p.get("_mway")],
-                  key=lambda p: (p["kind"] == "wc", p["off"]))[:OPPOSITE_CHECK]
+                  key=lambda p: (rank.get(p["kind"], 2), p["off"]))[:OPPOSITE_CHECK]
     def setSide(p, d):
         if d > OPPOSITE_DETOUR:
             p["opp"] = True

@@ -246,7 +246,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 <script>
 const KINDS={raststaette:['raststaette','Raststätte'],burger:['burger','Burger'],wc:['wc','WC'],rastplatz:['rastplatz','Rastplatz'],tank:['tank','Tankstelle'],ladepark:['lade','Ladepark'],super:['super','Supermarkt'],moebel:['moebel','Möbelhaus'],bau:['bau','Baumarkt'],mall:['mall','Einkaufszentrum'],bahnhof:['bahnhof','Bahnhof'],other:['other','Restaurant']};
 const DEFAULT_ON=Object.keys(KINDS);
-const MWY_FACILITY=new Set(['raststaette','rastplatz','wc','burger']); // only these are unusable from the other carriageway
+const MWY_FACILITY=new Set(['raststaette','rastplatz','wc','burger','tank']); // only these are unusable from the other carriageway
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ico=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
