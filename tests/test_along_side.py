@@ -35,7 +35,7 @@ def along(els, ref="A 3", detour=5000):
                 return fakeRoute(ref)
         return R()
 
-    with mock.patch.object(app.requests, "get", get), \
+    with mock.patch.object(app.OSRM_HTTP, "get", get), \
          mock.patch.object(app, "fetchAll", lambda q, w, deadline=None: (els, [], 0, 0)), \
          mock.patch.object(app, "shopEvidence", lambda p, limit=25: []):
         r = app.app.test_client().post("/api/along", json={"from": [51.0, 8.0], "to": [50.0, 8.0]})
@@ -108,7 +108,7 @@ class AlongDetourFails(unittest.TestCase):
             return R()
 
         els = [poi(1, 50.5, 8.002, "Kaputt"), poi(2, 50.504, 8.007, "Toresberg")]
-        with mock.patch.object(app.requests, "get", get), \
+        with mock.patch.object(app.OSRM_HTTP, "get", get), \
              mock.patch("concurrent.futures.ThreadPoolExecutor", Spy), \
              mock.patch.object(app, "fetchAll", lambda q, w, deadline=None: (els, [], 0, 0)), \
              mock.patch.object(app, "shopEvidence", lambda p, limit=25: []):

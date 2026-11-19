@@ -56,7 +56,7 @@ class LocalDbCase(unittest.TestCase):
 class LocalDb(LocalDbCase):
     # ===== Acceptance criteria =====
     def test_route_search_answers_from_the_file_without_overpass(self):
-        with mock.patch.object(app.requests, "get", osrm):
+        with mock.patch.object(app.OSRM_HTTP, "get", osrm):
             r = app.app.test_client().post("/api/along", json={"from": [51.0, 8.0], "to": [50.0, 8.0]})
         j = r.get_json()
         self.assertEqual(r.status_code, 200, j)

@@ -27,6 +27,9 @@ OVERPASS = ["https://ovp.dresel.systems/api/interpreter",
 # Only add servers that cover the whole world: a regional one (e.g. overpass.osm.ch, Switzerland only)
 # would answer 200 with an empty result for Germany and be taken as valid.
 OSRM = "https://router.project-osrm.org/route/v1/driving/"
+# One kept-alive connection pool for OSRM: a route search sends ~50 calls (the carriageway checks),
+# and a new TLS handshake plus certificate load for each cost ~1 s CPU, several s on Render.
+OSRM_HTTP = requests.Session()
 NOMINATIM = "https://nominatim.openstreetmap.org/search"
 PHOTON = "https://photon.komoot.io/api/"
 # The two geocoders cover the same footprint as the old countrycodes list (de,at,nl,be,lu,fr,ch,cz,pl,dk).
@@ -714,7 +717,7 @@ def osrmRoutes(stops, alternatives=False, steps=False):
     coords = ";".join(f"{x[1]},{x[0]}" for x in stops)
     alt = "&alternatives=3" if alternatives else ""
     st = "&steps=true" if steps else ("&steps=false" if alternatives else "")
-    r = requests.get(f"{OSRM}{coords}?overview=full&geometries=geojson{alt}{st}", headers=UA, timeout=30).json()
+    r = OSRM_HTTP.get(f"{OSRM}{coords}?overview=full&geometries=geojson{alt}{st}", headers=UA, timeout=30).json()
     return r.get("routes") or []
 
 MWY = re.compile(r"^A\s*\d")  # Autobahn refs ("A 3", "A 555"); B/L/K roads are not divided like that

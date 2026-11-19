@@ -23,7 +23,7 @@ class Base(unittest.TestCase):
         def get(url, **kw):
             seen["url"] = url
             return R()
-        with mock.patch.object(app.requests, "get", get), \
+        with mock.patch.object(app.OSRM_HTTP, "get", get), \
              mock.patch.object(app, "fetchAll", lambda q, w, deadline=None: ([], [], 0, 0)):
             r = app.app.test_client().post(path, json=body)
         return r, seen["url"]
