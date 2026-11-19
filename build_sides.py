@@ -190,11 +190,14 @@ def main():
     ask = [p for p in todo if key(p) not in done]
     print(f"📍 {len(todo)} stops, {len(todo) - len(ask)} already stored, {len(ask)} to ask", flush=True)
     last = 0.0
+    plan = [(p, directions(cw, (p["lat"], p["lon"]))) for p in ask]
+    calls = sum(len(ways) for _, ways in plan)  # one OSRM call per direction; stops far off a motorway need none
     with open(OUT, "a", encoding="utf-8", newline="\n") as f:
-        for n, p in enumerate(ask):
+        for n, (p, ways) in enumerate(plan):
             pt = (p["lat"], p["lon"])
             dirs, failed = [], False
-            for wid, k, t in directions(cw, pt):
+            calls -= len(ways)
+            for wid, k, t in ways:
                 time.sleep(max(0.0, PAUSE - (time.time() - last)))
                 last = time.time()
                 m = measure(cw, pt, wid, k, t)
@@ -211,7 +214,7 @@ def main():
             f.flush()
             done[key(p)] = line
             if n % 100 == 0:
-                left = (len(ask) - n) * 2 * PAUSE / 60
+                left = calls * PAUSE / 60
                 print(f"   {n}/{len(ask)} stops, ~{left:.0f} min left", flush=True)
     if only is None:
         # drop rows of stops that are gone or moved, sorted by id so a rebuild diffs cleanly
