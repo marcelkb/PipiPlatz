@@ -77,7 +77,7 @@ ALONG_CUT = 35  # s a route search waits before answering with what is ready; th
 OPPOSITE_M = 150  # m: a motorway stop this close but on the left is on the other carriageway
 OPPOSITE_DETOUR = 4000  # m extra when OSRM has to drive past a stop and turn around: other carriageway
 OPPOSITE_CHECK = 64  # stops per search that are verified with OSRM (beyond that the side test decides)
-MWY_FACILITY = {"raststaette", "rastplatz", "wc"}  # only these are unusable from the other carriageway
+MWY_FACILITY = {"raststaette", "rastplatz", "wc", "burger"}  # only these are unusable from the other carriageway
 
 ROUTE_CHUNK = 16  # route points (1.5 km apart) per Overpass query, ~22 km of road
 BBOX_SLACK = 500  # m added to the side distance: the road bends between two sample points

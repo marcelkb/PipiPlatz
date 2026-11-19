@@ -1,4 +1,4 @@
-import os, sys, unittest
+import os, re, sys, unittest
 from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["PIPI_NO_LOCAL"] = "1"  # these tests stub Overpass; the local data file would answer first
@@ -74,6 +74,21 @@ class AlongDetour(unittest.TestCase):
         # 500 m right of the line and the side test is happy, but OSRM needs 13 km to pass it
         got = along([poi(1, 50.504, 8.007, "Toresberg")], detour=13870)
         self.assertTrue(got["way1"]["opp"])
+
+    def test_burger_on_the_other_carriageway_is_marked_like_a_rest_area(self):
+        # the McDonald's of the mirrored Raststaette: only the other carriageway gets there
+        el = {"type": "node", "id": 8, "lat": 50.504, "lon": 8.007,
+              "tags": {"amenity": "fast_food", "brand": "McDonald's", "name": "McDonald's"}}
+        got = along([el], detour=13870)
+        self.assertEqual(got["node8"]["kind"], "burger")
+        self.assertTrue(got["node8"]["opp"])
+
+    def test_the_list_hides_the_same_kinds_the_server_checks(self):
+        # index.html hides an "opp" stop behind the "anzeigen" bar only for these kinds
+        html = open(os.path.join(os.path.dirname(app.__file__), "static", "index.html"), encoding="utf-8").read()
+        js = re.search(r"const MWY_FACILITY=new Set\(\[([^\]]*)\]\)", html).group(1)
+        self.assertEqual(set(re.findall(r"'(\w+)'", js)), app.MWY_FACILITY)
+        self.assertIn("burger", app.MWY_FACILITY)
 
     def test_short_detour_leaves_it_alone(self):
         got = along([poi(1, 50.504, 8.007, "Autohof")], detour=5200)  # ~2 km in and out

@@ -25,7 +25,8 @@ All data is free: OpenStreetMap through Overpass, OSRM for routing, Nominatim fo
   always return the road you have in mind; if it is missing, add a stop on it.
 - **Driving direction:** the "abseits" distance is measured to the road line itself, and a motorway
   stop that lies left of your direction within 150 m is on the other carriageway (the mirrored
-  Raststätte). Those are hidden behind a "anzeigen" bar; other places in the opposite direction stay
+  Raststätte). Those (Raststätte, Rastplatz, WC, McDonald's / Burger King) are hidden behind a
+  "anzeigen" bar; other places in the opposite direction stay
   in the list with an "andere Seite" note. A stop 1 km off the motorway is a normal detour over an
   exit and is never hidden.
 - **The route form folds away**: tap the grip above it, or swipe it up, and only that bar stays; the map
