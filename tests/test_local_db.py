@@ -101,6 +101,14 @@ class LocalDb(LocalDbCase):
         app.enrich(pois, evid)
         self.assertEqual(next(p for p in pois if p["id"] == "node4")["wc"], "likely")
 
+    def test_cafe_across_a_grid_cell_border_still_counts(self):
+        # enrich only looks at neighbouring 0.01 degree cells: the market at 50.4999 and the cafe
+        # 22 m north at 50.5001 sit in different cells, the same for longitude
+        for cafe in ((50.5001, 8.0), (50.4999, 8.0003)):
+            pois = [{"id": "m", "kind": "super", "lat": 50.4999, "lon": 7.9999, "wc": None}]
+            app.enrich(pois, [{"type": "node", "id": 9, "lat": cafe[0], "lon": cafe[1], "tags": {"amenity": "cafe"}}])
+            self.assertEqual(pois[0]["wc"], "likely", cafe)
+
     def test_box_reaching_outside_the_covered_cells_goes_live(self):
         self.assertIsNone(app.localBox(50.0, 8.4, 50.5, 8.7))  # its east edge is past 8.6
         self.assertIsNotNone(app.localBox(50.0, 8.4, 50.5, 8.55))

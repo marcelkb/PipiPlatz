@@ -66,6 +66,7 @@ EVIDENCE = [
      ["nwr[shop=bakery]", "nwr[amenity=cafe]"], 80),
 ]
 EVID_RADIUS = {"super": 80, "moebel": 150, "bau": 150, "ladepark": 150}
+EV_CELL = 0.01  # degrees: enrich's grid cell, must stay wider than the largest EVID_RADIUS
 PARK_MERGE_M = 150  # m: charging stations this close are one park (Kreuz Hilden: one station per operator)
 
 WORKERS = 5  # public Overpass servers handle only a few requests per client at once
@@ -294,12 +295,19 @@ def evidenceOf(e):
 
 def enrich(pois, evid):
     """Set wc / hint on shops without a confirmed WC from cafes and bakeries next to them."""
-    ev = [x for x in map(evidenceOf, evid) if x]
+    # a grid of 0.01 degree cells (>= 550 m, wider than any EVID_RADIUS): each stop only measures the
+    # cafes of its own and the 8 neighbouring cells. A route has ~500 stops and thousands of cafes, and
+    # measuring every pair cost a second of CPU, ten on Render's share of a core.
+    grid = {}
+    for n, x in enumerate(x for x in map(evidenceOf, evid) if x):
+        grid.setdefault((int(x[0] // EV_CELL), int(x[1] // EV_CELL)), []).append((n, x))
     for p in pois:
         r = EVID_RADIUS.get(p["kind"])
         if not r or p["wc"] is True: continue
         park = p["kind"] == "ladepark"
         big = p["kind"] in ("moebel", "bau") or park
+        i, j = int(p["lat"] // EV_CELL), int(p["lon"] // EV_CELL)
+        ev = [x for _, x in sorted(y for di in (-1, 0, 1) for dj in (-1, 0, 1) for y in grid.get((i + di, j + dj), ()))]
         # a bakery only counts for supermarkets and parks: shopEvidence never asks for one next to a
         # furniture / DIY store, the local data has them all, and both must decide alike
         near = [x for x in ev if hav((p["lat"], p["lon"]), (x[0], x[1])) <= r and (big or not x[4])
