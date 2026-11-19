@@ -1,4 +1,5 @@
 import os, sys, unittest
+from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import build_sides
 
@@ -28,6 +29,15 @@ class Walk(unittest.TestCase):
         (lat, _), done = cw.walk(2, 0, 0.0, 5000, True)
         self.assertAlmostEqual(lat, 50.0 - 3.0 * KM, places=6)
         self.assertAlmostEqual(done, 2000, delta=5)  # 111.32 km per degree vs the haversine's earth radius
+
+    def test_stop_where_the_motorway_ends_within_1500_m_is_not_stored(self):
+        # 500 m after the motorway starts: a route from further back may leave before it and reach the
+        # stop cheaply, which a stretch starting level with the stop cannot see. The live check decides
+        cw = build_sides.Carriageways(WAYS)
+        def ask(pts):
+            raise AssertionError("OSRM asked for a stretch shorter than 1.5 km")
+        with mock.patch.object(build_sides.app, "osrmRoutes", ask):
+            self.assertEqual(build_sides.measure(cw, (50.0 - 0.5 * KM, 8.001), 1, 1, 0.0), [])
 
 if __name__ == "__main__":
     unittest.main()

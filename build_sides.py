@@ -152,9 +152,13 @@ def directions(cw, pt):
     return [(s[1], s[2], s[3]) for s in out]
 
 def measure(cw, pt, wid, k, t):
-    """[A lat, A lon, B lat, B lon, metres A->B along the carriageway, detour] or None if OSRM failed."""
+    """[A lat, A lon, B lat, B lon, metres A->B along the carriageway, detour] or None if OSRM failed.
+    [] where the motorway ends within BACK_M: a route coming from further back may leave there and
+    reach the stop cheaply, which only the live check over the route itself sees."""
     A, da = cw.walk(wid, k, t, BACK_M, False)
     B, db = cw.walk(wid, k, t, BACK_M, True)
+    if min(da, db) < BACK_M:
+        return []
     try:
         rs = app.osrmRoutes([A, pt, B])
     except Exception as e:  # noqa: BLE001 - a failed call is asked again on the next run
@@ -197,7 +201,8 @@ def main():
                 if m is None:
                     failed = True
                     break
-                dirs.append(m)
+                if m:
+                    dirs.append(m)
             if failed:
                 continue  # not written: asked again next run
             _, la, lo = key(p)
