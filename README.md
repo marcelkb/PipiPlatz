@@ -107,7 +107,7 @@ store, which fixes `CERTIFICATE_VERIFY_FAILED` errors behind antivirus that insp
 - Every Overpass query is cached for 7 days in `cache.db` (SQLite), so a repeat search is fast.
 - "In der Nähe" queries run around a ~2 km grid point instead of your exact position, so searches
   from nearby spots reuse the same cache entries. The radius is padded by the offset.
-- Eleven public Overpass servers are used as fallbacks. If one is slow, the next starts after 10 s in
+- Nine public Overpass servers are used as fallbacks. If one is slow, the next starts after 10 s in
   parallel and the first valid answer wins; a host that failed recently is tried last.
 - Name filters (`name~`) are slow on the public servers, so furniture and DIY chains are matched in Python.
 - A cold search takes a few seconds when the servers are healthy (1.9 s measured for Frankfurt on
@@ -157,8 +157,8 @@ Geolocation and "Add to Home Screen" need **HTTPS**.
 
 - **PythonAnywhere (free):** outbound calls are limited to an allow-list. `overpass-api.de`,
   `overpass.openstreetmap.fr`, `overpass.kumi.systems`, `router.project-osrm.org` and
-  `nominatim.openstreetmap.org` are on it (checked 2026-11-08). `ovp.dresel.systems`,
-  `overpass.private.coffee` and `maps.mail.ru` are not. The free plan has one web app, one worker and
+  `nominatim.openstreetmap.org` are on it (checked 2026-11-08). `ovp.dresel.systems` and
+  `overpass.private.coffee` are not. The free plan has one web app, one worker and
   a one-month expiry you have to renew.
 - **Render (free):** the web service sleeps after 15 minutes idle and its disk is not kept, so the
   cache starts empty after a restart.
