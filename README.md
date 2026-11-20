@@ -13,8 +13,17 @@ All data is free: OpenStreetMap through Overpass, OSRM for routing, Nominatim fo
 ## Features
 
 - **In der Nähe**: stops around your position, sorted by distance.
-- **Entlang der Route**: enter start and destination, get stops along the way with the distance ahead
-  and the detour to each one. Radius and "how far ahead" are adjustable.
+- **Entlang der Route**: enter start and destination, get stops along the way with the distance ahead,
+  the driving time to each one ("~22 min", from OSRM's planned speeds) and the detour. Radius and "how
+  far ahead" are adjustable. An empty start means your current position.
+- **The list follows you.** Back in the app after 30 s or more, it takes a fresh position and centres
+  the map on it. A position update only re-filters the stops already loaded, it never searches again:
+  on a route, stops you passed (more than 300 m) disappear and km / minutes count from where you are
+  ("Alle gefundenen Stopps liegen hinter dir" at the end); nearby, the list is re-measured and re-sorted
+  from the new position. A new search starts only when you start one.
+- **The form is remembered**: start, destination, stops, Google link and the two selects are kept in
+  `localStorage` between visits (nothing goes to the server). The app does not search on its own, and
+  an empty start stays empty, so no search ever starts from yesterday's position.
 - **Google-Maps-Link laden**: paste the share link of a route planned in Google Maps (short
   `maps.app.goo.gl`, long `/maps/dir/` links, or the `?saddr=…&daddr=…` form the phone's "Share"
   produces). Start, destination and the stops in between are read
@@ -38,6 +47,10 @@ All data is free: OpenStreetMap through Overpass, OSRM for routing, Nominatim fo
 - Search overlay with a progress bar and a time estimate learned from your previous searches.
 - **Double click / double tap on the map** hides the list and shows the map over the full height; the
   same gesture brings the list back. (That is why double click no longer zooms: pinch or the wheel do.)
+- A place mapped twice in OSM (same type and name within 30 m, e.g. two fuel nodes) is listed once;
+  rest areas are exempt, because their two carriageway halves share a name.
+- A failed request (network error or a 5xx page while the free server wakes up) is retried twice
+  before the app shows a German error; a failed background poll keeps the stops already shown.
 - Installable PWA, light and dark theme.
 
 ## How the WC state is decided
@@ -48,15 +61,17 @@ OSM rarely tags toilets on shops, so the state is inferred per place type
 | Place type | Rule |
 |---|---|
 | Raststätte, public WC | WC vorhanden |
-| Rastplatz, Tankstelle, parking with WC | WC vorhanden unless `toilets=no` (Rastplatz) |
+| Rastplatz, parking with WC | WC vorhanden unless `toilets=no` |
+| Tankstelle (every `amenity=fuel`, the WC tag is rare) | WC vorhanden unless `toilets=no` |
 | McDonald's, Burger King | WC vorhanden, except pop-up or takeaway-only stores |
 | Supermarket | WC wahrscheinlich if a café or seated bakery is within 80 m, otherwise unklar |
 | Möbelhaus, Baumarkt (big chains by name) | WC wahrscheinlich if a café or restaurant is within 150 m; a Möbelhaus without one is still "wahrscheinlich", a Baumarkt "unklar" |
 | Einkaufszentrum (`shop=mall`) | WC vorhanden |
 | Bahnhof | WC vorhanden with `toilets=yes`; big DB stations (category 1-3) are "wahrscheinlich"; other stations are not listed |
+| Ladepark (public charging, 8+ points or `toilets=yes`) | WC vorhanden with `toilets=yes`, "wahrscheinlich" with a café, restaurant, seated bakery or public WC within 150 m; parks without either are not listed. Stations within 150 m are one park (operators and points merged) |
 
-An explicit `toilets=no` in OSM removes a Burger, Supermarkt, Möbelhaus, Baumarkt, Einkaufszentrum or
-Bahnhof entry. The UI shows three states: "WC vorhanden", "WC wahrscheinlich", "WC unklar".
+An explicit `toilets=no` in OSM removes a Burger, Supermarkt, Möbelhaus, Baumarkt, Einkaufszentrum,
+Bahnhof, Tankstelle or Ladepark entry. The UI shows three states: "WC vorhanden", "WC wahrscheinlich", "WC unklar".
 
 ## Run
 
@@ -72,8 +87,8 @@ store, which fixes `CERTIFICATE_VERIFY_FAILED` errors behind antivirus that insp
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/nearby?lat=&lon=` | Stops around a point; the radius widens from 3 km up to 24 km until enough are found |
-| `POST /api/along` | JSON `{from:[lat,lon], to:[lat,lon], via:[[lat,lon],...], radius, ahead_km}` (`via` optional); routes with OSRM and searches along the line |
+| `GET /api/nearby?lat=&lon=` | Up to 80 stops around a point; the radius starts at 3 km (10 km on the Autobahn, rest areas kept first) and doubles up to 24 km until enough are found |
+| `POST /api/along` | JSON `{from:[lat,lon], to:[lat,lon], via:[[lat,lon],...], radius, ahead_km, alt}` (`via`, `alt` optional); routes with OSRM and searches along the line. Each stop has `along`, `off`, `eta` (s from the start) and `opp` (other carriageway); `tl` is the route's distance/time line, `pending` the queries still running |
 | `GET /api/geocode?q=` | Nominatim address search |
 | `POST /api/routes` | JSON `{from, to, via}`; up to 3 route options with `roads`, `total`, `duration`, `route`; `/api/along` takes `alt` to pick one |
 | `POST /api/gmaps` | JSON `{url}`; reads the stops of a Google Maps route link, returns `points` (start, stops, destination) |
@@ -115,13 +130,15 @@ python -u build_sides.py          # Autobahn sides, see below; first run ~4 h, l
 git add data/pois.jsonl data/pois.meta.json data/motorways.jsonl data/sides.jsonl
 ```
 
-**Autobahn sides** (`data/sides.jsonl`): a route search hides a rest area that only the other
-carriageway reaches (driving through it costs >4 km more than driving on). That used to be one OSRM call
+**Autobahn sides** (`data/sides.jsonl`, ~11k stops: rest areas, motorway WCs, McDonald's / Burger King
+and Tankstellen): a route search hides such a stop when only the other carriageway reaches it (driving through it costs >4 km more than driving on). That used to be one OSRM call
 per stop and search, ~50 per route. `build_sides.py` asks OSRM once per stop and carriageway direction
 (1 request per second, the public server's limit), measured from 1.5 km before to 1.5 km after the stop
 along the real OSM carriageway. The app takes a stored answer only when the route drives that same
 stretch and the detour is not within 1.5 km of the 4 km limit; otherwise it asks OSRM as before. On six
-long routes 353 of 384 checks came from the file, all with OSRM's live verdict. The script can be
+long routes 353 of 384 checks came from the file, and on routes that were not used to build it 374 of
+448, all with OSRM's live verdict. Where the motorway ends within 1.5 km of a stop nothing is stored
+and the app asks OSRM live. The script can be
 stopped and started again; it keeps what it has.
 
 The `.pbf` and `.poly` are git-ignored. Needs `pip install osmium` (only for the build, not on the server).
